@@ -49,6 +49,7 @@ static unsigned int n_buffers = 0;
 static int v_force_format = 0;
 static int v_last_working_video_source = -1;
 static int v_last_working_video_format = 0;
+static int v_is_open = 0;
 
 // ------------------------- memory manager ------------------------
 
@@ -297,8 +298,8 @@ static int v_mainloop(const char *filename, int v_frame_count) {
             FD_SET(v_fd, &fds);
 
             /* Timeout. */
-            tv.tv_sec = 2;
-            tv.tv_usec = 0;
+            tv.tv_sec = 0;
+            tv.tv_usec = 500000;
 
             r = select(v_fd + 1, &fds, NULL, NULL, &tv);
 
@@ -731,60 +732,87 @@ static void usage(FILE *fp, int argc, char **argv)
 }
 */
 
-// main entry point to capture one image frame
-// v_frame_count - the number of frames requested
-// return 1 if the file v_filename was created
-// return 0 in case of error, the external call should create a default image
-int v_capture_image(const char *v_filename, int v_frame_count) {
-    int result = 0;
+int v_open_camera(void) {
+    if (v_is_open) {
+        if (debug) fprintf(stderr, "+++ v_open_camera: already open\n");
+        return 0;
+    }
+    if (debug) fprintf(stderr, "+++ v_open_camera: opening camera\n");
+
     int i, j, beg, end, fbeg, fend;
     if (v_last_working_video_source >= 0) {
-        // good video source is already available
         beg = v_last_working_video_source;
         end = v_last_working_video_source;
         fbeg = v_last_working_video_format;
         fend = v_last_working_video_format;
     } else {
-        // try to find another video source and format
         beg = 0;
         end = 3;
         fbeg = 0;
         fend = 1;
     }
+
     for (j = fbeg; j <= fend; j++) {
         v_force_format = j;
         for (i = beg; i <= end; i++) {
             sprintf(v_dev_name, "/dev/video%d", i);
+            if (debug) fprintf(stderr, "+++ v_open_camera: trying device %s with format %d\n", v_dev_name, j);
             mem_manager_begin();
-            if (v_open_device() >= 0) {
-                if (v_init_device() >= 0) {
-                    if (v_start_capturing() >= 0) {
-                        if (v_mainloop(v_filename, v_frame_count) >= 0) {
-                            if (v_stop_capturing() >= 0) {
-                                if (v_uninit_device() >= 0) {
-                                    if (v_close_device() >= 0) {
-                                        result = 1;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            if (v_open_device() < 0) {
+                if (debug) fprintf(stderr, "--- v_open_camera: v_open_device failed\n");
+                mem_manager_end();
+                continue;
             }
-            mem_manager_end();
-            if (result) {
-                // found a video source with no errors
-                v_last_working_video_source = i;
-                v_last_working_video_format = j;
-                goto e_n_d;
+            if (v_init_device() < 0) {
+                if (debug) fprintf(stderr, "--- v_open_camera: v_init_device failed\n");
+                v_close_device();
+                mem_manager_end();
+                continue;
             }
+            if (v_start_capturing() < 0) {
+                if (debug) fprintf(stderr, "--- v_open_camera: v_start_capturing failed\n");
+                v_uninit_device();
+                v_close_device();
+                mem_manager_end();
+                continue;
+            }
+
+            v_last_working_video_source = i;
+            v_last_working_video_format = j;
+            v_is_open = 1;
+            if (debug) fprintf(stderr, "+++ v_open_camera: successfully opened %s\n", v_dev_name);
+            return 0;
         }
     }
-e_n_d:
-    if (!result) {
-        // missing a good video source, set mode searching for the next call
-        v_last_working_video_source = -1;
-        v_last_working_video_format = 0;
+
+    if (debug) fprintf(stderr, "--- v_open_camera: failed to open any camera device\n");
+    v_last_working_video_source = -1;
+    v_last_working_video_format = 0;
+    v_is_open = 0;
+    return -1;
+}
+
+int v_capture_frame_to_file(const char *v_filename) {
+    if (!v_is_open) {
+        if (debug) fprintf(stderr, "--- v_capture_frame_to_file: camera not open\n");
+        return -1;
     }
+    if (debug) fprintf(stderr, "+++ v_capture_frame_to_file: capturing to %s\n", v_filename);
+    int result = v_mainloop(v_filename, 1);
+    if (debug) fprintf(stderr, "+++ v_capture_frame_to_file: v_mainloop result: %d\n", result);
     return result;
+}
+
+void v_close_camera(void) {
+    if (!v_is_open) {
+        if (debug) fprintf(stderr, "+++ v_close_camera: camera not open\n");
+        return;
+    }
+    if (debug) fprintf(stderr, "+++ v_close_camera: closing camera\n");
+    v_stop_capturing();
+    v_uninit_device();
+    v_close_device();
+    mem_manager_end();
+    v_is_open = 0;
+    if (debug) fprintf(stderr, "+++ v_close_camera: camera closed\n");
 }

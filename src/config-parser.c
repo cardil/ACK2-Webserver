@@ -21,7 +21,7 @@ config_option_t read_config_file(char *path) {
 
     if ((fp = fopen(path, "r")) == NULL) {
         if (debug)
-            fprintf(stderr, "Error: cannot read the config file\n");
+            fprintf(stderr, "Error: cannot read the config file: %s\n", path);
         return NULL;
     }
 

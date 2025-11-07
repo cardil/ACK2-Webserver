@@ -14,6 +14,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "httpd.h"
 
@@ -1209,6 +1210,56 @@ int update_printer_config_file(const char *config_file, const char *parameter_na
     return 1;
 }
 
+static pthread_t webcam_thread_id;
+static int webcam_thread_running = 0;
+static time_t last_webcam_request_time = 0;
+static pthread_mutex_t webcam_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void *webcam_capture_thread(void *arg) {
+    pthread_detach(pthread_self());
+
+    if (debug) fprintf(stderr, "+++ webcam thread: starting\n");
+    if (v_open_camera() != 0) {
+        if (debug) fprintf(stderr, "--- webcam thread: v_open_camera failed\n");
+        pthread_mutex_lock(&webcam_mutex);
+        webcam_thread_running = 0;
+        pthread_mutex_unlock(&webcam_mutex);
+        return NULL;
+    }
+    if (debug) fprintf(stderr, "+++ webcam thread: v_open_camera successful\n");
+
+    while (1) {
+        pthread_mutex_lock(&webcam_mutex);
+        time_t now = time(NULL);
+        if (now - last_webcam_request_time > 2) {
+            if (debug) fprintf(stderr, "+++ webcam thread: timeout, exiting\n");
+            webcam_thread_running = 0;
+            pthread_mutex_unlock(&webcam_mutex);
+            break;
+        }
+        pthread_mutex_unlock(&webcam_mutex);
+
+        if (debug) fprintf(stderr, "+++ webcam thread: capturing frame\n");
+        // capture one frame to the file "/tmp/cam.jpg"
+        int result = v_capture_frame_to_file("/tmp/cam.tmp");
+        if (result == 0) {
+            if (debug) fprintf(stderr, "+++ webcam thread: capture successful\n");
+            rename("/tmp/cam.tmp", "/tmp/cam.jpg");
+        } else {
+            if (debug) fprintf(stderr, "--- webcam thread: capture failed, result: %d\n", result);
+            // errors, use the default image
+            custom_copy_file("/mnt/UDISK/webfs/webcam/default.jpg", "/tmp/cam.jpg", "wb", NULL);
+        }
+
+        usleep(75000);  // 75ms
+    }
+
+    if (debug) fprintf(stderr, "+++ webcam thread: closing camera\n");
+    v_close_camera();
+    if (debug) fprintf(stderr, "+++ webcam thread: exited\n");
+    return NULL;
+}
+
 //==============================================================================================================================
 // CUSTOM PAGES
 void process_custom_pages(char *filename_str, struct REQUEST *req) {
@@ -1290,14 +1341,26 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
         // turn off the cache
         req->cache_turn_off = 'Y';
 
-        // capture one frame to the file "/mnt/UDISK/webfs/webcam/cam.jpg"
-        remove("/mnt/UDISK/webfs/webcam/cam.jpg");
-        int result = v_capture_image("/mnt/UDISK/webfs/webcam/cam.tmp", 1);
-        if (!result) {
-            // errors, use the default image
-            custom_copy_file("/mnt/UDISK/webfs/webcam/default.jpg", "/mnt/UDISK/webfs/webcam/cam.tmp", "wb", NULL);
+        pthread_mutex_lock(&webcam_mutex);
+        last_webcam_request_time = time(NULL);
+        if (!webcam_thread_running) {
+            if (debug) fprintf(stderr, "+++ process_custom_pages: starting webcam thread\n");
+            webcam_thread_running = 1;
+            if (pthread_create(&webcam_thread_id, NULL, webcam_capture_thread, NULL) != 0) {
+                if (debug) fprintf(stderr, "--- process_custom_pages: failed to create webcam thread\n");
+                webcam_thread_running = 0;
+            }
         }
-        rename("/mnt/UDISK/webfs/webcam/cam.tmp", "/mnt/UDISK/webfs/webcam/cam.jpg");
+        pthread_mutex_unlock(&webcam_mutex);
+
+        // if cam.jpg doesn't exist, copy default as a placeholder
+        // the background thread will overwrite it.
+        if (access("/tmp/cam.jpg", F_OK) == -1) {
+            custom_copy_file("/mnt/UDISK/webfs/webcam/default.jpg", "/tmp/cam.jpg", "wb", NULL);
+        }
+        
+        // Point the server to the image in tmpfs
+        strcpy(filename_str, "/tmp/cam.jpg");
         goto e_x_i_t;
     }
 
