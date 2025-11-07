@@ -1216,6 +1216,8 @@ static time_t last_webcam_request_time = 0;
 static pthread_mutex_t webcam_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void *webcam_capture_thread(void *arg) {
+    pthread_detach(pthread_self());
+
     if (debug) fprintf(stderr, "+++ webcam thread: starting\n");
     if (v_open_camera() != 0) {
         if (debug) fprintf(stderr, "--- webcam thread: v_open_camera failed\n");
@@ -1255,7 +1257,6 @@ void *webcam_capture_thread(void *arg) {
     if (debug) fprintf(stderr, "+++ webcam thread: closing camera\n");
     v_close_camera();
     if (debug) fprintf(stderr, "+++ webcam thread: exited\n");
-    pthread_exit(NULL);
     return NULL;
 }
 
