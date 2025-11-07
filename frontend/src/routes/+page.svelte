@@ -1,5 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import Webcam from '$lib/components/Webcam.svelte';
+  import PrinterStats from '$lib/components/PrinterStats.svelte';
+  import PrinterControls from '$lib/components/PrinterControls.svelte';
+  import PrintStatus from '$lib/components/PrintStatus.svelte';
+  import PrintHistory from '$lib/components/PrintHistory.svelte';
 
   let printerModel = '';
   let fwVersion = '';
@@ -13,17 +18,6 @@
   let cpuIdle = 0;
   let sshStatus = '';
   let uptime = '';
-  let webcamActive = false;
-  let webcamSrc = '/webcam/default.jpg';
-
-  function toggleWebcam() {
-    webcamActive = !webcamActive;
-    if (webcamActive) {
-      webcamSrc = '/webcam';
-    } else {
-      webcamSrc = '/webcam/default.jpg';
-    }
-  }
 
   onMount(() => {
     fetch('/api/webserver.json')
@@ -66,102 +60,60 @@
   });
 </script>
 
-<div class="container">
+<div class="page-container">
   <div class="main-content">
-    <div class="webcam-container">
-      <img src={webcamSrc} alt="Webcam" />
-      <button class="toggle-button" on:click={toggleWebcam}
-        >Toggle Webcam</button
-      >
-    </div>
-    <div class="printer-stats-container">
-      <h2>Printer Stats</h2>
-      <table>
-        <tbody>
-          <tr>
-            <td><strong>Total Memory:</strong></td>
-            <td>{totalMemory}MB</td>
-          </tr>
-          <tr>
-            <td><strong>Free Memory:</strong></td>
-            <td>{freeMemory}MB</td>
-          </tr>
-          <tr>
-            <td><strong>Free Memory:</strong></td>
-            <td>{freeMemoryPercentage}%</td>
-          </tr>
-          <tr>
-            <td><strong>CPU Total Usage:</strong></td>
-            <td>{cpuTotalUsage}%</td>
-          </tr>
-          <tr>
-            <td><strong>CPU User Usage:</strong></td>
-            <td>{cpuUserUsage}%</td>
-          </tr>
-          <tr>
-            <td><strong>CPU System Usage:</strong></td>
-            <td>{cpuSystemUsage}%</td>
-          </tr>
-          <tr>
-            <td><strong>CPU Idle:</strong></td>
-            <td>{cpuIdle}%</td>
-          </tr>
-          <tr>
-            <td><strong>Model:</strong></td>
-            <td>{printerModel}</td>
-          </tr>
-          <tr>
-            <td><strong>Firmware version:</strong></td>
-            <td>{fwVersion}</td>
-          </tr>
-          <tr>
-            <td><strong>SSH Status:</strong></td>
-            <td>{sshStatus}</td>
-          </tr>
-          <tr>
-            <td><strong>Sytem Uptime:</strong></td>
-            <td>{uptime}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <Webcam />
+    <PrinterStats
+      {totalMemory}
+      {freeMemory}
+      {freeMemoryPercentage}
+      {cpuTotalUsage}
+      {cpuUserUsage}
+      {cpuSystemUsage}
+      {cpuIdle}
+      {printerModel}
+      {fwVersion}
+      {sshStatus}
+      {uptime}
+    />
   </div>
   <div class="sidebar">
-    <div class="printer-controls-container">
-      <h2>Printer Controls</h2>
-      <!-- Printer controls will be displayed here -->
-    </div>
-    <div class="print-status-container">
-      <h2><a href={unleashedLink}>Kobra Unleashed</a></h2>
-      <!-- Print status will be displayed here -->
-    </div>
-    <div class="print-history-container">
-      <h2>Print History</h2>
-      <!-- Print history will be displayed here -->
-    </div>
+    <PrinterControls />
+    <PrintStatus {unleashedLink} />
+    <PrintHistory />
   </div>
 </div>
 
 <style>
-  .container {
+  .page-container {
     display: flex;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+    flex-wrap: wrap;
+    padding: 1rem;
+    gap: 1rem;
+    min-height: 100vh;
   }
+
   .main-content {
-    flex: 3;
-    margin-right: 20px;
+    flex: 3 1 70%; /* Flex-grow, flex-shrink, flex-basis */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
+
   .sidebar {
-    flex: 1;
+    flex: 1 1 25%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
-  .webcam-container {
-    margin-bottom: 20px;
-  }
-  .webcam-container img {
-    width: 100%;
-    height: auto;
+
+  @media (max-width: 768px) {
+    .main-content,
+    .sidebar {
+      flex-basis: 100%;
+    }
   }
 </style>
+
+
 
