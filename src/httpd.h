@@ -184,7 +184,9 @@ void init_mime(char *file, char *def);
 
 /* --- webcam.c ------------------------------------------------- */
 
-int v_capture_image(const char *v_filename, int v_frame_count);
+int v_open_camera(void);
+int v_capture_frame_to_file(const char *v_filename);
+void v_close_camera(void);
 
 /* --- config-parser.c ------------------------------------------ */
 
