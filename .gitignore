@@ -6,3 +6,4 @@ webserver/webserver.zip
 webserver/opt/bin/webfsd
 mybuild.sh
 originals/
+/webserver/opt/webfs
