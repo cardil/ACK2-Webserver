@@ -87,7 +87,7 @@
 <style>
   .page-container {
     display: grid;
-    grid-template-columns: 3fr 1fr;
+    grid-template-columns: 3fr 2fr; /* Change to 60% / 40% split */
     grid-template-rows: 1fr; /* Make the rows fill the container height */
     padding: 1rem;
     gap: 1rem;

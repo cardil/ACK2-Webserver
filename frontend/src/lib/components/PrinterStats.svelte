@@ -44,12 +44,8 @@
       <span>{cpuIdle}%</span>
     </div>
     <div class="stat-item">
-      <strong>Model:</strong>
-      <span>{printerModel}</span>
-    </div>
-    <div class="stat-item">
-      <strong>Firmware version:</strong>
-      <span>{fwVersion}</span>
+      <strong>Model & Firmware:</strong>
+      <span>{printerModel} <span class="divider">/</span> {fwVersion}</span>
     </div>
     <div class="stat-item">
       <strong>SSH Status:</strong>
@@ -72,11 +68,15 @@
   }
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem;
   }
   .stat-item {
     display: flex;
     flex-direction: column;
+  }
+  .divider {
+    color: var(--accent-color);
+    margin: 0 0.25rem;
   }
 </style>

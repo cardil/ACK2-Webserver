@@ -19,6 +19,7 @@
 		--card-background-color: #f0f0f0;
 		--card-border-color: #e0e0e0;
 		--accent-color: #007bff;
+		--letterbox-color: lightgray;
 	}
 
 	@media (prefers-color-scheme: dark) {
@@ -27,6 +28,7 @@
 			--text-color: #ffffff;
 			--card-background-color: #1e1e1e;
 			--card-border-color: #2e2e2e;
+			--letterbox-color: #000;
 		}
 	}
 
@@ -41,6 +43,7 @@
 		background-color: var(--background-color);
 		color: var(--text-color);
 		transition: background-color 0.2s, color 0.2s;
+		font-size: 0.9rem;
 	}
 
 	main {

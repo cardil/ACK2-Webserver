@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onDestroy } from 'svelte';
+  import CameraOffIcon from '$lib/components/icons/CameraOffIcon.svelte';
 
   let webcamActive = false;
-  let webcamSrc = '/webcam/default.jpg';
+  let webcamSrc = ''; // Default to empty, will be set by the logic
   let webcamInterval: ReturnType<typeof setInterval> | undefined = undefined;
 
   function toggleWebcam() {
@@ -15,7 +16,7 @@
       if (webcamInterval) {
         clearInterval(webcamInterval);
       }
-      webcamSrc = '/webcam/default.jpg';
+      webcamSrc = ''; // Go back to showing the icon
     }
   }
 
@@ -26,8 +27,14 @@
   });
 </script>
 
-<div class="card webcam-container">
-  <img src={webcamSrc} alt="Webcam" />
+<div class="card webcam-container" class:letterbox={webcamActive}>
+  {#if webcamActive}
+    <img src={webcamSrc} alt="Webcam" />
+  {:else}
+    <div class="icon-container">
+      <CameraOffIcon />
+    </div>
+  {/if}
   <button class="icon-button" on:click={toggleWebcam}>
     {#if webcamActive}
       <svg
@@ -75,7 +82,10 @@
     flex-grow: 1; /* Add this to make the container grow */
     display: flex; /* Helps the image inside behave predictably */
     min-height: 0; /* Allow the container to shrink */
-    background-color: #000; /* Black background for letterboxing */
+  }
+
+  .letterbox {
+    background-color: var(--letterbox-color);
   }
 
   .webcam-container img {
@@ -98,5 +108,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+  .icon-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
   }
 </style>
