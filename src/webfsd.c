@@ -185,23 +185,11 @@ static void create_root_doc_if_required(void) {
         }
     }
 
-    if (file_exists("/mnt/UDISK/webfs/index.html")) {
-        // doc root exists
-        if (file_exists("/opt/webfs/init_done")) {
-            // already transferred from src to dst, exit
-            return;
-        }
-    }
-
-    // doc root does not exists for the required package version
-
-    // delete the old one if exists
-    system("rm -rf /mnt/UDISK/webfs");
-    // copy the new one
-    system("cp -rf /opt/webfs /mnt/UDISK");
-    // mark it as done
-    if (!file_exists("/opt/webfs/init_done")) {
-        system("touch /opt/webfs/init_done");
+    // link to the source code to the /mnt/UDISK
+    system("ln -fs /opt/webfs /mnt/UDISK/webfs");
+    // copy printer's config if exists
+    if (file_exists("/etc/webfs/webserver.json")) {
+        system("cp /etc/webfs/webserver.json /mnt/UDISK/webfs/api/webserver.json");
     }
     return;
 }
