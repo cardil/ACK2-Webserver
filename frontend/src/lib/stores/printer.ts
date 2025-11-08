@@ -1,13 +1,15 @@
 import { get, writable } from 'svelte/store';
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { webserverStore } from './webserver';
 import { activePrinterIdStore } from './activePrinterId';
 
 // Define the structure for a file on the printer
 export interface PrinterFile {
-	name: string;
-	path: string;
+	name: string; // Mapped from 'filename'
 	size: number;
+	timestamp: number;
+	is_dir: boolean;
+	is_local: boolean;
 }
 
 // Define the structure for a print job
@@ -43,9 +45,35 @@ export interface Printer {
 	files: PrinterFile[];
 }
 
+/**
+ * Transforms the raw printer data from the Kobra Unleashed API into the format
+ * expected by the frontend UI components.
+ * @param rawPrinter The raw printer object from the API.
+ * @returns A transformed Printer object.
+ */
+function transformRawPrinterData(rawPrinter: any): Printer {
+	// The API returns files as a 2D array: [localFiles, udiskFiles]
+	// We'll take the local files list.
+	const files =
+		rawPrinter.files && Array.isArray(rawPrinter.files) && rawPrinter.files.length > 0
+			? rawPrinter.files[0].map((file: any) => ({
+					name: file.filename,
+					size: file.size,
+					timestamp: file.timestamp,
+					is_dir: file.is_dir,
+					is_local: file.is_local
+				}))
+			: [];
+
+	return {
+		...rawPrinter,
+		files
+	};
+}
+
 function createPrinterStore() {
 	const { subscribe, set, update } = writable<{ [id: string]: Printer }>({});
-  let socket: Socket | undefined;
+  let socket: any;
 
 	webserverStore.subscribe((config) => {
 		// Disconnect from the old socket if it exists
@@ -71,23 +99,27 @@ function createPrinterStore() {
 				console.error('Connection to Kobra Unleashed failed:', err.message);
 			});
 
-      socket.on('printer_list', (printers: { [id: string]: Printer }) => {
-        set(printers);
-        // Automatically select the first printer if one isn't already selected
+      			socket.on('printer_list', (printers: { [id: string]: any }) => {
+				const transformedPrinters: { [id: string]: Printer } = {};
+				for (const id in printers) {
+					transformedPrinters[id] = transformRawPrinterData(printers[id]);
+				}
+				set(transformedPrinters);
+				// Automatically select the first printer if one isn't already selected
 				// or if the currently selected one no longer exists.
-        const printerIds = Object.keys(printers);
-        if (printerIds.length > 0) {
-            const currentActiveId = get(activePrinterIdStore);
-					if (!currentActiveId || !printers[currentActiveId]) {
-                activePrinterIdStore.select(printerIds[0]);
-      }
-    }
-      });
+				const printerIds = Object.keys(transformedPrinters);
+				if (printerIds.length > 0) {
+					const currentActiveId = get(activePrinterIdStore);
+					if (!currentActiveId || !transformedPrinters[currentActiveId]) {
+						activePrinterIdStore.select(printerIds[0]);
+					}
+				}
+			});
 
-			socket.on('printer_updated', ({ id, printer }: { id: string; printer: Printer }) => {
+			socket.on('printer_updated', ({ id, printer }: { id:string; printer: any }) => {
 				update((currentPrinters) => ({
 					...currentPrinters,
-					[id]: printer
+					[id]: transformRawPrinterData(printer)
 				}));
         });
       socket.on('disconnect', () => {
@@ -132,7 +164,11 @@ function createPrinterStore() {
 
 		stopPrint: (printerId: string) => {
 			emitCommand('stop_print', printerId);
-}
+		},
+
+		reprint: (printerId: string, filename: string) => {
+			emitCommand('print_file', printerId, { file: filename });
+		}
 	};
 }
 

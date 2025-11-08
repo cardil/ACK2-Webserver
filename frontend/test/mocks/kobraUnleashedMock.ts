@@ -1,12 +1,34 @@
 // frontend/test/mocks/kobraUnleashedMock.ts
 import { Server as SocketIOServer } from 'socket.io';
 import { mockPrinter, Printer, PrintJob } from './kobraData';
-import { ViteDevServer } from 'vite';
+import { ViteDevServer, Connect } from 'vite';
 
 let printer: Printer = JSON.parse(JSON.stringify(mockPrinter)); // Deep copy to prevent mutation
 let printJobInterval: NodeJS.Timeout | null = null;
 
-export function createKobraUnleashedMock(server: ViteDevServer) {
+export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.NextHandleFunction {
+	return (req, res, next) => {
+		if (req.url?.includes('/api/printer/')) {
+			const printerIdRegex = /^\/api\/printer\/([a-zA-Z0-9]+)\/files$/;
+			const match = req.url.match(printerIdRegex);
+
+			if (match) {
+				const printerId = match[1];
+				if (printerId === printer.id) {
+					res.writeHead(200, { 'Content-Type': 'application/json' });
+					res.end(JSON.stringify(printer.files[0])); // Return local files
+				} else {
+					res.writeHead(404);
+					res.end('Printer not found');
+				}
+				return;
+			}
+		}
+		next();
+	};
+}
+
+export function createKobraUnleashedSocketMock(server: ViteDevServer) {
 	if (!server.httpServer) {
 		console.error('HTTP server is not available');
 		return;
@@ -16,7 +38,13 @@ export function createKobraUnleashedMock(server: ViteDevServer) {
 			origin: '*'
 		}
 	});
+	attachSocketListeners(io);
+	// Return the io instance so it can be used by the HTTP mock
+	return io;
+}
 
+
+function attachSocketListeners(io: SocketIOServer) {
 	io.on('connection', (socket) => {
 		console.log('🔌 [Kobra Mock] Client connected');
 
@@ -89,6 +117,7 @@ export function createKobraUnleashedMock(server: ViteDevServer) {
 	});
 }
 
+
 function startPrintSimulation(io: SocketIOServer) {
 	if (printJobInterval || !printer.print_job) return;
 
@@ -114,12 +143,33 @@ function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') 
 		clearInterval(printJobInterval);
 		printJobInterval = null;
 	}
-	if (printer.print_job) {
-		printer.print_job.state = finalState;
-		printer.print_job.progress = finalState === 'done' ? 100 : printer.print_job.progress;
+
+	const job = printer.print_job;
+	if (!job) {
+		printer.state = 'free';
+		io.emit('printer_updated', { id: printer.id, printer });
+		return;
 	}
+
+	job.state = finalState;
+	job.progress = finalState === 'done' ? 100 : job.progress;
+
+	if (finalState === 'done') {
+		// Add the completed job to the print history
+		const completedFile = {
+			filename: job.filename,
+			size: Math.floor(Math.random() * 100000), // a plausible random size
+			timestamp: job.print_time,
+			is_dir: false,
+			is_local: true
+		};
+		// Add to the beginning of the list
+		printer.files[0].unshift(completedFile);
+	}
+
 	printer.state = 'free';
 	io.emit('printer_updated', { id: printer.id, printer });
+
 	// Reset job after a short delay
 	setTimeout(() => {
 		printer.print_job = null;

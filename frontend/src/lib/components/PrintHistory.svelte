@@ -9,7 +9,21 @@
   $: activePrinterId = $activePrinterIdStore;
   $: printer = $printerStore[activePrinterId ?? ''];
 
-  $: localFiles = printer?.files[1] ?? [];
+  $: localFiles = printer?.files ?? [];
+
+  function formatPrintTime(seconds: number): string {
+    if (seconds < 0) return 'N/A';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    let timeString = '';
+    if (h > 0) timeString += `${h}h `;
+    if (m > 0) timeString += `${m}m `;
+    if (s > 0 || timeString === '') timeString += `${s}s`;
+
+    return timeString.trim();
+  }
 </script>
 
 <Card>
@@ -29,13 +43,13 @@
         {#if localFiles.length > 0}
           {#each localFiles as file}
             <tr>
-              <td>{file.filename}</td>
-              <td>{new Date(file.timestamp * 1000).toLocaleString()}</td>
+              <td>{file.name}</td>
+              <td>{formatPrintTime(file.timestamp)}</td>
               <td>
                 <button
                   class="icon-button action-button"
                   title="Re-print"
-                  on:click={() => printerStore.reprint(printer.id, file.filename)}
+                  on:click={() => printerStore.reprint(printer.id, file.name)}
                 >
                   <ReprintIcon style="transform: scale(0.7);" />
                 </button>

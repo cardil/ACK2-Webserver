@@ -54,13 +54,34 @@ export const mockPrinter: Printer = {
   files: [
     [
       {
-        filename: 'local_file.gcode',
-        size: 1024,
-        timestamp: Date.now(),
+        filename: 'benchy.gcode',
+        size: 123456,
+        timestamp: 3661, // 1h 1m 1s
+        is_dir: false,
+        is_local: true,
+      },
+      {
+        filename: 'flat-test.gcode',
+        size: 7890,
+        timestamp: 125, // 2m 5s
+        is_dir: false,
+        is_local: true,
+      },
+      {
+        filename: 'calibration-cube.gcode',
+        size: 4567,
+        timestamp: 630, // 10m 30s
+        is_dir: false,
+        is_local: true,
+      },
+      {
+        filename: 'wh40k-spacemarine.gcode',
+        size: 987654,
+        timestamp: 10800, // 3h
         is_dir: false,
         is_local: true,
       },
     ],
-    [],
+    [], // Udisk files
   ],
 };

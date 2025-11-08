@@ -2,7 +2,10 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import fs from 'fs';
 import path from 'path';
-import { createKobraUnleashedMock } from './test/mocks/kobraUnleashedMock';
+import {
+	createKobraUnleashedHttpMiddleware,
+	createKobraUnleashedSocketMock
+} from './test/mocks/kobraUnleashedMock';
 import { createMockApiMiddleware } from './test/mocks/mockApi';
 
 export default defineConfig({
@@ -15,7 +18,8 @@ export default defineConfig({
 				const port = server.config.server.port || 5173;
 				const protocol = server.config.server.https ? 'https' : 'http';
 				const defaultMqttUrl = `${protocol}://${host}:${port}`;
-				createKobraUnleashedMock(server);
+				const io = createKobraUnleashedSocketMock(server);
+				server.middlewares.use(createKobraUnleashedHttpMiddleware(io));
 
 				server.middlewares.use(createMockApiMiddleware(defaultMqttUrl));
 				server.middlewares.use((req, res, next) => {
