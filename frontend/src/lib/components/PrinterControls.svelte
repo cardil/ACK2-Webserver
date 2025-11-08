@@ -31,9 +31,6 @@
 </script>
 
 <Card>
-  <div class="card-header">
-    <PrinterSelector />
-  </div>
   <div class="status-row">
     <div class="status-item">
       <NozzleIcon />
@@ -52,7 +49,10 @@
     <div class="status-item">
       <StatusIcon />
       <div class="text">
-        <span class="label">Status</span>
+        <div class="label-container">
+          <span class="label">Status</span>
+          <PrinterSelector />
+        </div>
         <span class="value">{status}</span>
       </div>
     </div>
@@ -95,10 +95,6 @@
 </Card>
 
 <style>
-  .card-header {
-    display: flex;
-    justify-content: flex-end;
-  }
   .status-row {
     display: flex;
     justify-content: space-around;
@@ -117,6 +113,13 @@
     font-size: 0.8em;
     opacity: 0.8;
   }
+
+  .label-container {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
   .value {
     font-weight: bold;
   }
