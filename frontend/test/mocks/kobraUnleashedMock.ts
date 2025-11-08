@@ -8,12 +8,16 @@ let printJobInterval: NodeJS.Timeout | null = null;
 
 export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.NextHandleFunction {
 	return (req, res, next) => {
-		if (req.url?.includes('/api/printer/')) {
-			const printerIdRegex = /^\/api\/printer\/([a-zA-Z0-9]+)\/files$/;
-			const match = req.url.match(printerIdRegex);
+		// Handle Kobra Unleashed HTTP API mocks
+		if (req.url?.startsWith('/api/')) {
+			const filesUrlRegex = /^\/api\/printer\/([a-zA-Z0-9]+)\/files$/;
+			const printUrlRegex = /^\/api\/print$/;
 
-			if (match) {
-				const printerId = match[1];
+			const filesMatch = req.url.match(filesUrlRegex);
+			const printMatch = req.url.match(printUrlRegex);
+
+			if (filesMatch && req.method === 'GET') {
+				const printerId = filesMatch[1];
 				if (printerId === printer.id) {
 					res.writeHead(200, { 'Content-Type': 'application/json' });
 					res.end(JSON.stringify(printer.files[0])); // Return local files
@@ -23,7 +27,54 @@ export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.
 				}
 				return;
 			}
+
+			if (printMatch && req.method === 'POST') {
+				if (printer.state === 'free') {
+					let body = '';
+					req.on('data', (chunk) => {
+						body += chunk.toString();
+					});
+
+					req.on('end', () => {
+						const filenameMatch = body.match(/filename="([^"]+)"/);
+						const filename = filenameMatch
+							? filenameMatch[1]
+							: `uploaded_file_${Date.now()}.gcode`;
+
+						printer.state = 'printing';
+						printer.print_job = {
+							taskid: Math.random().toString(36).substring(7),
+							filename: filename,
+							filepath: '/',
+							state: 'printing',
+							remaining_time: 7200, // longer print for uploads
+							progress: 0,
+							print_time: 0,
+							supplies_usage: 0,
+							total_layers: 250,
+							curr_layer: 0,
+							fan_speed: 100,
+							z_offset: 0,
+							print_speed_mode: 1
+						};
+						io.emit('printer_updated', { id: printer.id, printer });
+						startPrintSimulation(io);
+
+						res.writeHead(200);
+						res.end('File uploaded successfully');
+						console.log(
+							`📠 [Kobra Mock] Simulated file upload for ${filename} and started print.`
+						);
+					});
+				} else {
+					res.writeHead(400);
+					res.end('Printer is busy');
+				}
+				return;
+			}
 		}
+
+		// Handle webserver API mocks (passthrough)
 		next();
 	};
 }
@@ -92,15 +143,19 @@ function attachSocketListeners(io: SocketIOServer) {
 					printJobInterval = null;
 				}
 				io.emit('printer_updated', { id: printer.id, printer });
+				console.log('📠 [Kobra Mock] Paused print job.');
 			}
 		});
 
 		socket.on('resume_print', () => {
 			if (printer.state === 'paused') {
 				printer.state = 'printing';
-				printer.print_job!.state = 'printing';
+				if (printer.print_job) {
+					printer.print_job.state = 'printing';
+				}
 				startPrintSimulation(io);
 				io.emit('printer_updated', { id: printer.id, printer });
+				console.log('📠 [Kobra Mock] Resumed print job.');
 			}
 		});
 

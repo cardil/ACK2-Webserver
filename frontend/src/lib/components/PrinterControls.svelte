@@ -6,6 +6,7 @@
   import ClockIcon from '$lib/components/icons/ClockIcon.svelte';
   import PauseIcon from '$lib/components/icons/PauseIcon.svelte';
   import StopIcon from '$lib/components/icons/StopIcon.svelte';
+  import PlayIcon from '$lib/components/icons/PlayIcon.svelte';
   import Card from '$lib/components/Card.svelte';
   import EtaIcon from '$lib/components/icons/EtaIcon.svelte';
   import { printerStore } from '$lib/stores/printer';
@@ -39,7 +40,7 @@ import { webserverStore } from '$lib/stores/webserver';
   $: activePrinterId = $activePrinterIdStore;
   $: printer = $printerStore[activePrinterId ?? ''];
 
-  $: isPrinting = printer?.state === 'printing';
+  $: isPrinting = ['printing', 'paused'].includes(printer?.state);
   $: nozzleTemp = printer?.nozzle_temp ?? '---';
   $: nozzleTarget = printer?.target_nozzle_temp ?? '---';
   $: bedTemp = printer?.hotbed_temp ?? '---';
@@ -117,7 +118,13 @@ import { webserverStore } from '$lib/stores/webserver';
     </div>
 
     <div class="button-group">
-      <button on:click={() => printerStore.pausePrint(activePrinterId)}><PauseIcon /> Pause</button>
+      {#if printer?.state === 'printing'}
+        <button on:click={() => printerStore.pausePrint(activePrinterId)}><PauseIcon /> Pause</button>
+      {:else if printer?.state === 'paused'}
+        <button on:click={() => printerStore.resumePrint(activePrinterId)}>
+          <PlayIcon /> Resume</button
+        >
+      {/if}
       <button on:click={() => printerStore.stopPrint(activePrinterId)} class="danger"
         ><StopIcon /> Stop</button
       >
