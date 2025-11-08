@@ -11,10 +11,9 @@
   import EtaIcon from '$lib/components/icons/EtaIcon.svelte';
   import { printerStore } from '$lib/stores/printer';
   import { activePrinterIdStore } from '$lib/stores/activePrinterId';
-  import PrinterSelector from './PrinterSelector.svelte';
-
-import { webserverStore } from '$lib/stores/webserver';
   import { get } from 'svelte/store';
+  import { webserverStore } from '$lib/stores/webserver';
+  import PrinterSelector from './PrinterSelector.svelte';
 
   let input: HTMLInputElement;
 
@@ -30,7 +29,7 @@ import { webserverStore } from '$lib/stores/webserver';
       if (config?.mqtt_webui_url) {
         await fetch(`${config.mqtt_webui_url}/api/print`, {
           method: 'POST',
-          body: formData,
+          body: formData
         });
       }
     }
@@ -40,7 +39,7 @@ import { webserverStore } from '$lib/stores/webserver';
   $: activePrinterId = $activePrinterIdStore;
   $: printer = $printerStore[activePrinterId ?? ''];
 
-  $: isPrinting = ['printing', 'paused'].includes(printer?.state);
+  $: isJobActive = ['printing', 'paused', 'preheating', 'downloading'].includes(printer?.state);
   $: nozzleTemp = printer?.nozzle_temp ?? '---';
   $: nozzleTarget = printer?.target_nozzle_temp ?? '---';
   $: bedTemp = printer?.hotbed_temp ?? '---';
@@ -92,7 +91,7 @@ import { webserverStore } from '$lib/stores/webserver';
     </div>
   </div>
 
-  {#if isPrinting}
+  {#if isJobActive}
     <div class="progress-container">
       <div class="progress-bar-container">
         <div class="progress-bar" style="width: {progress}%"></div>
@@ -118,8 +117,13 @@ import { webserverStore } from '$lib/stores/webserver';
     </div>
 
     <div class="button-group">
-      {#if printer?.state === 'printing'}
-        <button on:click={() => printerStore.pausePrint(activePrinterId)}><PauseIcon /> Pause</button>
+      {#if printer?.state === 'printing' || printer?.state === 'preheating' || printer?.state === 'downloading'}
+        <button
+          on:click={() => printerStore.pausePrint(activePrinterId)}
+          disabled={printer?.state === 'preheating' || printer?.state === 'downloading'}
+        >
+          <PauseIcon /> Pause
+        </button>
       {:else if printer?.state === 'paused'}
         <button on:click={() => printerStore.resumePrint(activePrinterId)}>
           <PlayIcon /> Resume</button

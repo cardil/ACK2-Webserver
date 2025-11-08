@@ -5,6 +5,28 @@ import { ViteDevServer, Connect } from 'vite';
 
 let printer: Printer = JSON.parse(JSON.stringify(mockPrinter)); // Deep copy to prevent mutation
 let printJobInterval: NodeJS.Timeout | null = null;
+let tempInterval: NodeJS.Timeout | null = null;
+
+const ROOM_TEMP = 25;
+const TARGET_NOZZLE_TEMP = 215;
+const TARGET_BED_TEMP = 60;
+const PREHEAT_SECONDS = 15;
+const COOLDOWN_SECONDS = 10;
+const SIMULATION_SPEED_MULTIPLIER = 10;
+
+/**
+ * Clears all active simulation intervals.
+ */
+function clearAllIntervals() {
+	if (printJobInterval) {
+		clearInterval(printJobInterval);
+		printJobInterval = null;
+	}
+	if (tempInterval) {
+		clearInterval(tempInterval);
+		tempInterval = null;
+	}
+}
 
 export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.NextHandleFunction {
 	return (req, res, next) => {
@@ -36,35 +58,46 @@ export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.
 					});
 
 					req.on('end', () => {
+						clearAllIntervals();
+
 						const filenameMatch = body.match(/filename="([^"]+)"/);
 						const filename = filenameMatch
 							? filenameMatch[1]
 							: `uploaded_file_${Date.now()}.gcode`;
 
-						printer.state = 'printing';
+						// Heuristics for print time and layers
+						const fileSizeInKb = body.length / 1024;
+						const estimatedPrintTime = (fileSizeInKb / 100) * 6 * 60; // 100KB = 6 mins
+						const totalLayers = Math.max(10, Math.floor(estimatedPrintTime / 30)); // Avg 30s per layer
+
+						printer.state = 'downloading';
 						printer.print_job = {
 							taskid: Math.random().toString(36).substring(7),
 							filename: filename,
 							filepath: '/',
-							state: 'printing',
-							remaining_time: 7200, // longer print for uploads
+							state: 'downloading',
+							remaining_time: estimatedPrintTime,
 							progress: 0,
 							print_time: 0,
 							supplies_usage: 0,
-							total_layers: 250,
+							total_layers: totalLayers,
 							curr_layer: 0,
 							fan_speed: 100,
 							z_offset: 0,
 							print_speed_mode: 1
 						};
 						io.emit('printer_updated', { id: printer.id, printer });
-						startPrintSimulation(io);
+						console.log(
+							`📠 [Kobra Mock] Downloading ${filename}, estimated time: ${estimatedPrintTime}s`
+						);
+
+						// Transition to preheating after a short delay
+						setTimeout(() => {
+							startPreheating(io);
+						}, 1500);
 
 						res.writeHead(200);
 						res.end('File uploaded successfully');
-						console.log(
-							`📠 [Kobra Mock] Simulated file upload for ${filename} and started print.`
-						);
 					});
 				} else {
 					res.writeHead(400);
@@ -94,7 +127,6 @@ export function createKobraUnleashedSocketMock(server: ViteDevServer) {
 	return io;
 }
 
-
 function attachSocketListeners(io: SocketIOServer) {
 	io.on('connection', (socket) => {
 		console.log('🔌 [Kobra Mock] Client connected');
@@ -108,25 +140,29 @@ function attachSocketListeners(io: SocketIOServer) {
 
 		socket.on('print_file', (data) => {
 			if (printer.state === 'free') {
+				clearAllIntervals();
 				const { file } = data;
-				printer.state = 'printing';
+				const estimatedPrintTime = 3600; // Default for re-prints
+				const totalLayers = 100;
+
+				printer.state = 'downloading';
 				printer.print_job = {
 					taskid: Math.random().toString(36).substring(7),
 					filename: file,
 					filepath: '/',
-					state: 'printing',
-					remaining_time: 3600,
+					state: 'downloading',
+					remaining_time: estimatedPrintTime,
 					progress: 0,
 					print_time: 0,
 					supplies_usage: 0,
-					total_layers: 100,
+					total_layers: totalLayers,
 					curr_layer: 0,
 					fan_speed: 100,
 					z_offset: 0,
 					print_speed_mode: 1
 				};
 				io.emit('printer_updated', { id: printer.id, printer });
-				startPrintSimulation(io);
+				setTimeout(() => startPreheating(io), 500);
 			}
 		});
 
@@ -138,23 +174,15 @@ function attachSocketListeners(io: SocketIOServer) {
 			if (printer.state === 'printing' && printer.print_job) {
 				printer.state = 'paused';
 				printer.print_job.state = 'paused';
-				if (printJobInterval) {
-					clearInterval(printJobInterval);
-					printJobInterval = null;
-				}
+				clearAllIntervals();
 				io.emit('printer_updated', { id: printer.id, printer });
 				console.log('📠 [Kobra Mock] Paused print job.');
 			}
 		});
 
 		socket.on('resume_print', () => {
-			if (printer.state === 'paused') {
-				printer.state = 'printing';
-				if (printer.print_job) {
-					printer.print_job.state = 'printing';
-				}
+			if (printer.state === 'paused' && printer.print_job) {
 				startPrintSimulation(io);
-				io.emit('printer_updated', { id: printer.id, printer });
 				console.log('📠 [Kobra Mock] Resumed print job.');
 			}
 		});
@@ -172,32 +200,40 @@ function attachSocketListeners(io: SocketIOServer) {
 	});
 }
 
-
 function startPrintSimulation(io: SocketIOServer) {
 	if (printJobInterval || !printer.print_job) return;
 
+	printer.state = 'printing';
+	printer.print_job.state = 'printing';
+	io.emit('printer_updated', { id: printer.id, printer });
+	console.log('📠 [Kobra Mock] Starting print simulation.');
+
+	const totalDuration = printer.print_job.remaining_time;
+	const simulationDuration = (totalDuration * 1000) / SIMULATION_SPEED_MULTIPLIER;
+	const steps = 100; // for percentage
+	const stepInterval = simulationDuration / steps;
+	let currentStep = printer.print_job.progress;
+
 	printJobInterval = setInterval(() => {
-		const job = printer.print_job;
-		if (!job || job.progress >= 100) {
+		currentStep++;
+		if (currentStep > 100) {
 			stopPrintSimulation(io, 'done');
 			return;
 		}
 
-		job.progress = Math.min(100, job.progress + 1);
-		job.print_time += 36;
-		job.remaining_time = Math.max(0, 3600 - job.print_time);
+		const job = printer.print_job!;
+		job.progress = currentStep;
+		job.print_time = (totalDuration * currentStep) / 100;
+		job.remaining_time = totalDuration - job.print_time;
 		job.curr_layer = Math.floor((job.progress / 100) * job.total_layers);
-		job.supplies_usage += 0.5;
+		job.supplies_usage += 0.5; // Simple heuristic
 
 		io.emit('printer_updated', { id: printer.id, printer });
-	}, 1000);
+	}, stepInterval);
 }
 
 function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') {
-	if (printJobInterval) {
-		clearInterval(printJobInterval);
-		printJobInterval = null;
-	}
+	clearAllIntervals();
 
 	const job = printer.print_job;
 	if (!job) {
@@ -210,24 +246,92 @@ function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') 
 	job.progress = finalState === 'done' ? 100 : job.progress;
 
 	if (finalState === 'done') {
-		// Add the completed job to the print history
 		const completedFile = {
 			filename: job.filename,
-			size: Math.floor(Math.random() * 100000), // a plausible random size
+			size: Math.floor(Math.random() * 100000),
 			timestamp: job.print_time,
 			is_dir: false,
 			is_local: true
 		};
-		// Add to the beginning of the list
 		printer.files[0].unshift(completedFile);
 	}
+	// Start cooldown for both completed and failed prints
+	startCooldown(io);
 
 	printer.state = 'free';
 	io.emit('printer_updated', { id: printer.id, printer });
 
-	// Reset job after a short delay
 	setTimeout(() => {
 		printer.print_job = null;
 		io.emit('printer_updated', { id: printer.id, printer });
 	}, 2000);
+}
+
+function startPreheating(io: SocketIOServer) {
+	clearAllIntervals();
+	printer.state = 'preheating';
+	printer.print_job!.state = 'preheating';
+	printer.target_nozzle_temp = String(TARGET_NOZZLE_TEMP);
+	printer.target_hotbed_temp = String(TARGET_BED_TEMP);
+	io.emit('printer_updated', { id: printer.id, printer });
+	console.log('📠 [Kobra Mock] Preheating...');
+
+	const steps = PREHEAT_SECONDS;
+	let currentStep = 0;
+	const initialNozzleTemp = Number(printer.nozzle_temp);
+	const initialBedTemp = Number(printer.hotbed_temp);
+
+	tempInterval = setInterval(() => {
+		currentStep++;
+		if (currentStep > steps) {
+			clearAllIntervals();
+			printer.nozzle_temp = String(TARGET_NOZZLE_TEMP);
+			printer.hotbed_temp = String(TARGET_BED_TEMP);
+			startPrintSimulation(io);
+			return;
+		}
+
+		const fraction = currentStep / steps;
+		printer.nozzle_temp = String(
+			Math.round(initialNozzleTemp + (TARGET_NOZZLE_TEMP - initialNozzleTemp) * fraction)
+		);
+		printer.hotbed_temp = String(
+			Math.round(initialBedTemp + (TARGET_BED_TEMP - initialBedTemp) * fraction)
+		);
+		io.emit('printer_updated', { id: printer.id, printer });
+	}, 1000);
+}
+
+function startCooldown(io: SocketIOServer) {
+	clearAllIntervals();
+	printer.target_nozzle_temp = '0';
+	printer.target_hotbed_temp = '0';
+	io.emit('printer_updated', { id: printer.id, printer });
+	console.log('📠 [Kobra Mock] Cooling down...');
+
+	const steps = COOLDOWN_SECONDS;
+	let currentStep = 0;
+	const initialNozzleTemp = Number(printer.nozzle_temp);
+	const initialBedTemp = Number(printer.hotbed_temp);
+
+	tempInterval = setInterval(() => {
+		currentStep++;
+		if (currentStep > steps) {
+			clearInterval(tempInterval!);
+			tempInterval = null;
+			printer.nozzle_temp = String(ROOM_TEMP);
+			printer.hotbed_temp = String(ROOM_TEMP);
+			io.emit('printer_updated', { id: printer.id, printer });
+			return;
+		}
+
+		const fraction = currentStep / steps;
+		printer.nozzle_temp = String(
+			Math.round(initialNozzleTemp - (initialNozzleTemp - ROOM_TEMP) * fraction)
+		);
+		printer.hotbed_temp = String(
+			Math.round(initialBedTemp - (initialBedTemp - ROOM_TEMP) * fraction)
+		);
+		io.emit('printer_updated', { id: printer.id, printer });
+	}, 1000);
 }
