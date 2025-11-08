@@ -12,6 +12,9 @@
   import { activePrinterIdStore } from '$lib/stores/activePrinterId';
   import PrinterSelector from './PrinterSelector.svelte';
 
+import { webserverStore } from '$lib/stores/webserver';
+  import { get } from 'svelte/store';
+
   let input: HTMLInputElement;
 
   async function handleFileSelect(event: Event) {
@@ -20,11 +23,15 @@
       const file = target.files[0];
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('printer_id', activePrinterId);
 
-      await fetch(`/api/printer/${activePrinterId}/print`, {
-        method: 'POST',
-        body: formData,
-      });
+      const config = get(webserverStore);
+      if (config?.mqtt_webui_url) {
+        await fetch(`${config.mqtt_webui_url}/api/print`, {
+          method: 'POST',
+          body: formData,
+        });
+      }
     }
   }
 

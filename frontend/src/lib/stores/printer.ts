@@ -1,4 +1,4 @@
-import { writable, get } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { io, Socket } from 'socket.io-client';
 import { webserverStore } from './webserver';
 import { activePrinterIdStore } from './activePrinterId';
@@ -112,7 +112,10 @@ function createPrinterStore() {
 		// Triggers the backend to refresh the file list for a specific printer.
 		// The update will be pushed back via the 'printer_updated' event.
 		refreshFiles: (printerId: string) => {
-			fetch(`/api/printer/${printerId}/files`);
+			const config = get(webserverStore);
+			if (config?.mqtt_webui_url) {
+				fetch(`${config.mqtt_webui_url}/api/printer/${printerId}/files`);
+			}
 		},
 
 		startPrint: (printerId: string, filename: string) => {
