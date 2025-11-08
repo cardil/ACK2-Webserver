@@ -12,6 +12,22 @@
   import { activePrinterIdStore } from '$lib/stores/activePrinterId';
   import PrinterSelector from './PrinterSelector.svelte';
 
+  let input: HTMLInputElement;
+
+  async function handleFileSelect(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+      const file = target.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      await fetch(`/api/printer/${activePrinterId}/print`, {
+        method: 'POST',
+        body: formData,
+      });
+    }
+  }
+
   // Get the active printer from the store
   $: activePrinterId = $activePrinterIdStore;
   $: printer = $printerStore[activePrinterId ?? ''];
@@ -24,13 +40,23 @@
   $: status = printer?.state ?? 'offline';
   $: progress = printer?.print_job?.progress ?? 0;
   $: fileName = printer?.print_job?.filename ?? 'No file';
-  $: filamentUsed = printer?.print_job?.supplies_usage ? `${printer.print_job.supplies_usage}m` : 'N/A';
-  
-  $: printTime = new Date( (printer?.print_job?.print_time ?? 0) * 1000).toISOString().substr(11, 8);
-  $: eta = new Date( (printer?.print_job?.remaining_time ?? 0) * 1000).toISOString().substr(11, 8);
+  $: filamentUsed = printer?.print_job?.supplies_usage
+    ? `${printer.print_job.supplies_usage}m`
+    : 'N/A';
+  $: printTime = new Date((printer?.print_job?.print_time ?? 0) * 1000).toISOString().substr(11, 8);
+  $: eta = new Date((printer?.print_job?.remaining_time ?? 0) * 1000)
+    .toISOString()
+    .substr(11, 8);
 </script>
 
 <Card>
+  <input
+    type="file"
+    bind:this={input}
+    on:change={handleFileSelect}
+    style="display: none;"
+    accept=".gcode"
+  />
   <div class="status-row">
     <div class="status-item">
       <NozzleIcon />
@@ -84,12 +110,14 @@
     </div>
 
     <div class="button-group">
-      <button><PauseIcon /> Pause</button>
-      <button class="danger"><StopIcon /> Stop</button>
+      <button on:click={() => printerStore.pausePrint(activePrinterId)}><PauseIcon /> Pause</button>
+      <button on:click={() => printerStore.stopPrint(activePrinterId)} class="danger"
+        ><StopIcon /> Stop</button
+      >
     </div>
   {:else}
     <div class="button-group idle">
-      <button disabled={!activePrinterId}>Upload & Print</button>
+      <button disabled={!activePrinterId} on:click={() => input.click()}>Upload & Print</button>
     </div>
   {/if}
 </Card>

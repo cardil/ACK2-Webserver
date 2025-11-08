@@ -10,6 +10,9 @@ This version of the webserver was done based on the great work from these two pr
 
 [MUSL](https://musl.libc.org) - well optimized static library that eliminate the need of using shared libraries (with all other functions in them not used by the caller).
 
+The frontend is built with [Svelte](https://svelte.dev/) and communicates with the printer via the [Kobra Unleashed]
+(https://github.com/cardil/kobra-unleashed) API.
+
 ### Installation
 
 Documentation can be found in the `install` folder.
@@ -25,6 +28,8 @@ After installing the tools, building the package can be done by executing the sc
 **install** - Contains information how to install the MUSL cross tool.
 
 **src** - Contains the source code for the custom webserver.
+
+**frontend** - Contains the Svelte-based frontend source code.
 
 **webserver** - Contains the web pages and other resources to be packed in the result archive file `webserver.zip`
 
@@ -42,20 +47,15 @@ The webcam web page requires a web camera connected to any USB slot with support
 
 The web page for the Kobra Unleashed interface requires the Kobra Unleashed http server URL to be set in advance inside the file `webserver.json`. This usually can be done in the folder RESOURCES/KEYS (for the custom update project) where a template `webserver.json` already exists and will be included in the generated custom update.
 
-How to build Kobra Unleashed MQTT server with web interface on a Raspberry Pi 4 or 5 can be found [here](https://github.com/AGG2017/kobra-unleashed).
+How to build Kobra Unleashed MQTT server with web interface on a Raspberry Pi 4 or 5 can be found [here](https://github.com/cardil/kobra-unleashed).
 
-Information how to create custom updates can be found in [this repository](https://github.com/ultimateshadsform/Anycubic-Kobra-2-Series-Tools)
+Information how to create custom updates can be found in [this repository](https://github.com/cardil/kobra2-fw-tools)
 
 ### Demo Screenshots from the Custom WebServer
 
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot1.png)
-
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot2.png)
-
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot3.png)
-
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot4.png)
-
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot5.png)
-
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot6.png)
+![Screenshot of the new UI](images/screenshot1.png)
+![Screenshot of the new UI](images/screenshot2.png)
+![Screenshot of the new UI](images/screenshot3.png)
+![Screenshot of the new UI](images/screenshot4.png)
+![Screenshot of the new UI](images/screenshot5.png)
+![Screenshot of the new UI](images/screenshot6.png)

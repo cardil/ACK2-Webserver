@@ -32,7 +32,11 @@
               <td>{file.filename}</td>
               <td>{new Date(file.timestamp * 1000).toLocaleString()}</td>
               <td>
-                <button class="icon-button action-button" title="Re-print">
+                <button
+                  class="icon-button action-button"
+                  title="Re-print"
+                  on:click={() => printerStore.reprint(printer.id, file.filename)}
+                >
                   <ReprintIcon style="transform: scale(0.7);" />
                 </button>
               </td>
