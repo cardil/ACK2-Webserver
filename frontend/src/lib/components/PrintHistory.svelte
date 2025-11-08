@@ -4,26 +4,13 @@
   import Card from '$lib/components/Card.svelte';
   import { printerStore } from '$lib/stores/printer';
   import { activePrinterIdStore } from '$lib/stores/activePrinterId';
+  import { formatDuration } from '$lib/utils/time';
 
   // Get the active printer from the store
   $: activePrinterId = $activePrinterIdStore;
   $: printer = $printerStore[activePrinterId ?? ''];
 
   $: localFiles = printer?.files ?? [];
-
-  function formatPrintTime(seconds: number): string {
-    if (seconds < 0) return 'N/A';
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-
-    let timeString = '';
-    if (h > 0) timeString += `${h}h `;
-    if (m > 0) timeString += `${m}m `;
-    if (s > 0 || timeString === '') timeString += `${s}s`;
-
-    return timeString.trim();
-  }
 </script>
 
 <Card>
@@ -44,7 +31,7 @@
           {#each localFiles as file}
             <tr>
               <td>{file.name}</td>
-              <td>{formatPrintTime(file.timestamp)}</td>
+              <td>{formatDuration(file.timestamp)}</td>
               <td>
                 <button
                   class="icon-button action-button"

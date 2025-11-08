@@ -1,5 +1,7 @@
 <script lang="ts">
   import Card from '$lib/components/Card.svelte';
+  import { formatDuration } from '$lib/utils/time';
+
   export let totalMemory: number;
   export let freeMemory: number;
   export let freeMemoryPercentage: number;
@@ -11,6 +13,16 @@
   export let fwVersion: string;
   export let sshStatus: string;
   export let uptime: string;
+
+  function parseUptime(uptimeString: string): number {
+    if (!uptimeString) return 0;
+    const parts = uptimeString.split(':').map(Number);
+    if (parts.length === 3) {
+      const [hours, minutes, seconds] = parts;
+      return hours * 3600 + minutes * 60 + seconds;
+    }
+    return 0;
+  }
 </script>
 
 <Card>
@@ -53,7 +65,7 @@
     </div>
     <div class="stat-item">
       <strong>Sytem Uptime:</strong>
-      <span>{uptime}</span>
+      <span>{formatDuration(parseUptime(uptime))}</span>
     </div>
   </div>
 </Card>
