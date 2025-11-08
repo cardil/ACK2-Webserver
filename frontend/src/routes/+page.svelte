@@ -4,6 +4,7 @@
   import PrinterStats from '$lib/components/PrinterStats.svelte';
   import PrinterControls from '$lib/components/PrinterControls.svelte';
   import PrintHistory from '$lib/components/PrintHistory.svelte';
+  import { webserverStore } from '$lib/stores/webserver';
 
   let printerModel = '';
   let fwVersion = '';
@@ -17,17 +18,16 @@
   let cpuIdle = 0;
   let sshStatus = '';
   let uptime = '';
+  
+  webserverStore.subscribe(config => {
+    if (config) {
+      printerModel = config.printer_model;
+      fwVersion = config.update_version;
+      unleashedLink = config.mqtt_webui_url;
+    }
+  });
 
   onMount(() => {
-    fetch('/api/webserver.json')
-      .then((response) => response.json())
-      .then((data) => {
-        printerModel = data.printer_model;
-        fwVersion = data.update_version;
-        unleashedLink = data.mqtt_webui_url;
-      })
-      .catch((error) => console.error('Error fetching webserver data:', error));
-
     function fetchData() {
       fetch('/api/info.json')
         .then((response) => response.json())

@@ -8,42 +8,23 @@
   import StopIcon from '$lib/components/icons/StopIcon.svelte';
   import Card from '$lib/components/Card.svelte';
   import EtaIcon from '$lib/components/icons/EtaIcon.svelte';
+  import { printerStore } from '$lib/stores/printer';
 
-  // --- Static Placeholder Data ---
-  let isPrinting = true; // Set to `false` to see the "idle" state
-  let nozzleTemp = 210;
-  let nozzleTarget = 210;
-  let bedTemp = 60;
-  let bedTarget = 60;
-  let status = "Printing"; // "Idle", "Preheating", "Offline"
-  let progress = 68; // 0-100
-  let fileName = "a_very_long_filename_that_should_be_truncated_because_it_is_way_too_long.gcode";
-  let filamentUsed = "15.2m";
-  let printTime = "01:23:45"; // Elapsed time
-  // --- End Placeholder Data ---
+  // Get the first printer from the store
+  $: printer = Object.values($printerStore)[0];
 
-  $: eta = (() => {
-    if (!isPrinting || progress === 0) return 'N/A';
-    
-    const timeParts = printTime.split(':').map(Number);
-    const elapsedTimeInSeconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
-    
-    const totalTimeInSeconds = (elapsedTimeInSeconds / progress) * 100;
-    const remainingTimeInSeconds = totalTimeInSeconds - elapsedTimeInSeconds;
-
-    if (remainingTimeInSeconds <= 0) return 'Done';
-    
-    const hours = Math.floor(remainingTimeInSeconds / 3600);
-    const minutes = Math.floor((remainingTimeInSeconds % 3600) / 60);
-    const seconds = Math.floor(remainingTimeInSeconds % 60);
-    
-    return [
-      hours.toString().padStart(2, '0'),
-      minutes.toString().padStart(2, '0'),
-      seconds.toString().padStart(2, '0')
-    ].join(':');
-  })();
-
+  $: isPrinting = printer?.state === 'printing';
+  $: nozzleTemp = printer?.nozzle_temp ?? '---';
+  $: nozzleTarget = printer?.target_nozzle_temp ?? '---';
+  $: bedTemp = printer?.hotbed_temp ?? '---';
+  $: bedTarget = printer?.target_hotbed_temp ?? '---';
+  $: status = printer?.state ?? 'offline';
+  $: progress = printer?.print_job?.progress ?? 0;
+  $: fileName = printer?.print_job?.filename ?? 'No file';
+  $: filamentUsed = printer?.print_job?.supplies_usage ? `${printer.print_job.supplies_usage}m` : 'N/A';
+  
+  $: printTime = new Date( (printer?.print_job?.print_time ?? 0) * 1000).toISOString().substr(11, 8);
+  $: eta = new Date( (printer?.print_job?.remaining_time ?? 0) * 1000).toISOString().substr(11, 8);
 </script>
 
 <Card>
