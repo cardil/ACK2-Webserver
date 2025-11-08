@@ -4,6 +4,7 @@
   import BedMeshIcon from '$lib/components/icons/BedMeshIcon.svelte';
   import FilesIcon from '$lib/components/icons/FilesIcon.svelte';
   import AboutIcon from '$lib/components/icons/AboutIcon.svelte';
+  import Logo from '$lib/components/icons/Logo.svelte';
 
   let isOpen = false;
 
@@ -13,14 +14,19 @@
 </script>
 
 <nav class:open={isOpen}>
-  <button class="toggle-button" on:click={toggleMenu}>
-    <!-- Hamburger icon -->
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="3" y1="12" x2="21" y2="12"></line>
-      <line x1="3" y1="6" x2="21" y2="6"></line>
-      <line x1="3" y1="18" x2="21" y2="18"></line>
-    </svg>
-  </button>
+  <div class="header">
+    <button class="toggle-button" on:click={toggleMenu}>
+      <!-- Hamburger icon -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    <div class="logo">
+      <Logo />
+    </div>
+  </div>
   <ul>
     <li><a href="/"><HomeIcon /><span>Home</span></a></li>
     <li><a href="/leveling"><LevelingIcon /><span>Leveling Tools</span></a></li>
@@ -42,14 +48,30 @@
   nav.open {
     width: 250px;
   }
+  .header {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    gap: 1rem;
+  }
   .toggle-button {
     background: none;
     border: none;
     color: var(--text-color);
     cursor: pointer;
-    padding: 1rem;
-    width: 100%;
-    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logo {
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+  }
+  nav.open .logo {
+    opacity: 1;
   }
   ul {
     list-style: none;
@@ -75,4 +97,5 @@
   nav.open li a span {
     opacity: 1;
   }
+
 </style>
