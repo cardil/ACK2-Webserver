@@ -53,6 +53,11 @@
 		font-size: 0.9rem;
 	}
 
+	:global(button:disabled) {
+		background-color: #6c757d !important;
+		cursor: not-allowed !important;
+	}
+
 .app-container {
     display: grid;
     grid-template-columns: auto 1fr; /* Nav is auto, content takes the rest */

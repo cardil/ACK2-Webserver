@@ -14,7 +14,7 @@
 
 <Card>
   <div class="header">
-    <button class="refresh-button" on:click={() => printerStore.refreshFiles(printer.id)}><RefreshIcon /> Refresh</button>
+    <button class="refresh-button" on:click={() => printerStore.refreshFiles(printer.id)} disabled={!activePrinterId}><RefreshIcon /> Refresh</button>
   </div>
   <div class="table-container">
     <table>

@@ -89,7 +89,7 @@
     </div>
   {:else}
     <div class="button-group idle">
-      <button>Upload & Print</button>
+      <button disabled={!activePrinterId}>Upload & Print</button>
     </div>
   {/if}
 </Card>

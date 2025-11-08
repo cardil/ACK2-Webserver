@@ -26,6 +26,7 @@
     class:online={activePrinter?.online}
     title={activePrinter?.name ?? 'Offline'}
     on:click={handleOrbClick}
+    disabled={!activePrinter}
   ></button>
 
   {#if showSelector}
