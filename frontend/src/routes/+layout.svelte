@@ -1,5 +1,6 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
+  import NavMenu from '$lib/components/NavMenu.svelte';
 
 	let { children } = $props();
 </script>
@@ -8,9 +9,12 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<main>
-	{@render children()}
-</main>
+<div class="app-container">
+  <NavMenu />
+  <main>
+    {@render children()}
+  </main>
+</div>
 
 <style>
 	:root {
@@ -46,6 +50,11 @@
 		font-size: 0.9rem;
 	}
 
+.app-container {
+    display: grid;
+    grid-template-columns: auto 1fr; /* Nav is auto, content takes the rest */
+    height: 100vh;
+  }
 	main {
 		display: flex;
 		flex-direction: column;

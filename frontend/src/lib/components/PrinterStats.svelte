@@ -13,7 +13,7 @@
 </script>
 
 <div class="card printer-stats-container">
-  <h2>Printer Stats</h2>
+
   <div class="stats-grid">
     <div class="stat-item">
       <strong>Total Memory:</strong>
@@ -61,7 +61,6 @@
 <style>
   .card {
     background-color: var(--card-background-color);
-    border: 1px solid var(--card-border-color);
     border-radius: 8px;
     padding: 1rem;
     transition: background-color 0.2s, border-color 0.2s;

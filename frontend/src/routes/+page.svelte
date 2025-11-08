@@ -3,7 +3,6 @@
   import Webcam from '$lib/components/Webcam.svelte';
   import PrinterStats from '$lib/components/PrinterStats.svelte';
   import PrinterControls from '$lib/components/PrinterControls.svelte';
-  import PrintStatus from '$lib/components/PrintStatus.svelte';
   import PrintHistory from '$lib/components/PrintHistory.svelte';
 
   let printerModel = '';
@@ -79,7 +78,7 @@
   </div>
   <div class="sidebar">
     <PrinterControls />
-    <PrintStatus {unleashedLink} />
+
     <PrintHistory />
   </div>
 </div>
