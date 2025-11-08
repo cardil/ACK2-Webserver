@@ -86,18 +86,20 @@
 
 <style>
   .page-container {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    grid-template-rows: 1fr; /* Make the rows fill the container height */
     padding: 1rem;
     gap: 1rem;
-    min-height: 100vh;
+    height: 100%;
   }
 
   .main-content {
-    flex: 3 1 70%; /* Flex-grow, flex-shrink, flex-basis */
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: 1fr auto; /* Webcam gets remaining space, stats get auto height */
     gap: 1rem;
+    overflow: hidden; /* Prevent the container from overflowing its parent */
+    min-height: 0; /* CRITICAL: Allows this grid item to shrink */
   }
 
   .sidebar {
@@ -108,9 +110,9 @@
   }
 
   @media (max-width: 768px) {
-    .main-content,
-    .sidebar {
-      flex-basis: 100%;
+    .page-container {
+      grid-template-columns: 1fr; /* Stack into a single column on mobile */
+      height: auto; /* Allow content to scroll naturally on mobile */
     }
   }
 </style>

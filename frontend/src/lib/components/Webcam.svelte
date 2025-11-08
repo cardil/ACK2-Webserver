@@ -74,12 +74,14 @@
     overflow: hidden; /* Hide anything that spills out */
     flex-grow: 1; /* Add this to make the container grow */
     display: flex; /* Helps the image inside behave predictably */
+    min-height: 0; /* Allow the container to shrink */
+    background-color: #000; /* Black background for letterboxing */
   }
 
   .webcam-container img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Cover the area, cropping if necessary */
+    object-fit: contain; /* Contain the image, creating letterboxes */
     display: block;
   }
 
