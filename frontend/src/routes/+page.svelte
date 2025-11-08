@@ -102,10 +102,10 @@
   }
 
   .sidebar {
-    flex: 1 1 25%;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto 1fr;
     gap: 1rem;
+    min-height: 0;
   }
 
   @media (max-width: 768px) {

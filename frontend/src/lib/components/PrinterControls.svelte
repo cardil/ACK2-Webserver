@@ -15,7 +15,7 @@
   let bedTarget = 60;
   let status = "Printing"; // "Idle", "Preheating", "Offline"
   let progress = 68; // 0-100
-  let fileName = "benchy.gcode";
+  let fileName = "a_very_long_filename_that_should_be_truncated_because_it_is_way_too_long.gcode";
   let filamentUsed = "15.2m";
   let printTime = "01:23:45";
   // --- End Placeholder Data ---
@@ -48,8 +48,11 @@
   </div>
 
   {#if isPrinting}
-    <div class="progress-bar-container">
-      <div class="progress-bar" style="width: {progress}%"></div>
+    <div class="progress-container">
+      <div class="progress-bar-container">
+        <div class="progress-bar" style="width: {progress}%"></div>
+      </div>
+      <span class="progress-percent">{progress}%</span>
     </div>
 
     <div class="print-info">
@@ -110,8 +113,14 @@
     font-weight: bold;
   }
 
+  .progress-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
   .progress-bar-container {
-    width: 100%;
+    flex-grow: 1;
     height: 10px;
     background-color: var(--card-border-color);
     border-radius: 5px;
@@ -121,6 +130,10 @@
     height: 100%;
     background-color: var(--accent-color);
     border-radius: 5px;
+  }
+
+  .progress-percent {
+    font-weight: bold;
   }
 
   .print-info {

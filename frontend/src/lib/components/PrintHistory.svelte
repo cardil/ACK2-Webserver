@@ -7,46 +7,210 @@
   <div class="header">
     <button class="refresh-button"><RefreshIcon /> Refresh</button>
   </div>
-  <table>
-    <thead>
-      <tr>
-        <th>File</th>
-        <th>Print Time</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Placeholder Data -->
-      <tr>
-        <td>benchy.gcode</td>
-        <td>01:23:45</td>
-        <td>
-          <button class="icon-button action-button" title="Re-print">
-            <ReprintIcon style="transform: scale(0.7);" />
-          </button>
-        </td>
-      </tr>
-      <tr>
-        <td>calibration_cube.gcode</td>
-        <td>00:15:30</td>
-        <td>
-          <button class="icon-button action-button" title="Re-print">
-            <ReprintIcon style="transform: scale(0.7);" />
-          </button>
-        </td>
-      </tr>
-      <tr>
-        <td>spool_holder.gcode</td>
-        <td>04:50:12</td>
-        <td>
-          <button class="icon-button action-button" title="Re-print">
-            <ReprintIcon style="transform: scale(0.7);" />
-          </button>
-        </td>
-      </tr>
-      <!-- End Placeholder Data -->
-    </tbody>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Print Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Placeholder Data -->
+        <tr>
+          <td>benchy.gcode</td>
+          <td>01:23:45</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>calibration_cube.gcode</td>
+          <td>00:15:30</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>spool_holder.gcode</td>
+          <td>04:50:12</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>benchy.gcode</td>
+          <td>01:23:45</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>calibration_cube.gcode</td>
+          <td>00:15:30</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>spool_holder.gcode</td>
+          <td>04:50:12</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>benchy.gcode</td>
+          <td>01:23:45</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>calibration_cube.gcode</td>
+          <td>00:15:30</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>spool_holder.gcode</td>
+          <td>04:50:12</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>benchy.gcode</td>
+          <td>01:23:45</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>calibration_cube.gcode</td>
+          <td>00:15:30</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>spool_holder.gcode</td>
+          <td>04:50:12</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>benchy.gcode</td>
+          <td>01:23:45</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>calibration_cube.gcode</td>
+          <td>00:15:30</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>spool_holder.gcode</td>
+          <td>04:50:12</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>benchy.gcode</td>
+          <td>01:23:45</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>calibration_cube.gcode</td>
+          <td>00:15:30</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>spool_holder.gcode</td>
+          <td>04:50:12</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>benchy.gcode</td>
+          <td>01:23:45</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>calibration_cube.gcode</td>
+          <td>00:15:30</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>spool_holder.gcode</td>
+          <td>04:50:12</td>
+          <td>
+            <button class="icon-button action-button" title="Re-print">
+              <ReprintIcon style="transform: scale(0.7);" />
+            </button>
+          </td>
+        </tr>
+        <!-- End Placeholder Data -->
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <style>
@@ -58,6 +222,12 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    min-height: 0;
+  }
+
+  .table-container {
+    overflow-y: auto;
+    flex-grow: 1;
   }
 
   .header {
