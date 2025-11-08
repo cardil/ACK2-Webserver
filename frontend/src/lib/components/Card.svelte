@@ -1,4 +1,8 @@
-<div class="card">
+<script lang="ts">
+  export let noPadding = false;
+</script>
+
+<div class="card" class:no-padding={noPadding}>
   <slot />
 </div>
 
@@ -12,5 +16,9 @@
     flex-direction: column;
     gap: 1rem;
     min-height: 0;
+    min-width: 0;
+  }
+  .no-padding {
+    padding: 0;
   }
 </style>

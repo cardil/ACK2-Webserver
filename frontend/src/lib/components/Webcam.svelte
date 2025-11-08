@@ -28,7 +28,7 @@
   });
 </script>
 
-<Card>
+<Card noPadding={true}>
   <div class="webcam-container" class:letterbox={webcamActive}>
   {#if webcamActive}
     <img src={webcamSrc} alt="Webcam" />
@@ -78,6 +78,7 @@
     flex-grow: 1; /* Add this to make the container grow */
     display: flex; /* Helps the image inside behave predictably */
     min-height: 0; /* Allow the container to shrink */
+    border-radius: 8px; /* Match the card's border-radius */
   }
 
   .letterbox {

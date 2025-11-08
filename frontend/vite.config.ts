@@ -10,7 +10,28 @@ export default defineConfig({
 			name: 'mock-api-server',
 			configureServer(server) {
 				server.middlewares.use((req, res, next) => {
-					if (req.url?.startsWith('/api/')) {
+					if (req.url?.startsWith('/webcam/cam.jpg')) {
+						const imagePath = path.join(
+							__dirname,
+							'static',
+							'webcam',
+							'default.jpg'
+						);
+						if (fs.existsSync(imagePath)) {
+							fs.readFile(imagePath, (err, data) => {
+								if (err) {
+									res.writeHead(500);
+									res.end('Error reading the file');
+									return;
+								}
+								res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+								res.end(data);
+							});
+						} else {
+							res.writeHead(404);
+							res.end('Not Found');
+						}
+					} else if (req.url?.startsWith('/api/')) {
 						const filePath = path.join(
 							__dirname,
 							'..', // Go up from 'frontend' to project root

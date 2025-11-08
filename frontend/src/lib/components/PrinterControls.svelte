@@ -7,6 +7,7 @@
   import PauseIcon from '$lib/components/icons/PauseIcon.svelte';
   import StopIcon from '$lib/components/icons/StopIcon.svelte';
   import Card from '$lib/components/Card.svelte';
+  import EtaIcon from '$lib/components/icons/EtaIcon.svelte';
 
   // --- Static Placeholder Data ---
   let isPrinting = true; // Set to `false` to see the "idle" state
@@ -18,8 +19,30 @@
   let progress = 68; // 0-100
   let fileName = "a_very_long_filename_that_should_be_truncated_because_it_is_way_too_long.gcode";
   let filamentUsed = "15.2m";
-  let printTime = "01:23:45";
+  let printTime = "01:23:45"; // Elapsed time
   // --- End Placeholder Data ---
+
+  $: eta = (() => {
+    if (!isPrinting || progress === 0) return 'N/A';
+    
+    const timeParts = printTime.split(':').map(Number);
+    const elapsedTimeInSeconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
+    
+    const totalTimeInSeconds = (elapsedTimeInSeconds / progress) * 100;
+    const remainingTimeInSeconds = totalTimeInSeconds - elapsedTimeInSeconds;
+
+    if (remainingTimeInSeconds <= 0) return 'Done';
+    
+    const hours = Math.floor(remainingTimeInSeconds / 3600);
+    const minutes = Math.floor((remainingTimeInSeconds % 3600) / 60);
+    const seconds = Math.floor(remainingTimeInSeconds % 60);
+    
+    return [
+      hours.toString().padStart(2, '0'),
+      minutes.toString().padStart(2, '0'),
+      seconds.toString().padStart(2, '0')
+    ].join(':');
+  })();
 
 </script>
 
@@ -56,7 +79,9 @@
       <span class="progress-percent">{progress}%</span>
     </div>
 
-    <div class="print-info">
+    <div class="file-name">{fileName}</div>
+
+    <div class="print-info-grid">
       <div class="info-item" title="Filament Used">
         <FilamentIcon />
         <span>{filamentUsed}</span>
@@ -65,8 +90,9 @@
         <ClockIcon />
         <span>{printTime}</span>
       </div>
-      <div class="file-name">
-        <span>{fileName}</span>
+      <div class="info-item" title="ETA">
+        <EtaIcon />
+        <span>{eta}</span>
       </div>
     </div>
 
@@ -128,9 +154,19 @@
     font-weight: bold;
   }
 
-  .print-info {
+  .file-name {
+    text-align: center;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.5rem 0;
+    max-width: 100%;
+  }
+
+  .print-info-grid {
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: repeat(3, 1fr);
     align-items: center;
     gap: 1rem;
     font-size: 0.9em;
@@ -138,14 +174,8 @@
   .info-item {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
-  }
-  .file-name {
-    text-align: right;
-    font-weight: bold;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .button-group {
