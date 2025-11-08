@@ -9,9 +9,12 @@
   import Card from '$lib/components/Card.svelte';
   import EtaIcon from '$lib/components/icons/EtaIcon.svelte';
   import { printerStore } from '$lib/stores/printer';
+  import { activePrinterIdStore } from '$lib/stores/activePrinterId';
+  import PrinterSelector from './PrinterSelector.svelte';
 
-  // Get the first printer from the store
-  $: printer = Object.values($printerStore)[0];
+  // Get the active printer from the store
+  $: activePrinterId = $activePrinterIdStore;
+  $: printer = $printerStore[activePrinterId ?? ''];
 
   $: isPrinting = printer?.state === 'printing';
   $: nozzleTemp = printer?.nozzle_temp ?? '---';
@@ -28,6 +31,9 @@
 </script>
 
 <Card>
+  <div class="card-header">
+    <PrinterSelector />
+  </div>
   <div class="status-row">
     <div class="status-item">
       <NozzleIcon />
@@ -89,7 +95,10 @@
 </Card>
 
 <style>
-
+  .card-header {
+    display: flex;
+    justify-content: flex-end;
+  }
   .status-row {
     display: flex;
     justify-content: space-around;

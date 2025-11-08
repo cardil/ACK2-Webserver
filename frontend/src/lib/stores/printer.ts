@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { io } from 'socket.io-client';
 import { webserverStore } from './webserver';
+import { activePrinterIdStore } from './activePrinterId';
 
 // Define the structure of the printer data based on main.py
 export interface PrintJob {
@@ -50,6 +51,11 @@ function createPrinterStore() {
 
       socket.on('printer_list', (printers: { [id: string]: Printer }) => {
         set(printers);
+        // Automatically select the first printer if one isn't already selected
+        const printerIds = Object.keys(printers);
+        if (printerIds.length > 0) {
+          activePrinterIdStore.select(printerIds[0]);
+        }
       });
       
       socket.on('printer_updated', (data: { id: string; printer: Printer }) => {
@@ -68,6 +74,9 @@ function createPrinterStore() {
 
   return {
     subscribe,
+    refreshFiles: (printerId: string) => {
+      fetch(`/api/printer/${printerId}/files`);
+    }
     // You can add methods here to send commands to the printer if needed
   };
 }

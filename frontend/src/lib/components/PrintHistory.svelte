@@ -3,16 +3,18 @@
   import ReprintIcon from '$lib/components/icons/ReprintIcon.svelte';
   import Card from '$lib/components/Card.svelte';
   import { printerStore } from '$lib/stores/printer';
+  import { activePrinterIdStore } from '$lib/stores/activePrinterId';
 
-  // Get the first printer from the store
-  $: printer = Object.values($printerStore)[0];
+  // Get the active printer from the store
+  $: activePrinterId = $activePrinterIdStore;
+  $: printer = $printerStore[activePrinterId ?? ''];
 
   $: localFiles = printer?.files[1] ?? [];
 </script>
 
 <Card>
   <div class="header">
-    <button class="refresh-button"><RefreshIcon /> Refresh</button>
+    <button class="refresh-button" on:click={() => printerStore.refreshFiles(printer.id)}><RefreshIcon /> Refresh</button>
   </div>
   <div class="table-container">
     <table>
