@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import CameraOffIcon from '$lib/components/icons/CameraOffIcon.svelte';
+  import Card from '$lib/components/Card.svelte';
 
   let webcamActive = false;
   let webcamSrc = ''; // Default to empty, will be set by the logic
@@ -27,7 +28,8 @@
   });
 </script>
 
-<div class="card webcam-container" class:letterbox={webcamActive}>
+<Card>
+  <div class="webcam-container" class:letterbox={webcamActive}>
   {#if webcamActive}
     <img src={webcamSrc} alt="Webcam" />
   {:else}
@@ -65,14 +67,9 @@
     {/if}
   </button>
 </div>
+</Card>
 
 <style>
-  .card {
-    background-color: var(--card-background-color);
-    border-radius: 8px;
-    padding: 1rem;
-    transition: background-color 0.2s, border-color 0.2s;
-  }
 
   .webcam-container {
     position: relative;

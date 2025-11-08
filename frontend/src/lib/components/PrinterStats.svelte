@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Card from '$lib/components/Card.svelte';
   export let totalMemory: number;
   export let freeMemory: number;
   export let freeMemoryPercentage: number;
@@ -12,8 +13,7 @@
   export let uptime: string;
 </script>
 
-<div class="card printer-stats-container">
-
+<Card>
   <div class="stats-grid">
     <div class="stat-item">
       <strong>Total Memory:</strong>
@@ -56,15 +56,9 @@
       <span>{uptime}</span>
     </div>
   </div>
-</div>
+</Card>
 
 <style>
-  .card {
-    background-color: var(--card-background-color);
-    border-radius: 8px;
-    padding: 1rem;
-    transition: background-color 0.2s, border-color 0.2s;
-  }
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

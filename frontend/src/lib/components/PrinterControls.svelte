@@ -6,6 +6,7 @@
   import ClockIcon from '$lib/components/icons/ClockIcon.svelte';
   import PauseIcon from '$lib/components/icons/PauseIcon.svelte';
   import StopIcon from '$lib/components/icons/StopIcon.svelte';
+  import Card from '$lib/components/Card.svelte';
 
   // --- Static Placeholder Data ---
   let isPrinting = true; // Set to `false` to see the "idle" state
@@ -22,7 +23,7 @@
 
 </script>
 
-<div class="card printer-controls-container">
+<Card>
   <div class="status-row">
     <div class="status-item">
       <NozzleIcon />
@@ -78,18 +79,9 @@
       <button>Upload & Print</button>
     </div>
   {/if}
-</div>
+</Card>
 
 <style>
-  .card {
-    background-color: var(--card-background-color);
-    border-radius: 8px;
-    padding: 1rem;
-    transition: background-color 0.2s, border-color 0.2s;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
 
   .status-row {
     display: flex;

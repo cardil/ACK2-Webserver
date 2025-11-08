@@ -1,9 +1,10 @@
 <script lang="ts">
   import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
   import ReprintIcon from '$lib/components/icons/ReprintIcon.svelte';
+  import Card from '$lib/components/Card.svelte';
 </script>
 
-<div class="card print-history-container">
+<Card>
   <div class="header">
     <button class="refresh-button"><RefreshIcon /> Refresh</button>
   </div>
@@ -211,19 +212,9 @@
       </tbody>
     </table>
   </div>
-</div>
+</Card>
 
 <style>
-  .card {
-    background-color: var(--card-background-color);
-    border-radius: 8px;
-    padding: 1rem;
-    transition: background-color 0.2s, border-color 0.2s;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-height: 0;
-  }
 
   .table-container {
     overflow-y: auto;
