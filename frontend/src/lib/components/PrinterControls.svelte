@@ -49,7 +49,7 @@
   $: progress = printer?.print_job?.progress ?? 0;
   $: fileName = printer?.print_job?.filename ?? 'No file';
   $: filamentUsed = printer?.print_job?.supplies_usage
-    ? `${printer.print_job.supplies_usage}mm`
+    ? `${Math.round(printer.print_job.supplies_usage)} mm`
     : 'N/A';
   $: printTime = formatDuration(printer?.print_job?.print_time ?? 0);
 
