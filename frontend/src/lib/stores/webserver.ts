@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { browser } from '$app/environment';
 
 export interface WebserverConfig {
   printer_model: string;
@@ -23,7 +24,10 @@ function createWebserverStore() {
     }
   }
 
-  fetchConfig();
+
+  if (browser) {
+    fetchConfig();
+  }
 
   return {
     subscribe,
