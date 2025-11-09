@@ -8,6 +8,7 @@ interface PrintSimulation {
 	totalPrintTime: number; // The total real duration of the print in seconds
 	startTime: number; // The timestamp when the print started
 	shouldPubliclyHaveEta: boolean; // Flag to control if the UI sees the ETA
+	speedMultiplier: number;
 }
 
 let printer: Printer = JSON.parse(JSON.stringify(mockPrinter)); // Deep copy to prevent mutation
@@ -21,7 +22,7 @@ const TARGET_NOZZLE_TEMP = 215;
 const TARGET_BED_TEMP = 60;
 const PREHEAT_SECONDS = 15;
 const COOLDOWN_SECONDS = 10;
-const SIMULATION_SPEED_MULTIPLIER = 10;
+const BASE_SIMULATION_SPEED = 10;
 
 /**
  * Clears all active simulation intervals.
@@ -35,6 +36,16 @@ function clearAllIntervals() {
 		clearInterval(tempInterval);
 		tempInterval = null;
 	}
+}
+
+function calculateSpeedMultiplier(totalPrintTimeSeconds: number): number {
+	const tenMinutesInSeconds = 10 * 60;
+	if (totalPrintTimeSeconds <= tenMinutesInSeconds) {
+		return BASE_SIMULATION_SPEED;
+	}
+	const printTimeMinutes = totalPrintTimeSeconds / 60;
+	const multiplier = BASE_SIMULATION_SPEED + (printTimeMinutes - 10);
+	return Math.round(multiplier);
 }
 
 export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.NextHandleFunction {
@@ -86,10 +97,12 @@ export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.
 						}
 
 						// Set up the internal simulation state
+						const speedMultiplier = calculateSpeedMultiplier(estimatedPrintTime);
 						simulation = {
 							totalPrintTime: estimatedPrintTime,
 							startTime: 0, // Will be set when preheating finishes
-							shouldPubliclyHaveEta: hasEta
+							shouldPubliclyHaveEta: hasEta,
+							speedMultiplier
 						};
 
 						printer.state = 'downloading';
@@ -175,10 +188,12 @@ function attachSocketListeners(io: SocketIOServer) {
 				}
 
 				// Set up the internal simulation state
+				const speedMultiplier = calculateSpeedMultiplier(estimatedPrintTime);
 				simulation = {
 					totalPrintTime: estimatedPrintTime,
 					startTime: 0, // Will be set when preheating finishes
-					shouldPubliclyHaveEta: hasEta
+					shouldPubliclyHaveEta: hasEta,
+					speedMultiplier
 				};
 
 				printer.state = 'downloading';
@@ -257,11 +272,13 @@ function startPrintSimulation(io: SocketIOServer) {
 	// if the print had been running continuously at the accelerated speed to
 	// reach the current `print_time`.
 	const simulatedElapsedTime = printer.print_job.print_time;
-	const wallClockTimeEquivalent = (simulatedElapsedTime * 1000) / SIMULATION_SPEED_MULTIPLIER;
+	const wallClockTimeEquivalent = (simulatedElapsedTime * 1000) / simulation.speedMultiplier;
 	simulation.startTime = Date.now() - wallClockTimeEquivalent;
 
 	io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
-	console.log('📠 [Kobra Mock] Starting time-based print simulation.');
+	console.log(
+		`📠 [Kobra Mock] Starting time-based print simulation (Speed: ${simulation.speedMultiplier}x).`
+	);
 
 	const simulationInterval = 250; // Update 4 times per second for smoothness
 
@@ -269,7 +286,7 @@ function startPrintSimulation(io: SocketIOServer) {
 		const job = printer.print_job!;
 		const sim = simulation!;
 		const wallClockTime = (Date.now() - sim.startTime) / 1000; // in seconds
-		const elapsedTime = wallClockTime * SIMULATION_SPEED_MULTIPLIER;
+		const elapsedTime = wallClockTime * sim.speedMultiplier;
 
 		if (elapsedTime >= sim.totalPrintTime) {
 			stopPrintSimulation(io, 'done');
@@ -280,7 +297,9 @@ function startPrintSimulation(io: SocketIOServer) {
 		job.progress = Math.min(100, Math.round((elapsedTime / sim.totalPrintTime) * 100));
 		job.remaining_time = sim.totalPrintTime - elapsedTime;
 		job.curr_layer = Math.floor((job.progress / 100) * job.total_layers);
-		job.supplies_usage += (Math.random() * 2 + 1) * (simulationInterval / 1000); // Scale usage by interval
+		const filamentIncrease =
+			(Math.random() * 2 + 1) * (simulationInterval / 1000) * sim.speedMultiplier;
+		job.supplies_usage += filamentIncrease;
 
 		io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
 	}, simulationInterval);
