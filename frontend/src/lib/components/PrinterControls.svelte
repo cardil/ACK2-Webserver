@@ -9,6 +9,11 @@
   import PlayIcon from '$lib/components/icons/PlayIcon.svelte';
   import Card from '$lib/components/Card.svelte';
   import EtaIcon from '$lib/components/icons/EtaIcon.svelte';
+  import LayersIcon from '$lib/components/icons/LayersIcon.svelte';
+  import FanIcon from '$lib/components/icons/FanIcon.svelte';
+  import ZOffsetIcon from '$lib/components/icons/ZOffsetIcon.svelte';
+  import SpeedIcon from '$lib/components/icons/SpeedIcon.svelte';
+  import FilesIcon from '$lib/components/icons/FilesIcon.svelte';
   import { printerStore } from '$lib/stores/printer';
   import { activePrinterIdStore } from '$lib/stores/activePrinterId';
   import { formatDuration } from '$lib/utils/time';
@@ -48,10 +53,21 @@
   $: status = printer?.state ?? 'offline';
   $: progress = printer?.print_job?.progress ?? 0;
   $: fileName = printer?.print_job?.filename ?? 'No file';
-  $: filamentUsed = printer?.print_job?.supplies_usage
-    ? `${Math.round(printer.print_job.supplies_usage)} mm`
-    : 'N/A';
   $: printTime = formatDuration(printer?.print_job?.print_time ?? 0);
+  $: layers = `${printer?.print_job?.curr_layer ?? 0} / ${printer?.print_job?.total_layers ?? 0}`;
+  $: fanSpeed = `${printer?.print_job?.fan_speed ?? 0}%`;
+  $: zOffset = printer?.print_job?.z_offset ?? 0;
+  $: filamentUsed = (() => {
+    const usage = printer?.print_job?.supplies_usage ?? 0;
+    if (usage >= 1000) {
+      return `${(usage / 1000).toFixed(2)} m`;
+    }
+    return `${Math.round(usage)} mm`;
+  })();
+  $: speedMode = ['Silent', 'Normal', 'Sport'][printer?.print_job?.print_speed_mode ?? 1];
+  $: formattedZOffset = `${((printer?.print_job?.z_offset ?? 0) > 0 ? '+' : '')}${(
+		printer?.print_job?.z_offset ?? 0
+	).toFixed(2)} mm`;
 
   // Calculated ETA
   $: eta = (() => {
@@ -110,6 +126,29 @@
   </div>
 
   {#if isJobActive}
+    <div class="status-row">
+      <div class="status-item">
+        <FanIcon />
+        <div class="text">
+          <span class="label">Fan</span>
+          <span class="value">{fanSpeed}</span>
+        </div>
+      </div>
+      <div class="status-item">
+        <ZOffsetIcon />
+        <div class="text">
+          <span class="label">Z-Offset</span>
+          <span class="value">{formattedZOffset}</span>
+        </div>
+      </div>
+      <div class="status-item">
+        <SpeedIcon />
+        <div class="text">
+          <span class="label">Speed Mode</span>
+          <span class="value">{speedMode}</span>
+        </div>
+      </div>
+    </div>
     <div class="progress-container">
       <div class="progress-bar-container">
         <div class="progress-bar" style="width: {progress}%"></div>
@@ -117,20 +156,46 @@
       <span class="progress-percent">{progress}%</span>
     </div>
 
-    <div class="file-name">{fileName}</div>
+    <div class="status-row file-info">
+      <div class="status-item">
+        <FilesIcon />
+        <div class="text">
+          <span class="label">File</span>
+          <span class="value">{fileName}</span>
+        </div>
+      </div>
+    </div>
 
-    <div class="print-info-grid">
-      <div class="info-item" title="Filament Used">
-        <FilamentIcon />
-        <span>{filamentUsed}</span>
-      </div>
-      <div class="info-item" title="Print Time">
+    <div class="status-row">
+      <div class="status-item">
         <ClockIcon />
-        <span>{printTime}</span>
+        <div class="text">
+          <span class="label">Elapsed Time</span>
+          <span class="value">{printTime}</span>
+        </div>
       </div>
-      <div class="info-item" title="ETA">
+      <div class="status-item">
         <EtaIcon />
-        <span>{eta}</span>
+        <div class="text">
+          <span class="label">ETA</span>
+          <span class="value">{eta}</span>
+        </div>
+      </div>
+    </div>
+    <div class="status-row">
+      <div class="status-item">
+        <FilamentIcon />
+        <div class="text">
+          <span class="label">Filament Used</span>
+          <span class="value">{filamentUsed}</span>
+        </div>
+      </div>
+      <div class="status-item">
+        <LayersIcon />
+        <div class="text">
+          <span class="label">Layer</span>
+          <span class="value">{layers}</span>
+        </div>
       </div>
     </div>
 
@@ -163,6 +228,7 @@
     display: flex;
     justify-content: space-around;
     gap: 1rem;
+    padding-bottom: 0.5rem;
   }
   .status-item {
     display: flex;
@@ -186,6 +252,7 @@
 
   .value {
     font-weight: bold;
+    font-variant-numeric: tabular-nums;
   }
 
   .progress-container {
@@ -211,28 +278,16 @@
     font-weight: bold;
   }
 
-  .file-name {
-    text-align: center;
-    font-weight: bold;
+  .file-info .status-item {
+    flex-grow: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .file-info .value {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 0.5rem 0;
-    max-width: 100%;
-  }
-
-  .print-info-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    align-items: center;
-    gap: 1rem;
-    font-size: 0.9em;
-  }
-  .info-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
   }
 
   .button-group {
