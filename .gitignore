@@ -7,3 +7,5 @@ webserver/opt/bin/webfsd
 mybuild.sh
 originals/
 /webserver/opt/webfs
+.continue/
+
