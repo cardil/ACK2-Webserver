@@ -310,14 +310,8 @@ function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') 
 			is_local: true
 		};
 		printer.files[0].unshift(completedFile);
-		startCooldown(io);
-	} else {
-		// If cancelled, temps go back to idle immediately
-		printer.nozzle_temp = String(ROOM_TEMP);
-		printer.hotbed_temp = String(ROOM_TEMP);
-		printer.target_nozzle_temp = '0';
-		printer.target_hotbed_temp = '0';
 	}
+	startCooldown(io);
 
 	printer.state = 'free';
 	io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
