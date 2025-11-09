@@ -11,6 +11,7 @@
   import EtaIcon from '$lib/components/icons/EtaIcon.svelte';
   import { printerStore } from '$lib/stores/printer';
   import { activePrinterIdStore } from '$lib/stores/activePrinterId';
+  import { formatDuration } from '$lib/utils/time';
   import { get } from 'svelte/store';
   import { webserverStore } from '$lib/stores/webserver';
   import PrinterSelector from './PrinterSelector.svelte';
@@ -48,12 +49,29 @@
   $: progress = printer?.print_job?.progress ?? 0;
   $: fileName = printer?.print_job?.filename ?? 'No file';
   $: filamentUsed = printer?.print_job?.supplies_usage
-    ? `${printer.print_job.supplies_usage}m`
+    ? `${printer.print_job.supplies_usage}mm`
     : 'N/A';
-  $: printTime = new Date((printer?.print_job?.print_time ?? 0) * 1000).toISOString().substr(11, 8);
-  $: eta = new Date((printer?.print_job?.remaining_time ?? 0) * 1000)
-    .toISOString()
-    .substr(11, 8);
+  $: printTime = formatDuration(printer?.print_job?.print_time ?? 0);
+
+  // Calculated ETA
+  $: eta = (() => {
+    const job = printer?.print_job;
+    if (!job) return 'N/A';
+
+    // Use printer's ETA if available and not zero
+    if (job.remaining_time > 0) {
+      return formatDuration(job.remaining_time);
+    }
+
+    // Otherwise, calculate it if we have enough data
+    if (job.progress > 0 && job.print_time > 0) {
+      const totalEstimatedTime = (job.print_time / job.progress) * 100;
+      const remainingTime = totalEstimatedTime - job.print_time;
+      return formatDuration(remainingTime);
+    }
+
+    return 'Calculating...';
+  })();
 </script>
 
 <Card>

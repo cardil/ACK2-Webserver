@@ -70,13 +70,19 @@ export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.
 						const estimatedPrintTime = (fileSizeInKb / 100) * 6 * 60; // 100KB = 6 mins
 						const totalLayers = Math.max(10, Math.floor(estimatedPrintTime / 30)); // Avg 30s per layer
 
+						// 50% chance of having no ETA from the slicer
+						const hasEta = Math.random() < 0.5;
+						if (!hasEta) {
+							console.log('📠 [Kobra Mock] Simulating a job with no initial ETA.');
+						}
+
 						printer.state = 'downloading';
 						printer.print_job = {
 							taskid: Math.random().toString(36).substring(7),
 							filename: filename,
 							filepath: '/',
 							state: 'downloading',
-							remaining_time: estimatedPrintTime,
+							remaining_time: hasEta ? estimatedPrintTime : 0,
 							progress: 0,
 							print_time: 0,
 							supplies_usage: 0,
@@ -144,6 +150,10 @@ function attachSocketListeners(io: SocketIOServer) {
 				const { file } = data;
 				const estimatedPrintTime = 3600; // Default for re-prints
 				const totalLayers = 100;
+				const hasEta = Math.random() < 0.5;
+				if (!hasEta) {
+					console.log('📠 [Kobra Mock] Simulating a job with no initial ETA.');
+				}
 
 				printer.state = 'downloading';
 				printer.print_job = {
@@ -151,7 +161,7 @@ function attachSocketListeners(io: SocketIOServer) {
 					filename: file,
 					filepath: '/',
 					state: 'downloading',
-					remaining_time: estimatedPrintTime,
+					remaining_time: hasEta ? estimatedPrintTime : 0,
 					progress: 0,
 					print_time: 0,
 					supplies_usage: 0,
@@ -208,7 +218,12 @@ function startPrintSimulation(io: SocketIOServer) {
 	io.emit('printer_updated', { id: printer.id, printer });
 	console.log('📠 [Kobra Mock] Starting print simulation.');
 
-	const totalDuration = printer.print_job.remaining_time;
+	const jobHadInitialEta = printer.print_job.remaining_time > 0;
+
+	// If ETA is 0, calculate a fallback duration based on the number of layers.
+	const fallbackDuration = printer.print_job.total_layers * 30; // 30s per layer
+	const totalDuration =
+		printer.print_job.remaining_time > 0 ? printer.print_job.remaining_time : fallbackDuration;
 	const simulationDuration = (totalDuration * 1000) / SIMULATION_SPEED_MULTIPLIER;
 	const steps = 100; // for percentage
 	const stepInterval = simulationDuration / steps;
@@ -224,9 +239,17 @@ function startPrintSimulation(io: SocketIOServer) {
 		const job = printer.print_job!;
 		job.progress = currentStep;
 		job.print_time = (totalDuration * currentStep) / 100;
-		job.remaining_time = totalDuration - job.print_time;
+
+		// Only update remaining_time if it was provided initially.
+		// Otherwise, ensure it stays 0.
+		if (jobHadInitialEta) {
+			job.remaining_time = totalDuration - job.print_time;
+		} else {
+			job.remaining_time = 0;
+		}
+
 		job.curr_layer = Math.floor((job.progress / 100) * job.total_layers);
-		job.supplies_usage += 0.5; // Simple heuristic
+		job.supplies_usage += Math.floor(Math.random() * 2) + 1; // More realistic increment
 
 		io.emit('printer_updated', { id: printer.id, printer });
 	}, stepInterval);
@@ -254,9 +277,14 @@ function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') 
 			is_local: true
 		};
 		printer.files[0].unshift(completedFile);
+		startCooldown(io);
+	} else {
+		// If cancelled, temps go back to idle immediately
+		printer.nozzle_temp = String(ROOM_TEMP);
+		printer.hotbed_temp = String(ROOM_TEMP);
+		printer.target_nozzle_temp = '0';
+		printer.target_hotbed_temp = '0';
 	}
-	// Start cooldown for both completed and failed prints
-	startCooldown(io);
 
 	printer.state = 'free';
 	io.emit('printer_updated', { id: printer.id, printer });
