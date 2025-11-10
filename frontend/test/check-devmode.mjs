@@ -33,7 +33,7 @@ try {
   if (typeof address === 'string' || address === null) {
     throw new Error('Server address is not in the expected format.');
   }
-  
+
   const port = address.port;
   const url = `http://localhost:${port}`;
 
@@ -57,7 +57,7 @@ try {
   }
 
   console.log('✅ Vite server started and handled initial request without errors.');
-  
+
   await server.close();
   process.exit(0);
 

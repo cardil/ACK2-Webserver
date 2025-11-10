@@ -19,7 +19,7 @@
   let cpuSystemUsage = 0;
   let sshStatus = '';
   let uptime = '';
-  
+
   webserverStore.subscribe(config => {
     if (config) {
       printerModel = config.printer_model;
@@ -124,6 +124,3 @@
     }
   }
 </style>
-
-
-

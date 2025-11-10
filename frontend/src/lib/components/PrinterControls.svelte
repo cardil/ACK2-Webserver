@@ -68,8 +68,8 @@
   })();
   $: speedMode = ['Silent', 'Normal', 'Sport'][printer?.print_job?.print_speed_mode ?? 1];
   $: formattedZOffset = `${((printer?.print_job?.z_offset ?? 0) > 0 ? '+' : '')}${(
-		printer?.print_job?.z_offset ?? 0
-	).toFixed(2)} mm`;
+    printer?.print_job?.z_offset ?? 0
+  ).toFixed(2)} mm`;
 
   // Calculated ETA
   $: eta = (() => {

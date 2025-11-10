@@ -2,16 +2,16 @@
 </script>
 
 <svg
-   width="24"
-   height="24"
-   viewBox="0 0 140 140"
-   version="1.1"
-   id="svg1"
-   fill="currentColor"
-   stroke="currentColor"
-   stroke-width="2"
-   stroke-linecap="round"
-   stroke-linejoin="round"
+  width="24"
+  height="24"
+  viewBox="0 0 140 140"
+  version="1.1"
+  id="svg1"
+  fill="currentColor"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
 >
 <g
     id="layer1"

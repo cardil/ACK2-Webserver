@@ -6,80 +6,80 @@ import { kobraConnectionStore } from './kobraConnection';
 
 // Define the structure for a file on the printer
 export interface PrinterFile {
-	name: string; // Mapped from 'filename'
-	size: number;
-	timestamp: number;
-	is_dir: boolean;
-	is_local: boolean;
+  name: string; // Mapped from 'filename'
+  size: number;
+  timestamp: number;
+  is_dir: boolean;
+  is_local: boolean;
 }
 
 // Define the structure for a print job
 export interface PrintJob {
-	taskid: string;
-	filename: string;
-	filepath: string;
+  taskid: string;
+  filename: string;
+  filepath: string;
   state: string;
-	remaining_time: number;
-	progress: number;
-	print_time: number;
-	supplies_usage: number;
-	total_layers: number;
-	curr_layer: number;
-	fan_speed: number;
-	z_offset: number;
-	print_speed_mode: number;
+  remaining_time: number;
+  progress: number;
+  print_time: number;
+  supplies_usage: number;
+  total_layers: number;
+  curr_layer: number;
+  fan_speed: number;
+  z_offset: number;
+  print_speed_mode: number;
 }
 
 // Define the structure for the printer data
 export interface Printer {
-	id: string;
-	name: string;
-	model_id: string;
-	fwver: number;
-	online: boolean;
-	state: string;
-	nozzle_temp: string;
-	target_nozzle_temp: string;
-	hotbed_temp: string;
-	target_hotbed_temp: string;
+  id: string;
+  name: string;
+  model_id: string;
+  fwver: number;
+  online: boolean;
+  state: string;
+  nozzle_temp: string;
+  target_nozzle_temp: string;
+  hotbed_temp: string;
+  target_hotbed_temp: string;
     print_job: PrintJob | null;
-	files: PrinterFile[];
+  files: PrinterFile[];
 }
 
 /**
- * Transforms the raw printer data from the Kobra Unleashed API into the format
- * expected by the frontend UI components.
- * @param rawPrinter The raw printer object from the API.
- * @returns A transformed Printer object.
- */
+  * Transforms the raw printer data from the Kobra Unleashed API into the format
+  * expected by the frontend UI components.
+  * @param rawPrinter The raw printer object from the API.
+  * @returns A transformed Printer object.
+  */
 function transformRawPrinterData(rawPrinter: any): Printer {
-	// The API returns files as a 2D array: [localFiles, udiskFiles]
-	// We'll take the local files list.
-	const files =
-		rawPrinter.files && Array.isArray(rawPrinter.files) && rawPrinter.files.length > 0
-			? rawPrinter.files[0].map((file: any) => ({
-					name: file.filename,
-					size: file.size,
-					timestamp: file.timestamp,
-					is_dir: file.is_dir,
-					is_local: file.is_local
-				}))
-			: [];
+  // The API returns files as a 2D array: [localFiles, udiskFiles]
+  // We'll take the local files list.
+  const files =
+    rawPrinter.files && Array.isArray(rawPrinter.files) && rawPrinter.files.length > 0
+      ? rawPrinter.files[0].map((file: any) => ({
+        name: file.filename,
+        size: file.size,
+        timestamp: file.timestamp,
+        is_dir: file.is_dir,
+        is_local: file.is_local
+      }))
+      : [];
 
-	return {
-		...rawPrinter,
-		files
-	};
+  return {
+    ...rawPrinter,
+    files
+  };
 }
 
 import { browser } from '$app/environment';
 
 function createPrinterStore() {
-	const { subscribe, set, update } = writable<{ [id: string]: Printer }>({});
+  const { subscribe, set, update } = writable<{ [id: string]: Printer }>({});
   let socket: any;
 
-	webserverStore.subscribe((config) => {
-		// Disconnect from the old socket if it exists
+  webserverStore.subscribe((config) => {
+    // Disconnect from the old socket if it exists
       if (socket) {
       socket.disconnect();
       socket = undefined;
@@ -91,12 +91,12 @@ function createPrinterStore() {
       return;
     }
 
-		// Connect to the new socket if a URL is provided
-		if (config.mqtt_webui_url) {
+    // Connect to the new socket if a URL is provided
+    if (config.mqtt_webui_url) {
       kobraConnectionStore.set('connecting');
       socket = io(config.mqtt_webui_url, {
-				transports: ['websocket'],
-				reconnectionAttempts: 5
+        transports: ['websocket'],
+        reconnectionAttempts: 5
       });
       if (browser && import.meta.env.DEV) {
         (window as any).socket = socket;
@@ -108,33 +108,33 @@ function createPrinterStore() {
         socket?.emit('get_printer_list');
       });
 
-			socket.on('connect_error', (err: Error) => {
+      socket.on('connect_error', (err: Error) => {
         kobraConnectionStore.set('error');
-				console.error('Connection to Kobra Unleashed failed:', err.message);
-			});
+        console.error('Connection to Kobra Unleashed failed:', err.message);
+      });
 
-      			socket.on('printer_list', (printers: { [id: string]: any }) => {
-				const transformedPrinters: { [id: string]: Printer } = {};
-				for (const id in printers) {
-					transformedPrinters[id] = transformRawPrinterData(printers[id]);
-				}
-				set(transformedPrinters);
-				// Automatically select the first printer if one isn't already selected
-				// or if the currently selected one no longer exists.
-				const printerIds = Object.keys(transformedPrinters);
-				if (printerIds.length > 0) {
-					const currentActiveId = get(activePrinterIdStore);
-					if (!currentActiveId || !transformedPrinters[currentActiveId]) {
-						activePrinterIdStore.select(printerIds[0]);
-					}
-				}
-			});
+            socket.on('printer_list', (printers: { [id: string]: any }) => {
+        const transformedPrinters: { [id: string]: Printer } = {};
+        for (const id in printers) {
+          transformedPrinters[id] = transformRawPrinterData(printers[id]);
+        }
+        set(transformedPrinters);
+        // Automatically select the first printer if one isn't already selected
+        // or if the currently selected one no longer exists.
+        const printerIds = Object.keys(transformedPrinters);
+        if (printerIds.length > 0) {
+          const currentActiveId = get(activePrinterIdStore);
+          if (!currentActiveId || !transformedPrinters[currentActiveId]) {
+            activePrinterIdStore.select(printerIds[0]);
+          }
+        }
+      });
 
-			socket.on('printer_updated', ({ id, printer }: { id:string; printer: any }) => {
-				update((currentPrinters) => ({
-					...currentPrinters,
-					[id]: transformRawPrinterData(printer)
-				}));
+      socket.on('printer_updated', ({ id, printer }: { id:string; printer: any }) => {
+        update((currentPrinters) => ({
+          ...currentPrinters,
+          [id]: transformRawPrinterData(printer)
+        }));
         });
       socket.on('disconnect', () => {
         kobraConnectionStore.set('error');
@@ -146,47 +146,47 @@ function createPrinterStore() {
     }
   });
 
-	// Helper to safely emit socket commands
-	const emitCommand = (command: string, printerId: string, extraData: object = {}) => {
-		if (socket?.connected) {
-			socket.emit(command, { printer_id: printerId, ...extraData });
-		} else {
-			console.warn(`Socket not connected. Cannot emit command '${command}'.`);
-		}
+  // Helper to safely emit socket commands
+  const emitCommand = (command: string, printerId: string, extraData: object = {}) => {
+    if (socket?.connected) {
+      socket.emit(command, { printer_id: printerId, ...extraData });
+    } else {
+      console.warn(`Socket not connected. Cannot emit command '${command}'.`);
+    }
   };
 
-	return {
-		subscribe,
+  return {
+    subscribe,
 
-		// Triggers the backend to refresh the file list for a specific printer.
-		// The update will be pushed back via the 'printer_updated' event.
-		refreshFiles: (printerId: string) => {
-			const config = get(webserverStore);
-			if (config?.mqtt_webui_url) {
-				fetch(`${config.mqtt_webui_url}/api/printer/${printerId}/files`);
-			}
-		},
+    // Triggers the backend to refresh the file list for a specific printer.
+    // The update will be pushed back via the 'printer_updated' event.
+    refreshFiles: (printerId: string) => {
+      const config = get(webserverStore);
+      if (config?.mqtt_webui_url) {
+        fetch(`${config.mqtt_webui_url}/api/printer/${printerId}/files`);
+      }
+    },
 
-		startPrint: (printerId: string, filename: string) => {
-			emitCommand('start_print', printerId, { filename });
-		},
+    startPrint: (printerId: string, filename: string) => {
+      emitCommand('start_print', printerId, { filename });
+    },
 
-		pausePrint: (printerId: string) => {
-			emitCommand('pause_print', printerId);
-		},
+    pausePrint: (printerId: string) => {
+      emitCommand('pause_print', printerId);
+    },
 
-		resumePrint: (printerId: string) => {
-			emitCommand('resume_print', printerId);
-		},
+    resumePrint: (printerId: string) => {
+      emitCommand('resume_print', printerId);
+    },
 
-		stopPrint: (printerId: string) => {
-			emitCommand('stop_print', printerId);
-		},
+    stopPrint: (printerId: string) => {
+      emitCommand('stop_print', printerId);
+    },
 
-		reprint: (printerId: string, filename: string) => {
-			emitCommand('print_file', printerId, { file: filename });
-		}
-	};
+    reprint: (printerId: string, filename: string) => {
+      emitCommand('print_file', printerId, { file: filename });
+    }
+  };
 }
 
 export const printerStore = createPrinterStore();

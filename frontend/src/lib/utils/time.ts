@@ -1,10 +1,10 @@
 // frontend/src/lib/utils/time.ts
 
 /**
- * Formats a duration in seconds into a human-readable string (e.g., "1h 2m 3s").
- * @param seconds The duration in seconds.
- * @returns A formatted string.
- */
+  * Formats a duration in seconds into a human-readable string (e.g., "1h 2m 3s").
+  * @param seconds The duration in seconds.
+  * @returns A formatted string.
+  */
 export function formatDuration(seconds: number): string {
   if (seconds < 0) return 'N/A';
   const h = Math.floor(seconds / 3600);
