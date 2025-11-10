@@ -103,18 +103,19 @@
   }
 
   .sidebar {
-    display: grid;
-    grid-template-rows: auto 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
     min-height: 0;
     position: relative;
   }
 
   .sidebar-content {
-    display: grid;
-    grid-template-rows: auto 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
     min-height: 0;
+    flex-grow: 1;
   }
 
   @media (max-width: 768px) {

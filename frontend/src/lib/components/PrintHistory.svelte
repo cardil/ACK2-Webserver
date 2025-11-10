@@ -13,7 +13,7 @@
   $: isPrinterIdle = printer?.state === 'free';
 </script>
 
-  <Card>
+  <Card style="flex-grow: 1;">
   <div class="list-container-wrapper">
     <div class="list-container">
       {#if localFiles.length > 0}

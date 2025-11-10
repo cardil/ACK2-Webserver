@@ -1,8 +1,9 @@
 <script lang="ts">
   export let noPadding = false;
+  export let style = '';
 </script>
 
-<div class="card" class:no-padding={noPadding}>
+<div class="card" class:no-padding={noPadding} {style}>
   <slot />
 </div>
 
