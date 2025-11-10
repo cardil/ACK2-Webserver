@@ -118,7 +118,7 @@ export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.
 							total_layers: totalLayers,
 							curr_layer: 0,
 							fan_speed: 100,
-							z_offset: 0,
+							z_offset: 0.01,
 							print_speed_mode: 1
 						};
 						io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });

@@ -25,6 +25,7 @@
     </div>
     <div class="fab-container">
       <button
+        title="Refresh"
         class="refresh-button"
         on:click={() => printerStore.refreshFiles(printer.id)}
         disabled={!activePrinterId}

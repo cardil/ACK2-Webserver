@@ -5,6 +5,8 @@
 
   export let file: { name: string; timestamp: number };
   export let onReprint: () => void;
+
+  $: duration = formatDuration(file.timestamp);
 </script>
 
 <div class="file-entry">
@@ -13,9 +15,9 @@
   </button>
   <div class="file-details">
     <div class="filename" title={file.name}>{file.name}</div>
-    <div class="print-time" title="Print time">
+    <div class="print-time" title="Print time: {duration}">
       <ClockIcon style="width: 0.9em; height: 0.9em;" />
-      <span>{formatDuration(file.timestamp)}</span>
+      <span>{duration}</span>
     </div>
   </div>
 </div>

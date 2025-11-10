@@ -15,5 +15,5 @@
       text-anchor: start;
     }
   </style>
-  <text x="0" y="18" class="logo-font">AK2 Dashboard</text>
+  <text x="0" y="18" class="logo-font">AK<tspan fill="var(--accent-color)">2</tspan> Dashboard</text>
 </svg>
