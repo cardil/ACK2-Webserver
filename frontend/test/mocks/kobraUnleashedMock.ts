@@ -48,6 +48,54 @@ function calculateSpeedMultiplier(totalPrintTimeSeconds: number): number {
 	return Math.round(multiplier);
 }
 
+function initiatePrintJob(io: SocketIOServer, filename: string, fileSize: number) {
+	clearAllIntervals();
+
+	// Heuristics for print time and layers
+	const fileSizeInKb = fileSize / 1024;
+	const estimatedPrintTime = (fileSizeInKb / 100) * 6 * 60; // 100KB = 6 mins
+	const totalLayers = Math.max(10, Math.floor(estimatedPrintTime / 30)); // Avg 30s per layer
+
+	// 50% chance of having no ETA from the slicer
+	const hasEta = Math.random() < 0.5;
+	if (!hasEta) {
+		console.log('📠 [Kobra Mock] Simulating a job with no initial ETA.');
+	}
+
+	// Set up the internal simulation state
+	const speedMultiplier = calculateSpeedMultiplier(estimatedPrintTime);
+	simulation = {
+		totalPrintTime: estimatedPrintTime,
+		startTime: 0, // Will be set when preheating finishes
+		shouldPubliclyHaveEta: hasEta,
+		speedMultiplier
+	};
+
+	printer.state = 'downloading';
+	printer.print_job = {
+		taskid: Math.random().toString(36).substring(7),
+		filename: filename,
+		filepath: '/',
+		state: 'downloading',
+		remaining_time: hasEta ? estimatedPrintTime : 0,
+		progress: 0,
+		print_time: 0,
+		supplies_usage: 0,
+		total_layers: totalLayers,
+		curr_layer: 0,
+		fan_speed: 100,
+		z_offset: 0.01,
+		print_speed_mode: 1
+	};
+	io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+	console.log(`📠 [Kobra Mock] Downloading ${filename}, estimated time: ${estimatedPrintTime}s`);
+
+	// Transition to preheating after a short delay
+	setTimeout(() => {
+		startPreheating(io);
+	}, 1500);
+}
+
 export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.NextHandleFunction {
 	return (req, res, next) => {
 		// Handle Kobra Unleashed HTTP API mocks
@@ -78,58 +126,12 @@ export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.
 					});
 
 					req.on('end', () => {
-						clearAllIntervals();
-
 						const filenameMatch = body.match(/filename="([^"]+)"/);
 						const filename = filenameMatch
 							? filenameMatch[1]
 							: `uploaded_file_${Date.now()}.gcode`;
 
-						// Heuristics for print time and layers
-						const fileSizeInKb = body.length / 1024;
-						const estimatedPrintTime = (fileSizeInKb / 100) * 6 * 60; // 100KB = 6 mins
-						const totalLayers = Math.max(10, Math.floor(estimatedPrintTime / 30)); // Avg 30s per layer
-
-						// 50% chance of having no ETA from the slicer
-						const hasEta = Math.random() < 0.5;
-						if (!hasEta) {
-							console.log('📠 [Kobra Mock] Simulating a job with no initial ETA.');
-						}
-
-						// Set up the internal simulation state
-						const speedMultiplier = calculateSpeedMultiplier(estimatedPrintTime);
-						simulation = {
-							totalPrintTime: estimatedPrintTime,
-							startTime: 0, // Will be set when preheating finishes
-							shouldPubliclyHaveEta: hasEta,
-							speedMultiplier
-						};
-
-						printer.state = 'downloading';
-						printer.print_job = {
-							taskid: Math.random().toString(36).substring(7),
-							filename: filename,
-							filepath: '/',
-							state: 'downloading',
-							remaining_time: hasEta ? estimatedPrintTime : 0,
-							progress: 0,
-							print_time: 0,
-							supplies_usage: 0,
-							total_layers: totalLayers,
-							curr_layer: 0,
-							fan_speed: 100,
-							z_offset: 0.01,
-							print_speed_mode: 1
-						};
-						io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
-						console.log(
-							`📠 [Kobra Mock] Downloading ${filename}, estimated time: ${estimatedPrintTime}s`
-						);
-
-						// Transition to preheating after a short delay
-						setTimeout(() => {
-							startPreheating(io);
-						}, 1500);
+						initiatePrintJob(io, filename, body.length);
 
 						res.writeHead(200);
 						res.end('File uploaded successfully');
@@ -146,6 +148,7 @@ export function createKobraUnleashedHttpMiddleware(io: SocketIOServer): Connect.
 		next();
 	};
 }
+
 
 export function createKobraUnleashedSocketMock(server: ViteDevServer) {
 	if (!server.httpServer) {
@@ -175,45 +178,11 @@ function attachSocketListeners(io: SocketIOServer) {
 
 		socket.on('print_file', (data) => {
 			if (printer.state === 'free') {
-				clearAllIntervals();
 				const { file } = data;
 				// Find the file in the mock data to get its size
 				const fileData = printer.files[0].find((f) => f.filename === file);
-				const fileSizeInKb = (fileData?.size ?? 200000) / 1024; // Default to 200KB if not found
-				const estimatedPrintTime = (fileSizeInKb / 100) * 6 * 60; // 100KB = 6 mins
-				const totalLayers = Math.max(10, Math.floor(estimatedPrintTime / 30)); // Avg 30s per layer
-				const hasEta = Math.random() < 0.5;
-				if (!hasEta) {
-					console.log('📠 [Kobra Mock] Simulating a job with no initial ETA.');
-				}
-
-				// Set up the internal simulation state
-				const speedMultiplier = calculateSpeedMultiplier(estimatedPrintTime);
-				simulation = {
-					totalPrintTime: estimatedPrintTime,
-					startTime: 0, // Will be set when preheating finishes
-					shouldPubliclyHaveEta: hasEta,
-					speedMultiplier
-				};
-
-				printer.state = 'downloading';
-				printer.print_job = {
-					taskid: Math.random().toString(36).substring(7),
-					filename: file,
-					filepath: '/',
-					state: 'downloading',
-					remaining_time: hasEta ? estimatedPrintTime : 0,
-					progress: 0,
-					print_time: 0,
-					supplies_usage: 0,
-					total_layers: totalLayers,
-					curr_layer: 0,
-					fan_speed: 100,
-					z_offset: 0,
-					print_speed_mode: 1
-				};
-				io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
-				setTimeout(() => startPreheating(io), 500);
+				const fileSize = fileData?.size ?? 200000; // Default to 200KB if not found
+				initiatePrintJob(io, file, fileSize);
 			}
 		});
 
