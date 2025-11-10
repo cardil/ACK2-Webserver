@@ -4,7 +4,8 @@
 
   export let meshData: number[][] = [];
   let plotContainer: HTMLDivElement;
-  let observer: MutationObserver;
+  let themeObserver: MutationObserver;
+  let resizeObserver: ResizeObserver;
   let Plotly: any;
 
   function getThemeColors() {
@@ -16,9 +17,9 @@
       };
     }
     return {
-      backgroundColor: 'rgba(240, 240, 240, 1)',
+      backgroundColor: 'rgba(255, 255, 255, 1)',
       textColor: '#000000',
-      gridColor: 'rgba(200, 200, 200, 1)'
+      gridColor: 'rgba(220, 220, 220, 1)'
     };
   }
 
@@ -29,10 +30,12 @@
 
     const theme = getThemeColors();
 
+    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
     const data: Plotly.Data[] = [{
-      z: meshData,
+      z: [...meshData].reverse(),
       type: 'surface',
-      colorscale: 'Viridis',
+      colorscale: isDarkMode ? 'Viridis' : 'RdBu',
       contours: {
         z: {
           show: true,
@@ -89,17 +92,24 @@
     mediaQuery.addEventListener('change', themeChangeHandler);
 
     // Also handle direct style changes on the body if any
-    observer = new MutationObserver(themeChangeHandler);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['style', 'class'] });
+    themeObserver = new MutationObserver(themeChangeHandler);
+    themeObserver.observe(document.body, { attributes: true, attributeFilter: ['style', 'class'] });
+
+    // Watch for container resize events
+    resizeObserver = new ResizeObserver(() => {
+      Plotly.Plots.resize(plotContainer);
+    });
+    resizeObserver.observe(plotContainer);
 
     // Cleanup on component destroy
     onDestroy(() => {
       mediaQuery.removeEventListener('change', themeChangeHandler);
-      observer.disconnect();
+      themeObserver.disconnect();
+      resizeObserver.disconnect();
     });
   });
 
-  $: if (meshData) {
+  $: if (meshData && Plotly) {
     drawPlot();
   }
 </script>

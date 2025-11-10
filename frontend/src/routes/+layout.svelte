@@ -77,6 +77,7 @@
   :global(button:disabled) {
     background-color: #6c757d !important;
     cursor: not-allowed !important;
+    color: #ced4da !important;
   }
 
 .app-container {

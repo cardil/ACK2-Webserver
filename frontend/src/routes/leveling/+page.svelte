@@ -3,6 +3,17 @@
   import BedMeshVisualizer from '$lib/components/BedMeshVisualizer.svelte';
   import BedMeshDataTable from '$lib/components/BedMeshDataTable.svelte';
   import SaveMeshModal from '$lib/components/SaveMeshModal.svelte';
+  import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+  import {
+    faCogs,
+    faTh,
+    faSave,
+    faEye,
+    faCheckCircle,
+    faTrash,
+    faFileMedical,
+    faHdd
+  } from '@fortawesome/free-solid-svg-icons';
 
   // --- Mock Data & State ---
 
@@ -19,11 +30,11 @@
   let bedTemp = 60;
 
   // Mesh Data
-  let savedSlots = [
-    { id: 1, date: '2023-10-27 10:00', data: generateRandomMesh(5) },
-    { id: 2, date: '2023-10-27 11:30', data: generateRandomMesh(5) },
-    { id: 5, date: '2023-10-28 09:00', data: generateRandomMesh(5) }
-  ];
+  let savedSlots = Array.from({ length: 20 }, (_, i) => ({
+    id: i + 1,
+    date: new Date(Date.now() - Math.random() * 1000000000).toISOString().slice(0, 16).replace('T', ' '),
+    data: generateRandomMesh(5)
+  }));
   let activeMesh = { id: 'active', data: generateRandomMesh(5) };
   let activeSlotId: number | string | null = null;
   let isSaveModalOpen = false;
@@ -133,71 +144,89 @@
 
 <div class="page-container">
   <div class="column">
-    <!-- Leveling Settings Card -->
-    <Card>
-      <div class="tool-section">
-        <h3 class="card-title">Leveling Settings</h3>
-        <div class="settings-form">
-          <div class="form-group">
-            <label for="grid">Grid Size</label>
-            <input type="number" id="grid" bind:value={gridSize} min="2" max="10" />
+    <div class="column-group">
+      <!-- Leveling Settings Card -->
+      <Card>
+        <div class="tool-section">
+          <h3 class="card-title">
+            <FontAwesomeIcon icon={faCogs} /> Leveling Settings
+          </h3>
+          <div class="settings-form">
+            <div class="form-group">
+              <label for="grid">Grid Size</label>
+              <input type="number" id="grid" bind:value={gridSize} min="2" max="10" />
+            </div>
+            <div class="form-group">
+              <label for="bed_temp">Bed Temp (°C)</label>
+              <input type="number" id="bed_temp" bind:value={bedTemp} min="0" max="90" />
+            </div>
+            <div class="form-group">
+              <label for="precision">Probe Precision</label>
+              <input type="number" id="precision" bind:value={precision} step="0.001" />
+            </div>
+            <div class="form-group button-group">
+              <button class="primary"><FontAwesomeIcon icon={faSave} /> Save</button>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="bed_temp">Bed Temp (°C)</label>
-            <input type="number" id="bed_temp" bind:value={bedTemp} min="0" max="90" />
-          </div>
-          <div class="form-group">
-            <label for="precision">Probe Precision</label>
-            <input type="number" id="precision" bind:value={precision} step="0.001" />
-          </div>
-          <div class="form-group button-group">
-            <button class="primary">Save</button>
-          </div>
+          <p class="disclaimer">
+            Note: Saving these settings requires a printer reboot to take effect.
+          </p>
         </div>
-        <p class="disclaimer">
-          Note: Saving these settings requires a printer reboot to take effect.
-        </p>
-      </div>
     </Card>
 
-    <!-- Bed Mesh Card -->
-    <Card>
-      <div class="tool-section">
-        <h3 class="card-title">Bed Mesh</h3>
-        <div class="mesh-list">
-          <!-- Active Mesh Special Slot -->
-          <div class="mesh-item" class:active={visualizedSlotId === 'active'}>
-            <span>Active</span>
-            <div class="button-group">
-              <button class="small primary" on:click={() => isSaveModalOpen = true}>Save</button>
-              <button class="small" on:click={() => visualizeSlot('active')} disabled={visualizedSlotId === 'active'}>
-                Visualize
-              </button>
+      <!-- Bed Mesh Card -->
+      <Card>
+        <div class="tool-section">
+          <h3 class="card-title"><FontAwesomeIcon icon={faTh} /> Bed Mesh</h3>
+          <div class="mesh-list">
+            <!-- Active Mesh Special Slot -->
+            <div class="mesh-item" class:active={visualizedSlotId === 'active'}>
+              <span>Active</span>
+              <div class="button-group">
+                <button class="small primary" on:click={() => (isSaveModalOpen = true)}
+                  ><FontAwesomeIcon icon={faSave} /> Save</button
+                >
+                <button
+                  class="small"
+                  on:click={() => visualizeSlot('active')}
+                  disabled={visualizedSlotId === 'active'}
+                  ><FontAwesomeIcon icon={faEye} />
+                  Visualize
+                </button>
+              </div>
             </div>
-          </div>
-          <!-- Average Mesh Special Slot -->
-          <div class="mesh-item" class:active={visualizedSlotId === 'average'}>
-            <span class="slot-name">
-              Average
-              {#if activeSlotId === 'average'}
-                <span class="active-label">active</span>
-              {/if}
-            </span>
-            <div class="button-group">
-              <button class="small" on:click={() => activateSlot(averageMesh)} disabled={activeSlotId === 'average'}>Activate</button>
-              <button class="small" on:click={() => visualizeSlot('average')} disabled={visualizedSlotId === 'average'}>
-                Visualize
-              </button>
+            <!-- Average Mesh Special Slot -->
+            <div class="mesh-item" class:active={visualizedSlotId === 'average'}>
+              <span class="slot-name">
+                Average
+                {#if activeSlotId === 'average'}
+                  <span class="active-label">active</span>
+                {/if}
+              </span>
+              <div class="button-group">
+                <button
+                  class="small"
+                  on:click={() => activateSlot(averageMesh)}
+                  disabled={activeSlotId === 'average'}><FontAwesomeIcon icon={faCheckCircle} /> Activate</button
+                >
+                <button
+                  class="small"
+                  on:click={() => visualizeSlot('average')}
+                  disabled={visualizedSlotId === 'average'}
+                  ><FontAwesomeIcon icon={faEye} />
+                  Visualize
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
     </Card>
+    </div>
 
     <!-- Saved Bed Meshes Card -->
-    <Card>
+    <Card style="flex-grow: 1; min-height: 0;">
       <div class="tool-section">
-        <h3 class="card-title">Saved Bed Meshes</h3>
+        <h3 class="card-title"><FontAwesomeIcon icon={faHdd} /> Saved Bed Meshes</h3>
         <div class="mesh-list">
           {#each savedSlots as slot}
             <div class="mesh-item" class:active={slot.id === visualizedSlotId}>
@@ -208,21 +237,28 @@
                 {/if}
               </span>
               <div class="button-group">
-                <button class="small" on:click={() => activateSlot(slot)} disabled={slot.id === activeSlotId}>Activate</button>
+                <button
+                  class="small"
+                  on:click={() => activateSlot(slot)}
+                  disabled={slot.id === activeSlotId}><FontAwesomeIcon icon={faCheckCircle} /> Activate</button
+                >
                 <button
                   class="small"
                   on:click={() => visualizeSlot(slot.id)}
                   disabled={slot.id === visualizedSlotId}
                 >
+                  <FontAwesomeIcon icon={faEye} />
                   Visualize
                 </button>
-                <button class="small danger" on:click={() => deleteSlot(slot.id)}>Delete</button>
+                <button class="small danger" on:click={() => deleteSlot(slot.id)}
+                  ><FontAwesomeIcon icon={faTrash} /> Delete</button
+                >
               </div>
             </div>
           {/each}
         </div>
         <div class="button-group spaced">
-          <button class="danger" on:click={deleteAllSlots}>Delete all</button>
+          <button class="danger" on:click={deleteAllSlots}><FontAwesomeIcon icon={faTrash} /> Delete all</button>
         </div>
       </div>
   </Card>
@@ -232,8 +268,10 @@
     <!-- Bed Mesh Visualizer Card -->
     <Card style="height: 100%;">
       <div class="tool-section">
-        <h3 class="card-title">Bed Mesh Visualizer</h3>
-        <BedMeshVisualizer meshData={visualizedMeshData} />
+        <h3 class="card-title"><FontAwesomeIcon icon={faFileMedical} /> Bed Mesh Visualizer</h3>
+        <div style="flex-grow: 1; min-height: 0;">
+          <BedMeshVisualizer meshData={visualizedMeshData} />
+        </div>
         <BedMeshDataTable meshData={visualizedMeshData} />
       </div>
     </Card>
@@ -249,13 +287,21 @@
 <style>
   .page-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 35% 1fr;
     gap: 1rem;
     padding: 1rem;
-    align-items: start;
+    height: 100%;
+    /* align-items: start; */
   }
 
   .column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 0;
+  }
+
+  .column-group {
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -271,6 +317,9 @@
     margin: 0;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--card-border-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .settings-form {
@@ -330,6 +379,10 @@
     color: var(--text-color);
     font-weight: bold;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
   button.primary {
     background-color: var(--accent-color);

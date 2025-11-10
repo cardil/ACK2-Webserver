@@ -1,5 +1,28 @@
 <script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
+
   export let meshData: number[][] = [];
+
+  let isDarkMode = false;
+  let ready = false;
+  let mediaQuery: MediaQueryList | undefined;
+
+  const updateTheme = () => {
+    if (mediaQuery) {
+      isDarkMode = mediaQuery.matches;
+    }
+  };
+
+  onMount(() => {
+    mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', updateTheme);
+    updateTheme();
+    ready = true;
+
+    onDestroy(() => {
+      mediaQuery?.removeEventListener('change', updateTheme);
+    });
+  });
 
   // Find min and max values for color scaling
   $: min = Math.min(...meshData.flat());
@@ -9,8 +32,8 @@
     if (min === max) return 'transparent'; // Avoid division by zero
 
     const range = max - min;
-    // Normalize the value to a 0-1 range
-    const normalized = (value - min) / range;
+    // Normalize the value to a -1 to 1 range, then map to 0-1 for color scale
+    const normalized = (value - min) / (max - min);
 
     // Viridis color scale - sampled points from the scale
     const viridis = [
@@ -26,13 +49,26 @@
       [253, 231, 37]
     ];
 
-    const i = Math.floor(normalized * (viridis.length - 1));
-    const j = Math.ceil(normalized * (viridis.length - 1));
-    const ratio = (normalized * (viridis.length - 1)) - i;
+    // RdBu (Red-Blue) diverging color scale for light mode
+    const rdBu = [
+      [9, 99, 171],   // Blue (Low)
+      [104, 158, 203],
+      [199, 219, 237],
+      [255, 255, 255], // White (Zero)
+      [249, 207, 200],
+      [227, 134, 122],
+      [194, 59, 44]    // Red (High)
+    ];
 
-    const r = Math.round(viridis[i][0] * (1 - ratio) + viridis[j][0] * ratio);
-    const g = Math.round(viridis[i][1] * (1 - ratio) + viridis[j][1] * ratio);
-    const b = Math.round(viridis[i][2] * (1 - ratio) + viridis[j][2] * ratio);
+    const colors = isDarkMode ? viridis : rdBu;
+
+    const i = Math.floor(normalized * (colors.length - 1));
+    const j = Math.ceil(normalized * (colors.length - 1));
+    const ratio = (normalized * (colors.length - 1)) - i;
+
+    const r = Math.round(colors[i][0] * (1 - ratio) + colors[j][0] * ratio);
+    const g = Math.round(colors[i][1] * (1 - ratio) + colors[j][1] * ratio);
+    const b = Math.round(colors[i][2] * (1 - ratio) + colors[j][2] * ratio);
 
     return `rgb(${r}, ${g}, ${b})`;
   }
@@ -47,6 +83,7 @@
   }
 </script>
 
+{#if ready}
 <div class="table-container">
   <table>
     <tbody>
@@ -64,6 +101,7 @@
     </tbody>
   </table>
 </div>
+{/if}
 
 <style>
   .table-container {
