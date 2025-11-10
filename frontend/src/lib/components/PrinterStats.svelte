@@ -13,7 +13,7 @@
   export let sshStatus: string;
   export let uptime: string;
 
-  $: memoryValue = `${100 - freeMemoryPercentage}% of ${totalMemory} MB`;
+  $: memoryUsedPercentage = 100 - freeMemoryPercentage;
   $: memoryTitle = `Free memory: ${freeMemoryPercentage}%; ${freeMemory} MB of ${totalMemory} MB`;
   $: cpuValue = `${cpuTotalUsage}%`;
   $: cpuTitle = `Used CPU: ${cpuTotalUsage}%; User: ${cpuUserUsage}%; System: ${cpuSystemUsage}%`;
@@ -35,7 +35,10 @@ $: uptimeInSeconds = parseUptime(uptime);
   <div class="stats-grid">
     <div class="stat-item">
       <span class="label" title="Used memory">Memory</span>
-      <span class="value" title={memoryTitle}>{memoryValue}</span>
+      <span class="value" title={memoryTitle}
+        >{memoryUsedPercentage}% <span class="divider">of</span>
+        {totalMemory} MB</span
+      >
     </div>
     <div class="stat-item">
       <span class="label" title="Used CPU">CPU</span>
@@ -75,7 +78,9 @@ $: uptimeInSeconds = parseUptime(uptime);
     font-variant-numeric: tabular-nums;
   }
   .divider {
-    color: var(--accent-color);
     margin: 0 0.25rem;
+    font-weight: normal;
+    font-size: 0.8em;
+    opacity: 0.75;
   }
 </style>
