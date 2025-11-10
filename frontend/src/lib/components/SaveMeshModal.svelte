@@ -81,7 +81,7 @@
     width: 90%;
     max-width: 400px;
   }
-  
+
   h3 {
       margin: 0;
   }
@@ -91,7 +91,7 @@
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   input {
     padding: 0.5rem;
     border: 1px solid var(--card-border-color);

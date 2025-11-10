@@ -1,11 +1,11 @@
 <script lang="ts">
   // @ts-nocheck
   import { onMount, onDestroy } from 'svelte';
-  import Plotly from 'plotly.js-dist-min';
 
   export let meshData: number[][] = [];
   let plotContainer: HTMLDivElement;
   let observer: MutationObserver;
+  let Plotly: any;
 
   function getThemeColors() {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -76,7 +76,11 @@
     Plotly.react(plotContainer, data, layout, { responsive: true });
   }
 
-  onMount(() => {
+  onMount(async () => {
+    // Dynamically import Plotly only on the client-side
+    const PlotlyModule = await import('plotly.js-dist-min');
+    Plotly = PlotlyModule.default;
+
     drawPlot();
 
     // Observe theme changes

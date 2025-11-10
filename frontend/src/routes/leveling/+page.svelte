@@ -25,7 +25,7 @@
     { id: 5, date: '2023-10-28 09:00', data: generateRandomMesh(5) }
   ];
   let activeMesh = { id: 'active', data: generateRandomMesh(5) };
-  let activeSlotId: number | null = null;
+  let activeSlotId: number | string | null = null;
   let isSaveModalOpen = false;
 
   // Reactive State
@@ -101,11 +101,11 @@
       // Add as a new slot
       newSlots.push(newSave);
     }
-    
+
     // Sort slots by ID for consistent order and assign to trigger reactivity
     savedSlots = newSlots.sort((a, b) => a.id - b.id);
     activeSlotId = slotNumber;
-    
+
     isSaveModalOpen = false;
   }
 
@@ -281,7 +281,7 @@
   }
   .settings-form .button-group {
     /* This allows the button to align nicely with the inputs */
-    padding-bottom: 0; 
+    padding-bottom: 0;
   }
 
   .disclaimer {

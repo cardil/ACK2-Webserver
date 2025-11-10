@@ -30,7 +30,6 @@
   <ul>
     <li><a href="/"><HomeIcon /><span>Home</span></a></li>
     <li><a href="/leveling"><LevelingIcon /><span>Leveling Tools</span></a></li>
-    <li><a href="/mesh"><BedMeshIcon /><span>Bed Mesh Visualizer</span></a></li>
     <li><a href="/files"><FilesIcon /><span>Logs & Files</span></a></li>
     <li><a href="/about"><AboutIcon /><span>About</span></a></li>
   </ul>
