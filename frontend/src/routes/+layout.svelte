@@ -1,6 +1,24 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
   import NavMenu from '$lib/components/NavMenu.svelte';
+  import { browser } from '$app/environment';
+
+  if (browser && import.meta.env.DEV) {
+    console.log('🧪 Mock controls are available as `mocksCtrl`. Try `mocksCtrl.connected()`, `mocksCtrl.connError()`, `mocksCtrl.unconfigured()`');
+    (window as any).mocksCtrl = {
+      connected: () => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('api_url');
+        window.location.href = url.href;
+      },
+      connError: () => (window as any).socket.disconnect(),
+      unconfigured: () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('api_url', 'unavailable');
+        window.location.href = url.href;
+      }
+    };
+  }
 
 	let { children } = $props();
 </script>

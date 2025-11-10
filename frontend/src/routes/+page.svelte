@@ -5,6 +5,8 @@
   import PrinterControls from '$lib/components/PrinterControls.svelte';
   import PrintHistory from '$lib/components/PrintHistory.svelte';
   import { webserverStore } from '$lib/stores/webserver';
+  import { kobraConnectionStore } from '$lib/stores/kobraConnection';
+  import ConnectionOverlay from '$lib/components/ConnectionOverlay.svelte';
 
   let printerModel = '';
   let fwVersion = '';
@@ -74,9 +76,11 @@
     />
   </div>
   <div class="sidebar">
-    <PrinterControls />
-
-    <PrintHistory />
+    <div class="sidebar-content">
+      <PrinterControls />
+      <PrintHistory />
+    </div>
+    <ConnectionOverlay />
   </div>
 </div>
 
@@ -99,6 +103,14 @@
   }
 
   .sidebar {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 1rem;
+    min-height: 0;
+    position: relative;
+  }
+
+  .sidebar-content {
     display: grid;
     grid-template-rows: auto 1fr;
     gap: 1rem;

@@ -160,6 +160,7 @@ export function createKobraUnleashedSocketMock(server: ViteDevServer) {
 			origin: '*'
 		}
 	});
+    (global as any).socket = io;
 	attachSocketListeners(io);
 	// Return the io instance so it can be used by the HTTP mock
 	return io;

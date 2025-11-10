@@ -2,6 +2,7 @@ import { get, writable } from 'svelte/store';
 import { io } from 'socket.io-client';
 import { webserverStore } from './webserver';
 import { activePrinterIdStore } from './activePrinterId';
+import { kobraConnectionStore } from './kobraConnection';
 
 // Define the structure for a file on the printer
 export interface PrinterFile {
@@ -71,6 +72,8 @@ function transformRawPrinterData(rawPrinter: any): Printer {
 	};
 }
 
+import { browser } from '$app/environment';
+
 function createPrinterStore() {
 	const { subscribe, set, update } = writable<{ [id: string]: Printer }>({});
   let socket: any;
@@ -83,19 +86,30 @@ function createPrinterStore() {
       set({});
       }
 
+    if (!config) {
+      kobraConnectionStore.set('initializing');
+      return;
+    }
+
 		// Connect to the new socket if a URL is provided
-		if (config?.mqtt_webui_url) {
+		if (config.mqtt_webui_url) {
+      kobraConnectionStore.set('connecting');
       socket = io(config.mqtt_webui_url, {
 				transports: ['websocket'],
 				reconnectionAttempts: 5
       });
+      if (browser && import.meta.env.DEV) {
+        (window as any).socket = socket;
+      }
 
       socket.on('connect', () => {
+        kobraConnectionStore.set('connected');
         console.log('Connected to Kobra Unleashed');
         socket?.emit('get_printer_list');
       });
 
 			socket.on('connect_error', (err) => {
+        kobraConnectionStore.set('error');
 				console.error('Connection to Kobra Unleashed failed:', err.message);
 			});
 
@@ -123,10 +137,13 @@ function createPrinterStore() {
 				}));
         });
       socket.on('disconnect', () => {
+        kobraConnectionStore.set('error');
         console.log('Disconnected from Kobra Unleashed');
         set({}); // Clear printers on disconnect
       });
-}
+    } else {
+      kobraConnectionStore.set('unavailable');
+    }
   });
 
 	// Helper to safely emit socket commands

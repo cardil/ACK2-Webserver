@@ -1,12 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import type { Connect } from 'vite';
+import { URL } from 'url';
 
 // Path to the source of truth JSON files
 const API_SOURCE_PATH = path.join(__dirname, '..', '..', '..', 'webserver', 'opt', 'webfs', 'api');
 
 function getApiFilePath(url: string): string | null {
-    const apiEndpoint = url.substring('/api/'.length);
+    const requestUrl = new URL(url, 'http://localhost');
+    const apiEndpoint = requestUrl.pathname.substring('/api/'.length);
     if (!apiEndpoint || !['do.json', 'info.json', 'webserver.json'].includes(apiEndpoint)) {
         return null;
     }
@@ -30,11 +31,16 @@ export function createMockApiMiddleware(defaultMqttUrl: string): Connect.NextHan
         try {
             const fileContent = fs.readFileSync(filePath, 'utf-8');
 
-            if (req.url.endsWith('/webserver.json')) {
+            if (req.url.startsWith('/api/webserver.json')) {
                 const data = JSON.parse(fileContent);
+                const requestUrl = new URL(req.url, `http://${req.headers.host}`);
+                const apiUrlOverride = requestUrl.searchParams.get('api_url');
 
-                // Allow overriding via environment variable for development, otherwise use default
-                data.mqtt_webui_url = process.env.VITE_MOCK_MQTT_URL || defaultMqttUrl;
+                if (apiUrlOverride) {
+                    data.mqtt_webui_url = apiUrlOverride === 'unavailable' ? '' : apiUrlOverride;
+                } else {
+                    data.mqtt_webui_url = process.env.VITE_MOCK_MQTT_URL || defaultMqttUrl;
+                }
 
                 const modifiedContent = JSON.stringify(data);
                 res.writeHead(200, { 'Content-Type': 'application/json' });

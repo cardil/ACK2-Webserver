@@ -12,7 +12,14 @@ function createWebserverStore() {
 
   async function fetchConfig() {
     try {
-      const response = await fetch('/api/webserver.json');
+      let url = '/api/webserver.json';
+      if (browser) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('api_url')) {
+          url += `?api_url=${params.get('api_url')}`;
+        }
+      }
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch webserver config');
       }
