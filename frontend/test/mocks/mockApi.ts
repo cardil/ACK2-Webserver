@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { URL } from 'url';
+import type { Connect } from 'vite';
 
 // Path to the source of truth JSON files
 const API_SOURCE_PATH = path.join(__dirname, '..', '..', '..', 'webserver', 'opt', 'webfs', 'api');
@@ -15,7 +15,7 @@ function getApiFilePath(url: string): string | null {
 }
 
 export function createMockApiMiddleware(defaultMqttUrl: string): Connect.NextHandleFunction {
-    return (req, res, next) => {
+    return (req: Connect.IncomingMessage, res: any, next: Connect.NextFunction) => {
         if (!req.url?.startsWith('/api/')) {
             return next();
         }

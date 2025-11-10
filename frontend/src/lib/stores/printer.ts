@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store';
-import { io } from 'socket.io-client';
+import io from 'socket.io-client';
 import { webserverStore } from './webserver';
 import { activePrinterIdStore } from './activePrinterId';
 import { kobraConnectionStore } from './kobraConnection';
@@ -108,7 +108,7 @@ function createPrinterStore() {
         socket?.emit('get_printer_list');
       });
 
-			socket.on('connect_error', (err) => {
+			socket.on('connect_error', (err: Error) => {
         kobraConnectionStore.set('error');
 				console.error('Connection to Kobra Unleashed failed:', err.message);
 			});

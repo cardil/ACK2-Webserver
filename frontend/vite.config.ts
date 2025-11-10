@@ -19,7 +19,9 @@ export default defineConfig({
 				const protocol = server.config.server.https ? 'https' : 'http';
 				const defaultMqttUrl = `${protocol}://${host}:${port}`;
 				const io = createKobraUnleashedSocketMock(server);
-				server.middlewares.use(createKobraUnleashedHttpMiddleware(io));
+				if (io) {
+					server.middlewares.use(createKobraUnleashedHttpMiddleware(io));
+				}
 
 				server.middlewares.use(createMockApiMiddleware(defaultMqttUrl));
 				server.middlewares.use((req, res, next) => {

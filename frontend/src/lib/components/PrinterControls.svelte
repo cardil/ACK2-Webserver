@@ -29,7 +29,9 @@
       const file = target.files[0];
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('printer_id', activePrinterId);
+      if (activePrinterId) {
+        formData.append('printer_id', activePrinterId);
+      }
 
       const config = get(webserverStore);
       if (config?.mqtt_webui_url) {
@@ -202,17 +204,17 @@
     <div class="button-group">
       {#if printer?.state === 'printing' || printer?.state === 'preheating' || printer?.state === 'downloading'}
         <button
-          on:click={() => printerStore.pausePrint(activePrinterId)}
+          on:click={() => activePrinterId && printerStore.pausePrint(activePrinterId)}
           disabled={printer?.state === 'preheating' || printer?.state === 'downloading'}
         >
           <PauseIcon /> Pause
         </button>
       {:else if printer?.state === 'paused'}
-        <button on:click={() => printerStore.resumePrint(activePrinterId)}>
+        <button on:click={() => activePrinterId && printerStore.resumePrint(activePrinterId)}>
           <PlayIcon /> Resume</button
         >
       {/if}
-      <button on:click={() => printerStore.stopPrint(activePrinterId)} class="danger"
+      <button on:click={() => activePrinterId && printerStore.stopPrint(activePrinterId)} class="danger"
         ><StopIcon /> Stop</button
       >
     </div>

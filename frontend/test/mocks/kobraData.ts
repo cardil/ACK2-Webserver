@@ -4,7 +4,7 @@ export interface PrintJob {
   taskid: string;
   filename: string;
   filepath: string;
-  state: 'printing' | 'paused' | 'done' | 'failed' | 'unknown';
+  state: 'printing' | 'paused' | 'done' | 'failed' | 'unknown' | 'downloading' | 'preheating';
   remaining_time: number;
   progress: number;
   print_time: number;
@@ -30,7 +30,7 @@ export interface Printer {
   model_id: string;
   fwver: number;
   online: boolean;
-  state: 'free' | 'printing' | 'paused' | 'offline' | 'failed' | 'downloading' | 'checking';
+  state: 'free' | 'printing' | 'paused' | 'offline' | 'failed' | 'downloading' | 'checking' | 'preheating';
   nozzle_temp: string;
   target_nozzle_temp: string;
   hotbed_temp: string;

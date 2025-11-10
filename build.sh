@@ -6,8 +6,7 @@ cd frontend
 npm install
 
 echo "Running smoke test for dev server..."
-# TODO: Restore the full 'npm run check' once type errors are fixed
-npm run check:devmode
+npm run check
 
 npm run build
 rsync -av --delete --exclude 'files' --exclude 'api' build/ ../webserver/opt/webfs/
