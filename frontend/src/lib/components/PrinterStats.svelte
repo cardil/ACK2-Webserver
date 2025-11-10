@@ -8,11 +8,15 @@
   export let cpuTotalUsage: number;
   export let cpuUserUsage: number;
   export let cpuSystemUsage: number;
-  export let cpuIdle: number;
   export let printerModel: string;
   export let fwVersion: string;
   export let sshStatus: string;
   export let uptime: string;
+
+  $: memoryValue = `${100 - freeMemoryPercentage}% of ${totalMemory} MB`;
+  $: memoryTitle = `Free memory: ${freeMemoryPercentage}%; ${freeMemory} MB of ${totalMemory} MB`;
+  $: cpuValue = `${cpuTotalUsage}%`;
+  $: cpuTitle = `Used CPU: ${cpuTotalUsage}%; User: ${cpuUserUsage}%; System: ${cpuSystemUsage}%`;
 
   function parseUptime(uptimeString: string): number {
     if (!uptimeString) return 0;
@@ -28,44 +32,24 @@
 <Card>
   <div class="stats-grid">
     <div class="stat-item">
-      <strong>Total Memory:</strong>
-      <span>{totalMemory}MB</span>
+      <span class="label" title="Used memory">Memory</span>
+      <span class="value" title={memoryTitle}>{memoryValue}</span>
     </div>
     <div class="stat-item">
-      <strong>Free Memory:</strong>
-      <span>{freeMemory}MB</span>
+      <span class="label" title="Used CPU">CPU</span>
+      <span class="value" title={cpuTitle}>{cpuValue}</span>
     </div>
     <div class="stat-item">
-      <strong>Free Memory:</strong>
-      <span>{freeMemoryPercentage}%</span>
+      <span class="label">Model & Firmware</span>
+      <span class="value">{printerModel} <span class="divider">/</span> {fwVersion}</span>
     </div>
     <div class="stat-item">
-      <strong>CPU Total Usage:</strong>
-      <span>{cpuTotalUsage}%</span>
+      <span class="label">SSH Status</span>
+      <span class="value">{sshStatus}</span>
     </div>
     <div class="stat-item">
-      <strong>CPU User Usage:</strong>
-      <span>{cpuUserUsage}%</span>
-    </div>
-    <div class="stat-item">
-      <strong>CPU System Usage:</strong>
-      <span>{cpuSystemUsage}%</span>
-    </div>
-    <div class="stat-item">
-      <strong>CPU Idle:</strong>
-      <span>{cpuIdle}%</span>
-    </div>
-    <div class="stat-item">
-      <strong>Model & Firmware:</strong>
-      <span>{printerModel} <span class="divider">/</span> {fwVersion}</span>
-    </div>
-    <div class="stat-item">
-      <strong>SSH Status:</strong>
-      <span>{sshStatus}</span>
-    </div>
-    <div class="stat-item">
-      <strong>Sytem Uptime:</strong>
-      <span>{formatDuration(parseUptime(uptime))}</span>
+      <span class="label">Sytem Uptime</span>
+      <span class="value">{formatDuration(parseUptime(uptime))}</span>
     </div>
   </div>
 </Card>
@@ -79,6 +63,14 @@
   .stat-item {
     display: flex;
     flex-direction: column;
+  }
+  .label {
+    font-size: 0.8em;
+    opacity: 0.8;
+  }
+  .value {
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
   }
   .divider {
     color: var(--accent-color);

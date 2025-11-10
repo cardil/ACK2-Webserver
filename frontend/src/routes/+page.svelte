@@ -15,7 +15,6 @@
   let cpuTotalUsage = 0;
   let cpuUserUsage = 0;
   let cpuSystemUsage = 0;
-  let cpuIdle = 0;
   let sshStatus = '';
   let uptime = '';
   
@@ -38,7 +37,6 @@
           cpuTotalUsage = data.cpu_use;
           cpuUserUsage = data.cpu_usr_use;
           cpuSystemUsage = data.cpu_sys_use;
-          cpuIdle = data.cpu_idle;
           sshStatus =
             data.ssh_status == 2
               ? 'Started'
@@ -69,7 +67,6 @@
       {cpuTotalUsage}
       {cpuUserUsage}
       {cpuSystemUsage}
-      {cpuIdle}
       {printerModel}
       {fwVersion}
       {sshStatus}
