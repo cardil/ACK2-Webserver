@@ -18,10 +18,12 @@
   $: cpuValue = `${cpuTotalUsage}%`;
   $: cpuTitle = `Used CPU: ${cpuTotalUsage}%; User: ${cpuUserUsage}%; System: ${cpuSystemUsage}%`;
 
+$: uptimeInSeconds = parseUptime(uptime);
+
   function parseUptime(uptimeString: string): number {
-    if (!uptimeString) return 0;
+    if (!uptimeString || typeof uptimeString !== 'string') return 0;
     const parts = uptimeString.split(':').map(Number);
-    if (parts.length === 3) {
+    if (parts.length === 3 && parts.every(p => !isNaN(p))) {
       const [hours, minutes, seconds] = parts;
       return hours * 3600 + minutes * 60 + seconds;
     }
@@ -49,7 +51,7 @@
     </div>
     <div class="stat-item">
       <span class="label">Sytem Uptime</span>
-      <span class="value">{formatDuration(parseUptime(uptime))}</span>
+      <span class="value">{formatDuration(uptimeInSeconds)}</span>
     </div>
   </div>
 </Card>
