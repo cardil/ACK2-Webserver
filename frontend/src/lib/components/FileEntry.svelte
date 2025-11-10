@@ -5,12 +5,13 @@
 
   export let file: { name: string; timestamp: number };
   export let onReprint: () => void;
+  export let disabled = false;
 
   $: duration = formatDuration(file.timestamp);
 </script>
 
 <div class="file-entry">
-  <button class="icon-button" title="Re-print" on:click={onReprint}>
+  <button class="icon-button" title="Re-print" on:click={onReprint} {disabled}>
     <ReprintIcon style="width: 1.5em; height: 1.5em;" />
   </button>
   <div class="file-details">

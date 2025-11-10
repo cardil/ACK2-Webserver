@@ -10,6 +10,7 @@
   $: printer = $printerStore[activePrinterId ?? ''];
 
   $: localFiles = printer?.files ?? [];
+  $: isPrinterIdle = printer?.state === 'free';
 </script>
 
   <Card>
@@ -17,7 +18,11 @@
     <div class="list-container">
       {#if localFiles.length > 0}
         {#each localFiles as file}
-          <FileEntry {file} onReprint={() => printerStore.reprint(printer.id, file.name)} />
+          <FileEntry
+            {file}
+            onReprint={() => activePrinterId && printerStore.reprint(activePrinterId, file.name)}
+            disabled={!isPrinterIdle}
+          />
         {/each}
       {:else}
         <div class="empty-message">No files found</div>
@@ -27,7 +32,7 @@
       <button
         title="Refresh"
         class="refresh-button"
-        on:click={() => printerStore.refreshFiles(printer.id)}
+        on:click={() => activePrinterId && printerStore.refreshFiles(activePrinterId)}
         disabled={!activePrinterId}
         ><RefreshIcon /></button
       >
