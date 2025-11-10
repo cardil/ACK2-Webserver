@@ -161,7 +161,7 @@
         <FilesIcon />
         <div class="text">
           <span class="label">File</span>
-          <span class="value">{fileName}</span>
+          <span class="value" title={fileName}>{fileName}</span>
         </div>
       </div>
     </div>
@@ -238,6 +238,7 @@
   .status-item .text {
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
   .label {
     font-size: 0.8em;
