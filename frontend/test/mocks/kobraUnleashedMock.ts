@@ -1,7 +1,9 @@
 // frontend/test/mocks/kobraUnleashedMock.ts
+import type { ViteDevServer, Connect } from 'vite';
+import { mockPrinter, type Printer, type PrintJob } from './kobraData';
 import { Server as SocketIOServer } from 'socket.io';
 import { mockPrinter, Printer, PrintJob } from './kobraData';
-import { ViteDevServer, Connect } from 'vite';
+
 
 // This will hold the "real" state of the print job for simulation purposes
 interface PrintSimulation {
