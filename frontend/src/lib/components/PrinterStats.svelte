@@ -34,27 +34,27 @@ $: uptimeInSeconds = parseUptime(uptime);
 <Card>
   <div class="stats-grid">
     <div class="stat-item">
-      <span class="label" title="Used memory">Memory</span>
+      <span class="label" title="Used memory">Memory Used</span>
       <span class="value" title={memoryTitle}
         >{memoryUsedPercentage}% <span class="divider">of</span>
         {totalMemory} MB</span
       >
     </div>
     <div class="stat-item">
-      <span class="label" title="Used CPU">CPU</span>
+      <span class="label" title="Used CPU">CPU Used</span>
       <span class="value" title={cpuTitle}>{cpuValue}</span>
     </div>
     <div class="stat-item">
-      <span class="label">Model & Firmware</span>
-      <span class="value">{printerModel} <span class="divider">/</span> {fwVersion}</span>
+      <span class="label">Uptime</span>
+      <span class="value">{formatDuration(uptimeInSeconds)}</span>
     </div>
     <div class="stat-item">
-      <span class="label">SSH Status</span>
+      <span class="label">SSH</span>
       <span class="value">{sshStatus}</span>
     </div>
     <div class="stat-item">
-      <span class="label">Sytem Uptime</span>
-      <span class="value">{formatDuration(uptimeInSeconds)}</span>
+      <span class="label">Model</span>
+      <span class="value">{printerModel} <span class="divider">ver.</span> {fwVersion}</span>
     </div>
   </div>
 </Card>
@@ -78,7 +78,7 @@ $: uptimeInSeconds = parseUptime(uptime);
     font-variant-numeric: tabular-nums;
   }
   .divider {
-    margin: 0 0.25rem;
+    margin: 0 0.15rem;
     font-weight: normal;
     font-size: 0.8em;
     opacity: 0.75;

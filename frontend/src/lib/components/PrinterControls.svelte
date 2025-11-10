@@ -166,7 +166,7 @@
       </div>
     </div>
 
-    <div class="status-row">
+    <div class="status-row two-column-row">
       <div class="status-item">
         <ClockIcon />
         <div class="text">
@@ -182,7 +182,7 @@
         </div>
       </div>
     </div>
-    <div class="status-row">
+    <div class="status-row two-column-row">
       <div class="status-item">
         <FilamentIcon />
         <div class="text">
@@ -230,10 +230,17 @@
     gap: 1rem;
     padding-bottom: 0.5rem;
   }
+  .status-row.two-column-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
   .status-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+  .status-row.two-column-row .status-item {
+      padding-left: 1.5rem;
   }
   .status-item .text {
     display: flex;

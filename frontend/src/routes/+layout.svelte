@@ -26,6 +26,7 @@
 		--card-background-color: #f0f0f0;
 		--card-border-color: #e0e0e0;
 		--accent-color: #007bff;
+		--accent-color-dark: #005bdf;
 		--letterbox-color: lightgray;
 	}
 

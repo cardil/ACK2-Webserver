@@ -62,7 +62,7 @@
         stroke-linecap="round"
         stroke-linejoin="round"
       >
-        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        <polygon points="8 3 22 12 8 21"></polygon>
       </svg>
     {/if}
   </button>

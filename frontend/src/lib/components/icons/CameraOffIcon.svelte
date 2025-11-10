@@ -28,11 +28,11 @@
       <!-- Lens -->
       <circle cx="50" cy="55" r="12" />
       <!-- Slash to indicate "off" -->
-      <line x1="25" y1="25" x2="75" y2="85" stroke-width="4" />
+      <line x1="20" y1="30" x2="80" y2="80" stroke-width="4" />
     </g>
     <!-- "Camera off" Text -->
-    <text x="50" y="85" font-family="sans-serif" font-size="10" fill="currentColor" text-anchor="middle">
-      Camera off
+    <text x="50" y="90" font-family="sans-serif" font-size="10" fill="currentColor" text-anchor="middle">
+      Camera is off
     </text>
   </g>
 </svg>
