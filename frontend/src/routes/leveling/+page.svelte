@@ -137,10 +137,7 @@
     <Card>
       <div class="tool-section">
         <h3 class="card-title">Leveling Settings</h3>
-        <p class="description">
-          Configure the parameters for the automatic bed leveling process. Changes require a printer reboot.
-        </p>
-        <div class="form-grid">
+        <div class="settings-form">
           <div class="form-group">
             <label for="grid">Grid Size</label>
             <input type="number" id="grid" bind:value={gridSize} min="2" max="10" />
@@ -153,12 +150,13 @@
             <label for="precision">Probe Precision</label>
             <input type="number" id="precision" bind:value={precision} step="0.001" />
           </div>
+          <div class="form-group button-group">
+            <button class="primary">Save</button>
+          </div>
         </div>
-        <div class="button-group">
-          <button class="primary">Apply Changes</button>
-          <button>Save as Profile</button>
-          <button>Load Profile</button>
-        </div>
+        <p class="disclaimer">
+          Note: Saving these settings requires a printer reboot to take effect.
+        </p>
       </div>
     </Card>
 
@@ -275,16 +273,22 @@
     border-bottom: 1px solid var(--card-border-color);
   }
 
-  .description {
-    font-size: 0.9em;
-    opacity: 0.8;
-    margin-bottom: 0.5rem;
-  }
-
-  .form-grid {
+  .settings-form {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 1rem;
+    align-items: flex-end;
+  }
+  .settings-form .button-group {
+    /* This allows the button to align nicely with the inputs */
+    padding-bottom: 0; 
+  }
+
+  .disclaimer {
+    font-size: 0.8em;
+    opacity: 0.7;
+    text-align: center;
+    margin-top: 0.5rem;
   }
 
   .form-group {
@@ -306,6 +310,7 @@
     color: var(--text-color);
     width: 100%;
   }
+
 
 
   .button-group {

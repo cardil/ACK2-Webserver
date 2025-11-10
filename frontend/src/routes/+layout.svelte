@@ -56,6 +56,7 @@
       --card-background-color: #1e1e1e;
       --card-border-color: #2e2e2e;
       --letterbox-color: #000;
+      color-scheme: dark;
     }
   }
 

@@ -12,24 +12,27 @@
     // Normalize the value to a 0-1 range
     const normalized = (value - min) / range;
 
-    // Simple blue-white-red scale
-    // Closer to min is blue, center is white/transparent, closer to max is red
-    const mid = 0.5;
-    let r, g, b;
+    // Viridis color scale - sampled points from the scale
+    const viridis = [
+      [68, 1, 84],
+      [72, 40, 120],
+      [62, 74, 137],
+      [49, 104, 142],
+      [38, 130, 142],
+      [31, 158, 137],
+      [53, 183, 121],
+      [109, 205, 89],
+      [180, 222, 44],
+      [253, 231, 37]
+    ];
 
-    if (normalized < mid) {
-      // Blue to white
-      const localNorm = normalized / mid; // Scale to 0-1 in this half
-      r = Math.round(255 * localNorm);
-      g = Math.round(255 * localNorm);
-      b = 255;
-    } else {
-      // White to red
-      const localNorm = (normalized - mid) / mid; // Scale to 0-1 in this half
-      r = 255;
-      g = Math.round(255 * (1 - localNorm));
-      b = Math.round(255 * (1 - localNorm));
-    }
+    const i = Math.floor(normalized * (viridis.length - 1));
+    const j = Math.ceil(normalized * (viridis.length - 1));
+    const ratio = (normalized * (viridis.length - 1)) - i;
+
+    const r = Math.round(viridis[i][0] * (1 - ratio) + viridis[j][0] * ratio);
+    const g = Math.round(viridis[i][1] * (1 - ratio) + viridis[j][1] * ratio);
+    const b = Math.round(viridis[i][2] * (1 - ratio) + viridis[j][2] * ratio);
 
     return `rgb(${r}, ${g}, ${b})`;
   }
