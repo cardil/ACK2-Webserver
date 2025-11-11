@@ -16,11 +16,41 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { levelingStore } from '$lib/stores/leveling';
   import type { MeshProfile } from '$lib/stores/leveling';
+  import Spinner from '$lib/components/Spinner.svelte';
+  import InfoModal from '$lib/components/InfoModal.svelte';
+
+  type ModalButton = {
+    label: string;
+    event: string;
+    class?: string;
+  };
+
+  // --- Modal State ---
+  let modalState: 'closed' | 'confirm_grid_change' | 'reboot_needed' = 'closed';
+  let modalInfo: { title: string; message: string; buttons: ModalButton[] } = { title: '', message: '', buttons: [] };
+
 
   // --- Component State ---
   let visualizedMeshData: number[][] = [];
   let visualizedSlotId: number | string | null = null;
-  let activeSlotId: number | string | null = null; // This will track which saved slot is currently active on the printer
+  let activeSlotId: number | string | null = null;
+  $: if ($levelingStore.activeMesh) {
+    const activeDataString = JSON.stringify($levelingStore.activeMesh.data);
+    const foundSlot = $levelingStore.savedMeshes.find(s => JSON.stringify(s.data) === activeDataString);
+    if (foundSlot) {
+      activeSlotId = foundSlot.id;
+    } else {
+        const averageMesh = $levelingStore.averageMesh;
+        if (averageMesh && JSON.stringify(averageMesh.data) === activeDataString) {
+            activeSlotId = 'average';
+        } else {
+            activeSlotId = 'active'; // Not matching any saved slot
+        }
+    }
+  }
+
+  // --- UI Functions ---
+
   let isSaveModalOpen = false;
   let localSettings = {
     gridSize: 5,
@@ -30,7 +60,7 @@
 
   // --- Store Subscription ---
   levelingStore.subscribe((store) => {
-    if (store.settings) {
+    if (store.settings && !store.isUpdating) {
       localSettings = { ...store.settings };
     }
     // Initialize visualized data with the active mesh from the store
@@ -51,6 +81,12 @@
     visualizeSlot($levelingStore.activeMesh);
   }
 
+  // Ensure the visualizer updates when the active mesh data changes from the store
+  $: if (visualizedSlotId === 'active' && $levelingStore.activeMesh) {
+    visualizedMeshData = $levelingStore.activeMesh.data;
+  }
+
+
 
   // --- UI Functions ---
 
@@ -68,6 +104,56 @@
       levelingStore.activateAverageMesh();
     }
   }
+
+  async function handleSaveSettings() {
+    if (!$levelingStore.settings) return;
+
+    if (localSettings.gridSize !== $levelingStore.settings.gridSize) {
+      modalInfo = {
+        title: 'Confirm Grid Size Change',
+        message: [
+          'Changing the grid size is a destructive operation with the following consequences:',
+          '- All saved mesh profiles will be deleted.',
+          '- The current active mesh will be zeroed out.',
+          '- The printer MUST be rebooted.',
+          '- Bed leveling MUST be performed again after reboot.',
+          '\nAre you sure you want to continue?'
+        ].join('\n\n'),
+        buttons: [
+          { label: 'Cancel', event: 'cancel', class: '' },
+          { label: 'Confirm', event: 'confirm', class: 'danger' }
+        ]
+      };
+      modalState = 'confirm_grid_change';
+    } else {
+      await executeSaveSettings();
+    }
+  }
+
+  async function executeSaveSettings() {
+    const response = await levelingStore.saveSettings(localSettings);
+    modalState = 'closed';
+    if (response.grid_size_changed) {
+        modalInfo = {
+            title: 'Reboot Required',
+            message: 'Grid size has been changed and all mesh data has been reset.\n\nA printer reboot is required for the changes to take full effect.',
+            buttons: [
+                { label: 'Later', event: 'close', class: '' },
+                { label: 'Reboot Printer', event: 'reboot', class: 'reboot' }
+            ]
+        };
+        modalState = 'reboot_needed';
+    } else {
+        // You can have a simple success notification modal here if you want
+        // For now, we'll do nothing on a simple save.
+    }
+  }
+
+  function handleReboot() {
+    // Mocking reboot by reloading the page
+    window.location.reload();
+  }
+
 
   function handleSaveMesh(event: CustomEvent<{ slot: number }>) {
     levelingStore.saveActiveMesh(event.detail.slot);
@@ -88,11 +174,16 @@
 </script>
 
 {#if $levelingStore.isLoading}
-  <div class="loading-container">Loading...</div>
+  <div class="loading-container"><Spinner /></div>
 {:else if $levelingStore.error}
   <div class="error-container">Error: {$levelingStore.error}</div>
 {:else}
-<div class="page-container">
+  {#if $levelingStore.isUpdating}
+    <div class="updating-overlay">
+      <Spinner />
+    </div>
+  {/if}
+  <div class="page-container">
   <div class="column">
     <div class="column-group">
       <!-- Leveling Settings Card -->
@@ -104,23 +195,24 @@
           <div class="settings-form">
             <div class="form-group">
               <label for="grid">Grid Size</label>
-              <input type="number" id="grid" bind:value={localSettings.gridSize} min="2" max="10" />
+              <input type="number" id="grid" bind:value={localSettings.gridSize} min="2" max="10" disabled={$levelingStore.rebootNeeded} />
             </div>
             <div class="form-group">
               <label for="bed_temp">Bed Temp (°C)</label>
-              <input type="number" id="bed_temp" bind:value={localSettings.bedTemp} min="0" max="90" />
+              <input type="number" id="bed_temp" bind:value={localSettings.bedTemp} min="0" max="90" disabled={$levelingStore.rebootNeeded} />
             </div>
             <div class="form-group">
               <label for="precision">Probe Precision</label>
-              <input type="number" id="precision" bind:value={localSettings.precision} step="0.001" />
+              <input type="number" id="precision" bind:value={localSettings.precision} step="0.001" disabled={$levelingStore.rebootNeeded} />
             </div>
             <div class="form-group button-group">
-              <button class="primary" on:click={() => levelingStore.saveSettings(localSettings)}><FontAwesomeIcon icon={faSave} /> Save</button>
+              {#if $levelingStore.rebootNeeded}
+                <button class="reboot" on:click={handleReboot}><FontAwesomeIcon icon={faSave} /> Reboot Printer</button>
+              {:else}
+                <button class="primary" on:click={handleSaveSettings}><FontAwesomeIcon icon={faSave} /> Save</button>
+              {/if}
             </div>
           </div>
-          <p class="disclaimer">
-            Note: Saving these settings requires a printer reboot to take effect.
-          </p>
         </div>
     </Card>
 
@@ -241,10 +333,22 @@
     on:close={() => (isSaveModalOpen = false)}
     on:save={handleSaveMesh}
   />
+  <InfoModal
+    isOpen={modalState !== 'closed'}
+    title={modalInfo.title}
+    message={modalInfo.message}
+    buttons={modalInfo.buttons}
+    on:cancel={() => modalState = 'closed'}
+    on:close={() => modalState = 'closed'}
+    on:confirm={() => executeSaveSettings()}
+    on:reboot={() => handleReboot()}
+  />
 </div>
 {/if}
 
+
 <style>
+
   .page-container {
     display: grid;
     grid-template-columns: 35% 1fr;
@@ -252,6 +356,26 @@
     padding: 1rem;
     height: 100%;
     /* align-items: start; */
+  }
+
+  .loading-container, .error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  .updating-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
   }
 
   .column {
@@ -291,13 +415,6 @@
   .settings-form .button-group {
     /* This allows the button to align nicely with the inputs */
     padding-bottom: 0;
-  }
-
-  .disclaimer {
-    font-size: 0.8em;
-    opacity: 0.7;
-    text-align: center;
-    margin-top: 0.5rem;
   }
 
   .form-group {
@@ -355,6 +472,10 @@
   button.small {
     padding: 0.25rem 0.5rem;
     font-size: 0.8em;
+  }
+  button.reboot {
+    background-color: #ffc107;
+    color: black;
   }
   .mesh-list {
     display: flex;

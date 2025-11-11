@@ -75,10 +75,29 @@ export async function deleteMeshSlot(slotId: number): Promise<{ status: string; 
   }
 }
 
-export async function saveLevelingSettings(settings: LevelingSettings): Promise<{ status: string; message: string }> {
+export interface SaveSettingsResponse {
+    status: string;
+    message: string;
+    grid_size_changed: boolean;
+}
+
+export async function saveLevelingSettings(settings: LevelingSettings): Promise<SaveSettingsResponse> {
   console.log(`Mock API: Saving leveling settings`, settings);
+  let gridSizeChanged = false;
+  if (settings.grid_size !== mockLevelingStatus.settings.grid_size) {
+    gridSizeChanged = true;
+    mockLevelingStatus.saved_meshes = [];
+    const newSize = settings.grid_size * settings.grid_size;
+    mockLevelingStatus.active_mesh.mesh_data = Array(newSize).fill('0.000000').join(', ');
+  }
   mockLevelingStatus.settings = { ...settings };
-  return new Promise(resolve => setTimeout(() => resolve({ status: "success", message: "Settings saved." }), 500));
+
+  const response: SaveSettingsResponse = {
+    status: "success",
+    message: "Settings saved.",
+    grid_size_changed: gridSizeChanged,
+  };
+  return new Promise(resolve => setTimeout(() => resolve(response), 500));
 }
 
 export async function saveActiveMesh(slotId: number): Promise<{ status: string; message: string }> {
@@ -215,4 +234,3 @@ export function createLevelingApiMiddleware(): Connect.NextHandleFunction {
         next();
     };
 }
-

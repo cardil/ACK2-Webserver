@@ -24,7 +24,7 @@
   }
 
   function drawPlot() {
-    if (!plotContainer || !meshData || meshData.length === 0) {
+    if (!plotContainer || !meshData || !Array.isArray(meshData) || meshData.length === 0 || !Array.isArray(meshData[0]) || meshData[0].length === 0) {
       return;
     }
 

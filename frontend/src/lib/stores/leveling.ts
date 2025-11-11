@@ -24,7 +24,9 @@ export interface LevelingStore {
   activeMesh: MeshProfile | null;
   savedMeshes: MeshProfile[];
   averageMesh: MeshProfile | null;
-  isLoading: boolean;
+  isLoading: boolean; // For the initial page load
+  isUpdating: boolean; // For background updates after an action
+  rebootNeeded: boolean;
   error: string | null;
 }
 
@@ -82,11 +84,18 @@ function createLevelingStore() {
     savedMeshes: [],
     averageMesh: null,
     isLoading: true,
+    isUpdating: false,
+    rebootNeeded: false,
     error: null,
   });
 
-  async function fetchData() {
-    update(s => ({ ...s, isLoading: true, error: null }));
+  async function fetchData(initial = false) {
+    if (initial) {
+      update(s => ({ ...s, isLoading: true, error: null }));
+    } else {
+      update(s => ({ ...s, isUpdating: true, error: null }));
+    }
+
     try {
       const status = await api.getLevelingStatus();
       const gridSize = status.settings.grid_size;
@@ -108,6 +117,7 @@ function createLevelingStore() {
       const averageMesh = calculateAverageMesh(savedMeshes, gridSize);
 
       set({
+        ...get(levelingStore), // Preserve existing state like rebootNeeded
         settings: {
           gridSize: status.settings.grid_size,
           bedTemp: status.settings.bed_temp,
@@ -117,83 +127,91 @@ function createLevelingStore() {
         savedMeshes,
         averageMesh,
         isLoading: false,
+        isUpdating: false,
         error: null,
       });
     } catch (e: any) {
-      update(s => ({ ...s, isLoading: false, error: e.message || 'Failed to fetch leveling data.' }));
+      update(s => ({ ...s, isLoading: false, isUpdating: false, error: e.message || 'Failed to fetch leveling data.' }));
     }
   }
 
   async function deleteSlot(slotId: number) {
-    update(s => ({ ...s, isLoading: true }));
+    update(s => ({ ...s, isUpdating: true }));
     try {
       await api.deleteMeshSlot(slotId);
       await fetchData(); // Refetch data to update the state
     } catch (e: any) {
-      update(s => ({ ...s, isLoading: false, error: e.message || `Failed to delete slot ${slotId}.` }));
+      update(s => ({ ...s, isUpdating: false, error: e.message || `Failed to delete slot ${slotId}.` }));
     }
   }
 
 
-  async function saveSettings(settings: LevelingSettings) {
-    update(s => ({ ...s, isLoading: true }));
+  async function saveSettings(settings: LevelingSettings): Promise<api.SaveSettingsResponse> {
+    update(s => ({ ...s, isUpdating: true }));
     try {
       const apiSettings: ApiLevelingSettings = {
         grid_size: settings.gridSize,
         bed_temp: settings.bedTemp,
         precision: settings.precision
       };
-      await api.saveLevelingSettings(apiSettings);
+      const response = await api.saveLevelingSettings(apiSettings);
+
+      if (response.grid_size_changed) {
+        update(s => ({ ...s, rebootNeeded: true }));
+      }
+
       await fetchData(); // Refetch data to update the state
+      return response;
     } catch (e: any) {
-      update(s => ({ ...s, isLoading: false, error: e.message || 'Failed to save settings.' }));
+      update(s => ({ ...s, isUpdating: false, error: e.message || 'Failed to save settings.' }));
+      throw e;
     }
   }
 
   async function saveActiveMesh(slotId: number) {
-    update(s => ({ ...s, isLoading: true }));
+    update(s => ({ ...s, isUpdating: true }));
     try {
       await api.saveActiveMesh(slotId);
       await fetchData();
     } catch (e: any) {
-      update(s => ({ ...s, isLoading: false, error: e.message || `Failed to save mesh to slot ${slotId}.` }));
+      update(s => ({ ...s, isUpdating: false, error: e.message || `Failed to save mesh to slot ${slotId}.` }));
     }
   }
 
   async function activateSlot(slotId: number) {
-    update(s => ({ ...s, isLoading: true }));
+    update(s => ({ ...s, isUpdating: true }));
     try {
       await api.activateMeshSlot(slotId);
       await fetchData();
     } catch (e: any) {
-      update(s => ({ ...s, isLoading: false, error: e.message || `Failed to activate slot ${slotId}.` }));
+      update(s => ({ ...s, isUpdating: false, error: e.message || `Failed to activate slot ${slotId}.` }));
     }
   }
 
   async function deleteAllSlots() {
-    update(s => ({ ...s, isLoading: true }));
+    update(s => ({ ...s, isUpdating: true }));
     try {
       await api.deleteAllMeshSlots();
       await fetchData();
     } catch (e: any) {
-      update(s => ({ ...s, isLoading: false, error: e.message || 'Failed to delete all slots.' }));
+      update(s => ({ ...s, isUpdating: false, error: e.message || 'Failed to delete all slots.' }));
     }
   }
 
   async function activateAverageMesh() {
     const store = get(levelingStore);
     if (store.averageMesh) {
-      update(s => ({ ...s, isLoading: true }));
+      update(s => ({ ...s, isUpdating: true }));
       try {
         await api.activateMeshContent(store.averageMesh.data.flat().join(', '));
         await fetchData();
       } catch (e: any) {
-        update(s => ({ ...s, isLoading: false, error: e.message || 'Failed to activate average mesh.' }));
+        update(s => ({ ...s, isUpdating: false, error: e.message || 'Failed to activate average mesh.' }));
       }
     }
   }
 
-  fetchData();
+  fetchData(true);
 
   return {
     subscribe,

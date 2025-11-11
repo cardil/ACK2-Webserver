@@ -50,13 +50,19 @@ export async function deleteMeshSlot(slotId: number): Promise<{ status: string; 
   return handleResponse(response);
 }
 
-export async function saveLevelingSettings(settings: LevelingSettings): Promise<{ status: string; message: string }> {
+export interface SaveSettingsResponse {
+    status: string;
+    message: string;
+    grid_size_changed: boolean;
+}
+
+export async function saveLevelingSettings(settings: LevelingSettings): Promise<SaveSettingsResponse> {
     const response = await fetch(`${API_BASE}/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
     });
-    return handleResponse(response);
+    return handleResponse<SaveSettingsResponse>(response);
 }
 
 export async function saveActiveMesh(slotId: number): Promise<{ status: string; message: string }> {
