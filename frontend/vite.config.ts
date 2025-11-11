@@ -7,6 +7,7 @@ import {
   createKobraUnleashedSocketMock
 } from './test/mocks/kobraUnleashedMock';
 import { createMockApiMiddleware } from './test/mocks/mockApi';
+import { createLevelingApiMiddleware } from './test/mocks/levelingApi';
 
 export default defineConfig({
   plugins: [
@@ -24,6 +25,7 @@ export default defineConfig({
         }
 
         server.middlewares.use(createMockApiMiddleware(defaultMqttUrl));
+        server.middlewares.use(createLevelingApiMiddleware());
         server.middlewares.use((req, res, next) => {
           if (req.url?.startsWith('/webcam/cam.jpg')) {
             const imagePath = path.join(__dirname, 'static', 'webcam', 'default.jpg');

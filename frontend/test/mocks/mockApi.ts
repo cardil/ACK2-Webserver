@@ -23,9 +23,7 @@ export function createMockApiMiddleware(defaultMqttUrl: string): Connect.NextHan
     const filePath = getApiFilePath(req.url);
 
         if (!filePath || !fs.existsSync(filePath)) {
-            res.writeHead(404);
-            res.end('Not Found');
-            return;
+            return next();
         }
 
         try {

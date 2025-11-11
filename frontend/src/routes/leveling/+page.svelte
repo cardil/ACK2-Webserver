@@ -14,134 +14,84 @@
     faFileMedical,
     faHdd
   } from '@fortawesome/free-solid-svg-icons';
+  import { levelingStore } from '$lib/stores/leveling';
+  import type { MeshProfile } from '$lib/stores/leveling';
 
-  // --- Mock Data & State ---
+  // --- Component State ---
+  let visualizedMeshData: number[][] = [];
+  let visualizedSlotId: number | string | null = null;
+  let activeSlotId: number | string | null = null; // This will track which saved slot is currently active on the printer
+  let isSaveModalOpen = false;
+  let localSettings = {
+    gridSize: 5,
+    bedTemp: 60,
+    precision: 0.01
+  };
 
-  // Helper to generate random mesh data for prototyping
-  function generateRandomMesh(size: number): number[][] {
-    return Array.from({ length: size }, () =>
-      Array.from({ length: size }, () => parseFloat((Math.random() * 0.4 - 0.2).toFixed(4)))
-    );
+  // --- Store Subscription ---
+  levelingStore.subscribe((store) => {
+    if (store.settings) {
+      localSettings = { ...store.settings };
+    }
+    // Initialize visualized data with the active mesh from the store
+    if (store.activeMesh && visualizedSlotId === null) {
+      visualizedMeshData = store.activeMesh.data;
+      visualizedSlotId = 'active';
+    }
+  });
+
+  // Reactive block to handle cases where the visualized mesh is deleted from the store
+  $: if (
+    $levelingStore.activeMesh &&
+    visualizedSlotId &&
+    visualizedSlotId !== 'active' &&
+    visualizedSlotId !== 'average' &&
+    !$levelingStore.savedMeshes.find((s) => s.id === visualizedSlotId)
+  ) {
+    visualizeSlot($levelingStore.activeMesh);
   }
 
-  // Settings
-  let precision = 0.01;
-  let gridSize = 5;
-  let bedTemp = 60;
-
-  // Mesh Data
-  let savedSlots = Array.from({ length: 20 }, (_, i) => ({
-    id: i + 1,
-    date: new Date(Date.now() - Math.random() * 1000000000).toISOString().slice(0, 16).replace('T', ' '),
-    data: generateRandomMesh(5)
-  }));
-  let activeMesh = { id: 'active', data: generateRandomMesh(5) };
-  let activeSlotId: number | string | null = null;
-  let isSaveModalOpen = false;
-
-  // Reactive State
-  let visualizedMeshData = activeMesh.data;
-  let visualizedSlotId: number | string | null = 'active';
-  $: averageMesh = (() => {
-    if (savedSlots.length === 0) {
-      // If there are no saved slots, return a flat mesh of the current grid size
-      const zeroMesh = Array.from({ length: gridSize }, () => Array(gridSize).fill(0.0));
-      return { id: 'average', data: zeroMesh };
-    }
-    const size = savedSlots[0].data.length;
-    const avgData = Array.from({ length: size }, () => Array(size).fill(0));
-    for (const slot of savedSlots) {
-      for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
-          avgData[i][j] += slot.data[i][j];
-        }
-      }
-    }
-    for (let i = 0; i < size; i++) {
-      for (let j = 0; j < size; j++) {
-        avgData[i][j] = parseFloat((avgData[i][j] / savedSlots.length).toFixed(4));
-      }
-    }
-    return { id: 'average', data: avgData };
-  })();
 
   // --- UI Functions ---
 
-  function visualizeSlot(id: number | string) {
-    visualizedSlotId = id;
-    if (id === 'active') {
-      visualizedMeshData = activeMesh.data;
-    } else if (id === 'average') {
-      visualizedMeshData = averageMesh.data;
-    } else {
-      const slot = savedSlots.find(s => s.id === id);
-      if (slot) {
-        visualizedMeshData = slot.data;
-      }
+  function visualizeSlot(slot: MeshProfile) {
+    if (slot) {
+      visualizedMeshData = slot.data;
+      visualizedSlotId = slot.id;
     }
   }
 
-  // Keep the visualized data in sync if the average is showing and the slots change
-  $: if (visualizedSlotId === 'average') {
-    visualizedMeshData = averageMesh.data;
-  }
-
-  function activateSlot(slotToActivate: {id: number | string, data: number[][]}) {
-      // In a real scenario, this would send a command to the printer
-      console.log(`Activating mesh from slot ${slotToActivate.id}`);
-      activeMesh.data = JSON.parse(JSON.stringify(slotToActivate.data)); // Deep copy
-      activeSlotId = slotToActivate.id;
-      visualizeSlot('active');
+  function activateSlot(slotToActivate: MeshProfile) {
+    if (typeof slotToActivate.id === 'number') {
+      levelingStore.activateSlot(slotToActivate.id);
+    } else if (slotToActivate.id === 'average') {
+      levelingStore.activateAverageMesh();
+    }
   }
 
   function handleSaveMesh(event: CustomEvent<{ slot: number }>) {
-    const slotNumber = event.detail.slot;
-    const existingSlotIndex = savedSlots.findIndex(s => s.id === slotNumber);
-
-    const newSave = {
-      id: slotNumber,
-      date: new Date().toISOString(), // Use a real timestamp
-      data: JSON.parse(JSON.stringify(activeMesh.data)) // Deep copy
-    };
-
-    const newSlots = [...savedSlots];
-    if (existingSlotIndex !== -1) {
-      // Overwrite existing slot
-      newSlots[existingSlotIndex] = newSave;
-    } else {
-      // Add as a new slot
-      newSlots.push(newSave);
-    }
-
-    // Sort slots by ID for consistent order and assign to trigger reactivity
-    savedSlots = newSlots.sort((a, b) => a.id - b.id);
-    activeSlotId = slotNumber;
-
+    levelingStore.saveActiveMesh(event.detail.slot);
     isSaveModalOpen = false;
   }
 
   function deleteSlot(slotId: number) {
     if (confirm(`Are you sure you want to delete slot ${slotId}?`)) {
-      // Re-assign to a new filtered array to trigger reactivity
-      savedSlots = savedSlots.filter(s => s.id !== slotId);
-      if (activeSlotId === slotId) {
-        activeSlotId = null; // The active slot no longer exists
-      }
-      if (visualizedSlotId === slotId) {
-        visualizeSlot('active'); // Revert visualization to active mesh
-      }
+      levelingStore.deleteSlot(slotId);
     }
   }
 
   function deleteAllSlots() {
     if (confirm('Are you sure you want to delete ALL saved mesh profiles? This cannot be undone.')) {
-      savedSlots = []; // This assignment is reactive
-      activeSlotId = null;
-      visualizeSlot('active');
+      levelingStore.deleteAllSlots();
     }
   }
 </script>
 
+{#if $levelingStore.isLoading}
+  <div class="loading-container">Loading...</div>
+{:else if $levelingStore.error}
+  <div class="error-container">Error: {$levelingStore.error}</div>
+{:else}
 <div class="page-container">
   <div class="column">
     <div class="column-group">
@@ -154,18 +104,18 @@
           <div class="settings-form">
             <div class="form-group">
               <label for="grid">Grid Size</label>
-              <input type="number" id="grid" bind:value={gridSize} min="2" max="10" />
+              <input type="number" id="grid" bind:value={localSettings.gridSize} min="2" max="10" />
             </div>
             <div class="form-group">
               <label for="bed_temp">Bed Temp (°C)</label>
-              <input type="number" id="bed_temp" bind:value={bedTemp} min="0" max="90" />
+              <input type="number" id="bed_temp" bind:value={localSettings.bedTemp} min="0" max="90" />
             </div>
             <div class="form-group">
               <label for="precision">Probe Precision</label>
-              <input type="number" id="precision" bind:value={precision} step="0.001" />
+              <input type="number" id="precision" bind:value={localSettings.precision} step="0.001" />
             </div>
             <div class="form-group button-group">
-              <button class="primary"><FontAwesomeIcon icon={faSave} /> Save</button>
+              <button class="primary" on:click={() => levelingStore.saveSettings(localSettings)}><FontAwesomeIcon icon={faSave} /> Save</button>
             </div>
           </div>
           <p class="disclaimer">
@@ -179,45 +129,50 @@
         <div class="tool-section">
           <h3 class="card-title"><FontAwesomeIcon icon={faTh} /> Bed Mesh</h3>
           <div class="mesh-list">
-            <!-- Active Mesh Special Slot -->
-            <div class="mesh-item" class:active={visualizedSlotId === 'active'}>
-              <span>Active</span>
-              <div class="button-group">
-                <button class="small primary" on:click={() => (isSaveModalOpen = true)}
-                  ><FontAwesomeIcon icon={faSave} /> Save</button
-                >
-                <button
-                  class="small"
-                  on:click={() => visualizeSlot('active')}
-                  disabled={visualizedSlotId === 'active'}
-                  ><FontAwesomeIcon icon={faEye} />
-                  Visualize
-                </button>
+            {#if $levelingStore.activeMesh}
+              <div class="mesh-item" class:active={visualizedSlotId === 'active'}>
+                <span>Active (Z-Offset: {$levelingStore.activeMesh.zOffset})</span>
+                <div class="button-group">
+                  <button class="small primary" on:click={() => (isSaveModalOpen = true)}>
+                    <FontAwesomeIcon icon={faSave} /> Save
+                  </button>
+                  <button
+                    class="small"
+                    on:click={() => $levelingStore.activeMesh && visualizeSlot($levelingStore.activeMesh)}
+                    disabled={visualizedSlotId === 'active'}
+                  >
+                    <FontAwesomeIcon icon={faEye} />
+                    Visualize
+                  </button>
+                </div>
               </div>
-            </div>
+            {/if}
+
             <!-- Average Mesh Special Slot -->
-            <div class="mesh-item" class:active={visualizedSlotId === 'average'}>
-              <span class="slot-name">
-                Average
-                {#if activeSlotId === 'average'}
-                  <span class="active-label">active</span>
-                {/if}
-              </span>
-              <div class="button-group">
-                <button
-                  class="small"
-                  on:click={() => activateSlot(averageMesh)}
-                  disabled={activeSlotId === 'average'}><FontAwesomeIcon icon={faCheckCircle} /> Activate</button
-                >
-                <button
-                  class="small"
-                  on:click={() => visualizeSlot('average')}
-                  disabled={visualizedSlotId === 'average'}
-                  ><FontAwesomeIcon icon={faEye} />
-                  Visualize
-                </button>
+            {#if $levelingStore.averageMesh}
+              <div class="mesh-item" class:active={visualizedSlotId === 'average'}>
+                <span class="slot-name">
+                  Average
+                  {#if activeSlotId === 'average'}
+                    <span class="active-label">active</span>
+                  {/if}
+                </span>
+                <div class="button-group">
+                  <button
+                    class="small"
+                    on:click={() => levelingStore.activateAverageMesh()}
+                    disabled={activeSlotId === 'average'}><FontAwesomeIcon icon={faCheckCircle} /> Activate</button
+                  >
+                  <button
+                    class="small"
+                    on:click={() => $levelingStore.averageMesh && visualizeSlot($levelingStore.averageMesh)}
+                    disabled={visualizedSlotId === 'average'}
+                    ><FontAwesomeIcon icon={faEye} />
+                    Visualize
+                  </button>
+                </div>
               </div>
-            </div>
+            {/if}
           </div>
         </div>
     </Card>
@@ -228,10 +183,10 @@
       <div class="tool-section">
         <h3 class="card-title"><FontAwesomeIcon icon={faHdd} /> Saved Bed Meshes</h3>
         <div class="mesh-list">
-          {#each savedSlots as slot}
+          {#each $levelingStore.savedMeshes as slot (slot.id)}
             <div class="mesh-item" class:active={slot.id === visualizedSlotId}>
               <span class="slot-name">
-                Slot {slot.id}
+                {slot.name}
                 {#if slot.id === activeSlotId}
                   <span class="active-label">active</span>
                 {/if}
@@ -244,15 +199,19 @@
                 >
                 <button
                   class="small"
-                  on:click={() => visualizeSlot(slot.id)}
+                  on:click={() => visualizeSlot(slot)}
                   disabled={slot.id === visualizedSlotId}
                 >
                   <FontAwesomeIcon icon={faEye} />
                   Visualize
                 </button>
-                <button class="small danger" on:click={() => deleteSlot(slot.id)}
-                  ><FontAwesomeIcon icon={faTrash} /> Delete</button
-                >
+                  <button class="small danger" on:click={() => {
+                    if (typeof slot.id === 'number') {
+                      deleteSlot(slot.id);
+                    }
+                  }}
+                    ><FontAwesomeIcon icon={faTrash} /> Delete</button
+                  >
               </div>
             </div>
           {/each}
@@ -279,10 +238,11 @@
 
   <SaveMeshModal
     isOpen={isSaveModalOpen}
-    on:close={() => isSaveModalOpen = false}
+    on:close={() => (isSaveModalOpen = false)}
     on:save={handleSaveMesh}
   />
 </div>
+{/if}
 
 <style>
   .page-container {

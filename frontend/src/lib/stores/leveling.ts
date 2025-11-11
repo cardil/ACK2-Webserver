@@ -1,0 +1,211 @@
+
+import { get, writable } from 'svelte/store';
+import * as api from '$lib/api/leveling';
+import type { LevelingSettings as ApiLevelingSettings } from '$lib/api/leveling';
+
+// --- Types ---
+
+export interface LevelingSettings {
+  gridSize: number;
+  bedTemp: number;
+  precision: number;
+}
+
+export interface MeshProfile {
+  id: number | 'active' | 'average';
+  name: string;
+  date?: string;
+  data: number[][];
+  zOffset?: number; // Only for the active mesh
+}
+
+export interface LevelingStore {
+  settings: LevelingSettings | null;
+  activeMesh: MeshProfile | null;
+  savedMeshes: MeshProfile[];
+  averageMesh: MeshProfile | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+// --- Helper Functions ---
+
+/**
+  * Parses a flat mesh string (e.g., "0.1, 0.2, 0.3...") into a 2D number array.
+  * @param meshString The raw mesh data string.
+  * @param gridSize The size of the grid (e.g., 5 for a 5x5 mesh).
+  * @returns A 2D array of numbers representing the mesh.
+  */
+function parseMeshString(meshString: string, gridSize: number): number[][] {
+  const flatData = meshString.split(',').map(s => parseFloat(s.trim()));
+  const grid: number[][] = [];
+  for (let i = 0; i < gridSize; i++) {
+    grid.push(flatData.slice(i * gridSize, (i + 1) * gridSize));
+  }
+  return grid;
+}
+
+/**
+  * Calculates the average of a list of saved mesh profiles.
+  * @param meshes An array of saved mesh profiles.
+  * @param gridSize The size of the grid.
+  * @returns A new MeshProfile representing the average, or null if no meshes are provided.
+  */
+function calculateAverageMesh(meshes: MeshProfile[], gridSize: number): MeshProfile | null {
+  if (meshes.length === 0) return null;
+
+  const avgData = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
+  for (const mesh of meshes) {
+    for (let i = 0; i < gridSize; i++) {
+      for (let j = 0; j < gridSize; j++) {
+        avgData[i][j] += mesh.data[i][j];
+      }
+    }
+  }
+
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      avgData[i][j] = parseFloat((avgData[i][j] / meshes.length).toFixed(4));
+    }
+  }
+
+  return { id: 'average', name: 'Average', data: avgData };
+}
+
+
+// --- Store ---
+
+function createLevelingStore() {
+  const { subscribe, set, update } = writable<LevelingStore>({
+    settings: null,
+    activeMesh: null,
+    savedMeshes: [],
+    averageMesh: null,
+    isLoading: true,
+    error: null,
+  });
+
+  async function fetchData() {
+    update(s => ({ ...s, isLoading: true, error: null }));
+    try {
+      const status = await api.getLevelingStatus();
+      const gridSize = status.settings.grid_size;
+
+      const activeMesh: MeshProfile = {
+        id: 'active',
+        name: 'Active',
+        data: parseMeshString(status.active_mesh.mesh_data, gridSize),
+        zOffset: status.active_mesh.z_offset,
+      };
+
+      const savedMeshes: MeshProfile[] = status.saved_meshes.map(sm => ({
+        id: sm.id,
+        name: `Slot ${sm.id}`,
+        date: sm.date,
+        data: parseMeshString(sm.mesh_data, gridSize),
+      }));
+
+      const averageMesh = calculateAverageMesh(savedMeshes, gridSize);
+
+      set({
+        settings: {
+          gridSize: status.settings.grid_size,
+          bedTemp: status.settings.bed_temp,
+          precision: status.settings.precision,
+        },
+        activeMesh,
+        savedMeshes,
+        averageMesh,
+        isLoading: false,
+        error: null,
+      });
+    } catch (e: any) {
+      update(s => ({ ...s, isLoading: false, error: e.message || 'Failed to fetch leveling data.' }));
+    }
+  }
+
+  async function deleteSlot(slotId: number) {
+    update(s => ({ ...s, isLoading: true }));
+    try {
+      await api.deleteMeshSlot(slotId);
+      await fetchData(); // Refetch data to update the state
+    } catch (e: any) {
+      update(s => ({ ...s, isLoading: false, error: e.message || `Failed to delete slot ${slotId}.` }));
+    }
+  }
+
+
+  async function saveSettings(settings: LevelingSettings) {
+    update(s => ({ ...s, isLoading: true }));
+    try {
+      const apiSettings: ApiLevelingSettings = {
+        grid_size: settings.gridSize,
+        bed_temp: settings.bedTemp,
+        precision: settings.precision
+      };
+      await api.saveLevelingSettings(apiSettings);
+      await fetchData(); // Refetch data to update the state
+    } catch (e: any) {
+      update(s => ({ ...s, isLoading: false, error: e.message || 'Failed to save settings.' }));
+    }
+  }
+
+  async function saveActiveMesh(slotId: number) {
+    update(s => ({ ...s, isLoading: true }));
+    try {
+      await api.saveActiveMesh(slotId);
+      await fetchData();
+    } catch (e: any) {
+      update(s => ({ ...s, isLoading: false, error: e.message || `Failed to save mesh to slot ${slotId}.` }));
+    }
+  }
+
+  async function activateSlot(slotId: number) {
+    update(s => ({ ...s, isLoading: true }));
+    try {
+      await api.activateMeshSlot(slotId);
+      await fetchData();
+    } catch (e: any) {
+      update(s => ({ ...s, isLoading: false, error: e.message || `Failed to activate slot ${slotId}.` }));
+    }
+  }
+
+  async function deleteAllSlots() {
+    update(s => ({ ...s, isLoading: true }));
+    try {
+      await api.deleteAllMeshSlots();
+      await fetchData();
+    } catch (e: any) {
+      update(s => ({ ...s, isLoading: false, error: e.message || 'Failed to delete all slots.' }));
+    }
+  }
+
+  async function activateAverageMesh() {
+    const store = get(levelingStore);
+    if (store.averageMesh) {
+      update(s => ({ ...s, isLoading: true }));
+      try {
+        await api.activateMeshContent(store.averageMesh.data.flat().join(', '));
+        await fetchData();
+      } catch (e: any) {
+        update(s => ({ ...s, isLoading: false, error: e.message || 'Failed to activate average mesh.' }));
+      }
+    }
+  }
+
+  fetchData();
+
+  return {
+    subscribe,
+    fetchData,
+    deleteSlot,
+    saveSettings,
+    saveActiveMesh,
+    activateSlot,
+    deleteAllSlots,
+    activateAverageMesh
+  };
+}
+
+
+export const levelingStore = createLevelingStore();
