@@ -7,6 +7,8 @@
   let themeObserver: MutationObserver;
   let resizeObserver: ResizeObserver;
   let Plotly: any;
+  let themeChangeHandler: () => void;
+  let mediaQuery: MediaQueryList;
 
   function getThemeColors() {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -87,8 +89,8 @@
     drawPlot();
 
     // Observe theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const themeChangeHandler = () => drawPlot();
+    mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    themeChangeHandler = () => drawPlot();
     mediaQuery.addEventListener('change', themeChangeHandler);
 
     // Also handle direct style changes on the body if any
@@ -97,16 +99,23 @@
 
     // Watch for container resize events
     resizeObserver = new ResizeObserver(() => {
-      Plotly.Plots.resize(plotContainer);
+      if (Plotly && plotContainer) {
+        Plotly.Plots.resize(plotContainer);
+      }
     });
     resizeObserver.observe(plotContainer);
+  });
 
-    // Cleanup on component destroy
-    onDestroy(() => {
+  onDestroy(() => {
+    if (mediaQuery && themeChangeHandler) {
       mediaQuery.removeEventListener('change', themeChangeHandler);
+    }
+    if (themeObserver) {
       themeObserver.disconnect();
+    }
+    if (resizeObserver) {
       resizeObserver.disconnect();
-    });
+    }
   });
 
   $: if (meshData && Plotly) {

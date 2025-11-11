@@ -1,7 +1,7 @@
 
 import { get, writable } from 'svelte/store';
+import { browser } from '$app/environment';
 import * as api from '$lib/api/leveling';
-import type { LevelingSettings as ApiLevelingSettings } from '$lib/api/leveling';
 
 // --- Types ---
 
@@ -104,7 +104,7 @@ function createLevelingStore() {
         id: 'active',
         name: 'Active',
         data: parseMeshString(status.active_mesh.mesh_data, gridSize),
-        zOffset: status.active_mesh.z_offset,
+        zOffset: status.settings.z_offset, // z_offset comes from settings in the C backend
       };
 
       const savedMeshes: MeshProfile[] = status.saved_meshes.map(sm => ({
@@ -149,7 +149,7 @@ function createLevelingStore() {
   async function saveSettings(settings: LevelingSettings): Promise<api.SaveSettingsResponse> {
     update(s => ({ ...s, isUpdating: true }));
     try {
-      const apiSettings: ApiLevelingSettings = {
+      const apiSettings: Omit<api.LevelingSettings, 'z_offset'> = {
         grid_size: settings.gridSize,
         bed_temp: settings.bedTemp,
         precision: settings.precision
@@ -171,7 +171,12 @@ function createLevelingStore() {
   async function saveActiveMesh(slotId: number) {
     update(s => ({ ...s, isUpdating: true }));
     try {
-      await api.saveActiveMesh(slotId);
+      const store = get(levelingStore);
+      if (!store.activeMesh) {
+        throw new Error('No active mesh to save');
+      }
+      const meshData = store.activeMesh.data.flat().join(', ');
+      await api.saveActiveMesh(slotId, meshData);
       await fetchData();
     } catch (e: any) {
       update(s => ({ ...s, isUpdating: false, error: e.message || `Failed to save mesh to slot ${slotId}.` }));
@@ -181,7 +186,13 @@ function createLevelingStore() {
   async function activateSlot(slotId: number) {
     update(s => ({ ...s, isUpdating: true }));
     try {
-      await api.activateMeshSlot(slotId);
+      const store = get(levelingStore);
+      const slot = store.savedMeshes.find(s => s.id === slotId);
+      if (!slot) {
+        throw new Error(`Slot ${slotId} not found`);
+      }
+      const meshData = slot.data.flat().join(', ');
+      await api.activateMeshSlot(slotId, meshData);
       await fetchData();
     } catch (e: any) {
       update(s => ({ ...s, isUpdating: false, error: e.message || `Failed to activate slot ${slotId}.` }));
@@ -191,7 +202,15 @@ function createLevelingStore() {
   async function deleteAllSlots() {
     update(s => ({ ...s, isUpdating: true }));
     try {
-      await api.deleteAllMeshSlots();
+      const store = get(levelingStore);
+      // Delete all slots individually since the backend doesn't support bulk delete
+      const deletePromises = store.savedMeshes.map(slot => {
+        if (typeof slot.id === 'number') {
+          return api.deleteMeshSlot(slot.id);
+        }
+        return Promise.resolve();
+      });
+      await Promise.all(deletePromises);
       await fetchData();
     } catch (e: any) {
       update(s => ({ ...s, isUpdating: false, error: e.message || 'Failed to delete all slots.' }));
@@ -211,7 +230,9 @@ function createLevelingStore() {
     }
   }
 
-  fetchData(true);
+  if (browser) {
+    fetchData(true);
+  }
 
   return {
     subscribe,

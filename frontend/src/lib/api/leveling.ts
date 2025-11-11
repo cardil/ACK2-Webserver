@@ -7,11 +7,11 @@ export interface LevelingSettings {
   grid_size: number;
   bed_temp: number;
   precision: number;
+  z_offset: number; // z_offset is returned in settings by the C backend
 }
 
 export interface MeshData {
   mesh_data: string;
-  z_offset: number;
 }
 
 export interface SavedMesh {
@@ -56,34 +56,39 @@ export interface SaveSettingsResponse {
     grid_size_changed: boolean;
 }
 
-export async function saveLevelingSettings(settings: LevelingSettings): Promise<SaveSettingsResponse> {
+export async function saveLevelingSettings(settings: Omit<LevelingSettings, 'z_offset'>): Promise<SaveSettingsResponse> {
+    // z_offset is read-only, so we don't send it when saving settings
     const response = await fetch(`${API_BASE}/settings`, {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify({
+            grid_size: settings.grid_size,
+            bed_temp: settings.bed_temp,
+            precision: settings.precision,
+        }),
     });
     return handleResponse<SaveSettingsResponse>(response);
 }
 
-export async function saveActiveMesh(slotId: number): Promise<{ status: string; message: string }> {
-    const response = await fetch(`${API_BASE}/mesh/save`, {
-        method: 'POST',
+export async function saveActiveMesh(slotId: number, meshData: string): Promise<{ status: string; message: string }> {
+    const response = await fetch(`${API_BASE}/mesh/${slotId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slot: slotId }),
+        body: JSON.stringify({ mesh_data: meshData }),
     });
     return handleResponse(response);
 }
 
-export async function activateMeshSlot(slotId: number): Promise<{ status: string; message: string }> {
-    const response = await fetch(`${API_BASE}/mesh/activate/${slotId}`, {
-        method: 'POST',
-    });
-    return handleResponse(response);
+export async function activateMeshSlot(slotId: number, meshData: string): Promise<{ status: string; message: string }> {
+    // The C backend doesn't have a direct "activate slot" endpoint.
+    // Instead, we need to first read the slot data, then activate it.
+    // For now, we'll use activateMeshContent with the mesh data.
+    return activateMeshContent(meshData);
 }
 
 export async function activateMeshContent(meshData: string): Promise<{ status: string; message: string }> {
-    const response = await fetch(`${API_BASE}/mesh/activate/content`, {
-        method: 'POST',
+    const response = await fetch(`${API_BASE}/printer-mesh`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mesh_data: meshData }),
     });
@@ -91,8 +96,7 @@ export async function activateMeshContent(meshData: string): Promise<{ status: s
 }
 
 export async function deleteAllMeshSlots(): Promise<{ status: string; message: string }> {
-    const response = await fetch(`${API_BASE}/mesh/all`, {
-        method: 'DELETE',
-    });
-    return handleResponse(response);
+    // The C backend doesn't have a "delete all" endpoint.
+    // We'll need to delete slots individually. For now, return an error.
+    throw new Error('Delete all slots is not supported by the backend. Please delete slots individually.');
 }

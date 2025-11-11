@@ -25,11 +25,19 @@
       handleBackdropClick();
     }
   }
+
+  function handleBackdropKeydown(event: KeyboardEvent) {
+    // Handle keyboard events on backdrop for accessibility
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleBackdropClick();
+    }
+  }
 </script>
 
 {#if isOpen}
-  <div class="modal-backdrop" on:click={handleBackdropClick} on:keydown={handleKeydown} role="button" tabindex="0">
-    <div class="modal" on:click|stopPropagation role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+  <div class="modal-backdrop" on:click={handleBackdropClick} on:keydown={handleBackdropKeydown} role="button" tabindex="0" aria-label="Close modal">
+    <div class="modal" on:click|stopPropagation on:keydown={handleKeydown} role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
       <h3 id="modal-title">{title}</h3>
       <p>{message}</p>
       <div class="button-group">

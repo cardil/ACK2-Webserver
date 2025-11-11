@@ -1,8 +1,3 @@
-export async function activateMeshContent(meshData: string): Promise<{ status: string; message:string }> {
-  console.log('Mock API: Activating mesh from content');
-  mockLevelingStatus.active_mesh.mesh_data = meshData;
-  return new Promise(resolve => setTimeout(() => resolve({ status: "success", message: "Mesh content activated." }), 500));
-}
 import type { Connect } from 'vite';
 
 // This file will mock the C backend API for leveling tools.
@@ -13,11 +8,11 @@ export interface LevelingSettings {
   grid_size: number;
   bed_temp: number;
   precision: number;
+  z_offset: number; // z_offset is returned in settings by the C backend
 }
 
 export interface MeshData {
   mesh_data: string;
-  z_offset: number;
 }
 
 export interface SavedMesh {
@@ -38,10 +33,10 @@ const mockLevelingStatus: LevelingStatus = {
     grid_size: 5,
     bed_temp: 60,
     precision: 0.01,
+    z_offset: 0.123, // z_offset is in settings
   },
   active_mesh: {
     mesh_data: "0.01, 0.02, 0.03, 0.02, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.03, 0.04, 0.05, 0.04, 0.03, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.02, 0.03, 0.02, 0.01",
-    z_offset: 0.123,
   },
   saved_meshes: [
     {
@@ -81,7 +76,7 @@ export interface SaveSettingsResponse {
     grid_size_changed: boolean;
 }
 
-export async function saveLevelingSettings(settings: LevelingSettings): Promise<SaveSettingsResponse> {
+export async function saveLevelingSettings(settings: Omit<LevelingSettings, 'z_offset'>): Promise<SaveSettingsResponse> {
   console.log(`Mock API: Saving leveling settings`, settings);
   let gridSizeChanged = false;
   if (settings.grid_size !== mockLevelingStatus.settings.grid_size) {
@@ -90,7 +85,11 @@ export async function saveLevelingSettings(settings: LevelingSettings): Promise<
     const newSize = settings.grid_size * settings.grid_size;
     mockLevelingStatus.active_mesh.mesh_data = Array(newSize).fill('0.000000').join(', ');
   }
-  mockLevelingStatus.settings = { ...settings };
+  // Update settings but preserve z_offset (it's read-only)
+  mockLevelingStatus.settings = {
+    ...settings,
+    z_offset: mockLevelingStatus.settings.z_offset,
+  };
 
   const response: SaveSettingsResponse = {
     status: "success",
@@ -100,7 +99,7 @@ export async function saveLevelingSettings(settings: LevelingSettings): Promise<
   return new Promise(resolve => setTimeout(() => resolve(response), 500));
 }
 
-export async function saveActiveMesh(slotId: number): Promise<{ status: string; message: string }> {
+export async function saveActiveMesh(slotId: number, meshData: string): Promise<{ status: string; message: string }> {
   console.log(`Mock API: Saving active mesh to slot ${slotId}`);
   if (!mockLevelingStatus.active_mesh) {
     return new Promise(resolve => setTimeout(() => resolve({ status: "error", message: "No active mesh to save." }), 500));
@@ -108,31 +107,35 @@ export async function saveActiveMesh(slotId: number): Promise<{ status: string; 
   const existingSlot = mockLevelingStatus.saved_meshes.find(mesh => mesh.id === slotId);
   if (existingSlot) {
     // Overwrite existing slot
-    existingSlot.mesh_data = mockLevelingStatus.active_mesh.mesh_data;
+    existingSlot.mesh_data = meshData;
     existingSlot.date = new Date().toISOString().slice(0, 19).replace('T', ' ');
   } else {
     // Add new slot
     mockLevelingStatus.saved_meshes.push({
       id: slotId,
       date: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      mesh_data: mockLevelingStatus.active_mesh.mesh_data,
+      mesh_data: meshData,
     });
   }
   return new Promise(resolve => setTimeout(() => resolve({ status: "success", message: `Mesh saved to slot ${slotId}.` }), 500));
 }
 
-export async function activateMeshSlot(slotId: number): Promise<{ status: string; message: string }> {
+export async function activateMeshSlot(slotId: number, meshData: string): Promise<{ status: string; message: string }> {
   console.log(`Mock API: Activating mesh from slot ${slotId}`);
   const slotToActivate = mockLevelingStatus.saved_meshes.find(mesh => mesh.id === slotId);
   if (slotToActivate) {
-    mockLevelingStatus.active_mesh = {
-      mesh_data: slotToActivate.mesh_data,
-      z_offset: mockLevelingStatus.active_mesh.z_offset, // Z-offset is not stored in slots, so we keep the current one
-    };
+    // Use the provided meshData (which should match the slot)
+    mockLevelingStatus.active_mesh.mesh_data = meshData;
     return new Promise(resolve => setTimeout(() => resolve({ status: "success", message: `Mesh from slot ${slotId} activated.` }), 500));
   } else {
     return new Promise(resolve => setTimeout(() => resolve({ status: "error", message: "Slot not found." }), 500));
   }
+}
+
+export async function activateMeshContent(meshData: string): Promise<{ status: string; message: string }> {
+  console.log('Mock API: Activating mesh from content');
+  mockLevelingStatus.active_mesh.mesh_data = meshData;
+  return new Promise(resolve => setTimeout(() => resolve({ status: "success", message: "Mesh content activated." }), 500));
 }
 
 export async function deleteAllMeshSlots(): Promise<{ status: string; message: string }> {
@@ -156,7 +159,8 @@ export function createLevelingApiMiddleware(): Connect.NextHandleFunction {
             return;
         }
 
-        if (req.method === 'POST' && req.url === '/api/leveling/settings') {
+        // PUT /api/leveling/settings (changed from POST)
+        if (req.method === 'PUT' && req.url === '/api/leveling/settings') {
             let body = '';
             req.on('data', chunk => {
                 body += chunk.toString();
@@ -171,22 +175,26 @@ export function createLevelingApiMiddleware(): Connect.NextHandleFunction {
             return;
         }
 
-        if (req.method === 'POST' && req.url === '/api/leveling/mesh/save') {
-          let body = '';
-          req.on('data', chunk => {
-            body += chunk.toString();
-          });
-          req.on('end', () => {
-            const { slot } = JSON.parse(body);
-            saveActiveMesh(slot).then(response => {
-              res.statusCode = response.status === 'success' ? 200 : 400;
-              res.end(JSON.stringify(response));
+        // PUT /api/leveling/mesh/{id} (changed from POST /api/leveling/mesh/save)
+        const putMeshMatch = req.url.match(/^\/api\/leveling\/mesh\/(\d+)$/);
+        if (req.method === 'PUT' && putMeshMatch) {
+            const slotId = parseInt(putMeshMatch[1], 10);
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
             });
-          });
-          return;
+            req.on('end', () => {
+                const { mesh_data } = JSON.parse(body);
+                saveActiveMesh(slotId, mesh_data).then(response => {
+                    res.statusCode = response.status === 'success' ? 200 : 400;
+                    res.end(JSON.stringify(response));
+                });
+            });
+            return;
         }
 
-        if (req.method === 'POST' && req.url === '/api/leveling/mesh/activate/content') {
+        // PUT /api/leveling/printer-mesh (changed from POST /api/leveling/mesh/activate/content)
+        if (req.method === 'PUT' && req.url === '/api/leveling/printer-mesh') {
             let body = '';
             req.on('data', chunk => {
                 body += chunk.toString();
@@ -201,31 +209,21 @@ export function createLevelingApiMiddleware(): Connect.NextHandleFunction {
             return;
         }
 
-        if (req.method === 'POST' && req.url.match(/^\/api\/leveling\/mesh\/activate\/(\d+)$/)) {
-            const match = req.url.match(/^\/api\/leveling\/mesh\/activate\/(\d+)$/);
-            if (match) {
-                const slotId = parseInt(match[1], 10);
-                activateMeshSlot(slotId).then(response => {
-                    res.statusCode = response.status === 'success' ? 200 : 404;
-                    res.end(JSON.stringify(response));
-                });
-            }
-            return;
-        }
-
-        if (req.method === 'DELETE' && req.url === '/api/leveling/mesh/all') {
-            deleteAllMeshSlots().then(response => {
-                res.statusCode = 200;
-                res.end(JSON.stringify(response));
-            });
-            return;
-        }
-
+        // DELETE /api/leveling/mesh/{id}
         const deleteMatch = req.url.match(/^\/api\/leveling\/mesh\/(\d+)$/);
         if (req.method === 'DELETE' && deleteMatch) {
             const slotId = parseInt(deleteMatch[1], 10);
             deleteMeshSlot(slotId).then(response => {
                 res.statusCode = response.status === 'success' ? 200 : 404;
+                res.end(JSON.stringify(response));
+            });
+            return;
+        }
+
+        // DELETE /api/leveling/mesh/all (for mock compatibility, but backend doesn't support this)
+        if (req.method === 'DELETE' && req.url === '/api/leveling/mesh/all') {
+            deleteAllMeshSlots().then(response => {
+                res.statusCode = 200;
                 res.end(JSON.stringify(response));
             });
             return;
