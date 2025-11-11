@@ -6,6 +6,10 @@ webserver/webserver.zip
 webserver/opt/bin/webfsd
 mybuild.sh
 originals/
-/webserver/opt/webfs
+!/webserver/opt/webfs/
+/webserver/opt/webfs/*
+!/webserver/opt/webfs/api
+!/webserver/opt/webfs/files
+!/webserver/opt/webfs/deprecated
 .continue/
 

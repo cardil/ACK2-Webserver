@@ -5,7 +5,7 @@ ODIR=.
 
 DEPS = httpd.h
 
-OBJ = webfsd.o webcam.o mime.o ls.o request.o response.o config-parser.o
+OBJ = webfsd.o webcam.o mime.o ls.o request.o response.o config-parser.o api.o
 
 $(ODIR)/%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)

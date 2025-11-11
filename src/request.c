@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include "api.h"
 #include "httpd.h"
 
 typedef uint8_t BYTE;
@@ -1279,7 +1280,7 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     if (debug) {
-        fprintf(stderr, "+++ requested file: %s\n", filename_str);
+        fprintf(stderr, "+++ process_custom_pages: checking for custom pages for request path: %s\n", req->path);
     }
 
     if ((strstr(filename_str, "/mnt/UDISK/webfs/files/"))) {
@@ -1293,17 +1294,18 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     // ----------------------------- access to the 3d visualizer index.html -----------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/mesh/index.html"))) {
+    if ((strcmp(req->path, "/deprecated/mesh/") == 0 || strcmp(req->path, "/deprecated/mesh") == 0 || strcmp(req->path, "/deprecated/mesh/index.html") == 0)) {
+        if (debug) fprintf(stderr, "+++ process_custom_pages: handling /deprecated/mesh/index.html\n");
         // turn off the cache
         req->cache_turn_off = 'Y';
 
         int rr = read_mesh_from_printer_config();
 
         if (rr == 1) {
-            custom_copy_file(NULL, "/mnt/UDISK/webfs/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Missing printer configuration file! Try to upload it from a backup.</body></html>");
+            custom_copy_file(NULL, "/mnt/UDISK/webfs/deprecated/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Missing printer configuration file! Try to upload it from a backup.</body></html>");
         } else {
             if (rr == 2) {
-                custom_copy_file(NULL, "/mnt/UDISK/webfs/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Missing configuration data! Level the bed first!</body></html>");
+                custom_copy_file(NULL, "/mnt/UDISK/webfs/deprecated/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Missing configuration data! Level the bed first!</body></html>");
             } else {
                 int rrr = -1;
 
@@ -1324,12 +1326,13 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
                     }
                 }
                 if (rrr == 0) {
-                    custom_copy_file(NULL, "/mnt/UDISK/webfs/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Selected Data Slot is empty! Select another Data Slot!</body></html>");
+                    custom_copy_file(NULL, "/mnt/UDISK/webfs/deprecated/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Selected Data Slot is empty! Select another Data Slot!</body></html>");
                 } else {
-                    remove("/mnt/UDISK/webfs/mesh/index.html");
-                    custom_copy_file("/opt/webfs/mesh/index1.html", "/mnt/UDISK/webfs/mesh/index.tmp", "wb", mesh_matrix);
-                    custom_copy_file("/opt/webfs/mesh/index2.html", "/mnt/UDISK/webfs/mesh/index.tmp", "ab", NULL);
-                    rename("/mnt/UDISK/webfs/mesh/index.tmp", "/mnt/UDISK/webfs/mesh/index.html");
+                    remove("/mnt/UDISK/webfs/deprecated/mesh/index.html");
+                    custom_copy_file("/opt/webfs/deprecated/mesh/index1.html", "/mnt/UDISK/webfs/deprecated/mesh/index.tmp", "wb", mesh_matrix);
+                    custom_copy_file("/opt/webfs/deprecated/mesh/index2.html", "/mnt/UDISK/webfs/deprecated/mesh/index.tmp", "ab", NULL);
+                    rename("/mnt/UDISK/webfs/deprecated/mesh/index.tmp", "/mnt/UDISK/webfs/deprecated/mesh/index.html");
+                    sync();
                 }
             }
         }
@@ -1337,7 +1340,7 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     // ----------------------------- access to the cam.jpg file -----------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/webcam/cam.jpg"))) {
+    if ((!strcmp(req->path, "/webcam/cam.jpg"))) {
         // turn off the cache
         req->cache_turn_off = 'Y';
 
@@ -1365,7 +1368,7 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     // ----------------------------- access to the api.json file ----------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/api/info.json"))) {
+    if ((!strcmp(req->path, "/api/info.json"))) {
         // turn off the cache
         req->cache_turn_off = 'Y';
 
@@ -1374,7 +1377,7 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     // ----------------------------- access to the do.json file -----------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/api/do.json"))) {
+    if ((!strcmp(req->path, "/api/do.json"))) {
         // turn off the cache
         req->cache_turn_off = 'Y';
 
@@ -1383,7 +1386,8 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     // ----------------------------- access to the tools index.html -------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/tools/index.html"))) {
+    if ((strcmp(req->path, "/deprecated/tools/") == 0 || strcmp(req->path, "/deprecated/tools") == 0 || strcmp(req->path, "/deprecated/tools/index.html") == 0)) {
+        if (debug) fprintf(stderr, "+++ process_custom_pages: handling /deprecated/tools/index.html\n");
         response_code = 0;
         error_code = 0;
 
@@ -1412,14 +1416,16 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
         // mesh_matrix_export(mesh_average, mesh_grid);
 
         // Fill the index.html template
-        remove("/mnt/UDISK/webfs/tools/index.html");
-        int rrr = populate_template_file("/opt/webfs/tools/index.html", "/mnt/UDISK/webfs/tools/index.tmp", leveling_template_callback);
-        rename("/mnt/UDISK/webfs/tools/index.tmp", "/mnt/UDISK/webfs/tools/index.html");
+        remove("/mnt/UDISK/webfs/deprecated/tools/index.html");
+        int rrr = populate_template_file("/opt/webfs/deprecated/tools/index.html", "/mnt/UDISK/webfs/deprecated/tools/index.tmp", leveling_template_callback);
+        rename("/mnt/UDISK/webfs/deprecated/tools/index.tmp", "/mnt/UDISK/webfs/deprecated/tools/index.html");
+        sync();
         goto e_x_i_t;
     }
 
     // process all actions from /leveling/index.html and go back to the index.html
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/tools/response.html"))) {
+    if ((!strcmp(req->path, "/deprecated/tools/response.html"))) {
+        if (debug) fprintf(stderr, "+++ process_custom_pages: handling /deprecated/tools/response.html\n");
         // set no error and no information messages
         response_code = 0;
         error_code = 0;
@@ -1676,9 +1682,10 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
             }
         }
 
-        remove("/mnt/UDISK/webfs/tools/response.html");
-        int rrr = populate_template_file("/opt/webfs/tools/response.html", "/mnt/UDISK/webfs/tools/response.tmp", leveling_template_callback);
-        rename("/mnt/UDISK/webfs/tools/response.tmp", "/mnt/UDISK/webfs/tools/response.html");
+        remove("/mnt/UDISK/webfs/deprecated/tools/response.html");
+        int rrr = populate_template_file("/opt/webfs/deprecated/tools/response.html", "/mnt/UDISK/webfs/deprecated/tools/response.tmp", leveling_template_callback);
+        rename("/mnt/UDISK/webfs/deprecated/tools/response.tmp", "/mnt/UDISK/webfs/deprecated/tools/response.html");
+        sync();
         goto e_x_i_t;
     }
 
@@ -2145,7 +2152,9 @@ void parse_request(struct REQUEST *req) {
         fprintf(stderr, "query: \"%s\"\n", req->query);
 
     if (0 != strcmp(req->type, "GET") &&
-        0 != strcmp(req->type, "HEAD")) {
+        0 != strcmp(req->type, "HEAD") &&
+        0 != strcmp(req->type, "PUT") &&
+        0 != strcmp(req->type, "DELETE")) {
         mkerror(req, 501, 0);
         return;
     }
@@ -2156,6 +2165,7 @@ void parse_request(struct REQUEST *req) {
 
     /* parse header lines */
     req->keep_alive = req->minor;
+    req->content_length = 0;
     for (h = req->hreq; h - req->hreq < req->lreq;) {
         h = strchr(h, '\n');
         if (NULL == h)
@@ -2187,6 +2197,8 @@ void parse_request(struct REQUEST *req) {
             /* parsing must be done after fstat, we need the file size
                      for the boundary checks */
             req->range_hdr = h + 13;
+        } else if (0 == strncasecmp(h, "Content-Length: ", 16)) {
+            req->content_length = atoi(h + 16);
         }
     }
     if (debug) {
@@ -2200,6 +2212,46 @@ void parse_request(struct REQUEST *req) {
             fprintf(stderr, "%03d: if-range: \"%s\"\n",
                     req->fd, req->if_range);
     }
+
+
+    // Read request body for PUT requests
+    if ((0 == strcmp(req->type, "PUT") || 0 == strcmp(req->type, "POST")) && req->content_length > 0) {
+        if (req->content_length > MAX_HEADER) { // Or some other reasonable limit
+            mkerror(req, 413, 0); // Payload Too Large
+            return;
+        }
+        req->req_body = malloc(req->content_length + 1);
+        if (req->req_body == NULL) {
+            mkerror(req, 500, 0);
+            return;
+        }
+        
+        int body_read = 0;
+        char *header_end = strstr(req->hreq, "\r\n\r\n");
+        if (header_end) {
+            header_end += 4;
+            int body_start_offset = header_end - req->hreq;
+            int initial_body_len = req->hdata - body_start_offset;
+            if (initial_body_len > 0) {
+                memcpy(req->req_body, header_end, initial_body_len);
+                body_read = initial_body_len;
+            }
+        }
+
+        while (body_read < req->content_length) {
+            rc = read(req->fd, req->req_body + body_read, req->content_length - body_read);
+            if (rc <= 0) {
+                // Error or connection closed
+                free(req->req_body);
+                req->req_body = NULL;
+                mkerror(req, 400, 0);
+                return;
+            }
+            body_read += rc;
+        }
+        req->req_body[req->content_length] = '\0';
+    }
+
 
     /* take care about the hostname */
     if (virtualhosts) {
@@ -2256,7 +2308,11 @@ void parse_request(struct REQUEST *req) {
     req->cache_turn_off = 'N';
 
     // process the custom pages
-    process_custom_pages(filename, req);
+    if (strncmp(req->path, "/api/leveling", 13) == 0) {
+        handle_api_request(req, filename);
+    } else {
+        process_custom_pages(filename, req);
+    }
 
     h = filename + len - 1;
     if (*h == '/') {
