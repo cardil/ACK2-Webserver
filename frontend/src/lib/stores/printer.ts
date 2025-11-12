@@ -160,10 +160,40 @@ function createPrinterStore() {
 
     // Triggers the backend to refresh the file list for a specific printer.
     // The update will be pushed back via the 'printer_updated' event.
-    refreshFiles: (printerId: string) => {
+    refreshFiles: async (printerId: string) => {
       const config = get(webserverStore);
       if (config?.mqtt_webui_url) {
-        fetch(`${config.mqtt_webui_url}/api/printer/${printerId}/files`);
+        try {
+          const response = await fetch(`${config.mqtt_webui_url}/api/printer/${printerId}/files`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch files: ${response.statusText}`);
+          }
+          const files = await response.json();
+          update((printers) => {
+            const existingPrinter = printers[printerId];
+            if (existingPrinter) {
+              const localFiles = files.map((file: any) => ({
+                name: file.filename,
+                size: file.size,
+                timestamp: file.timestamp,
+                is_dir: file.is_dir,
+                is_local: file.is_local
+              }));
+              const updatedPrinter = {
+                ...existingPrinter,
+                files: localFiles
+              };
+              const newState = {
+                ...printers,
+                [printerId]: updatedPrinter
+              };
+              return newState;
+            }
+            return printers;
+          });
+        } catch (error) {
+          console.error('Error refreshing files:', error);
+        }
       }
     },
 

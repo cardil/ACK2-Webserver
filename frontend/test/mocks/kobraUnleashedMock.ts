@@ -87,7 +87,7 @@ function initiatePrintJob(io: SocketIOServer, filename: string, fileSize: number
     z_offset: 0.01,
     print_speed_mode: 1
   };
-  io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+  emitPrinterUpdate(io);
   console.log(`📠 [Kobra Mock] Downloading ${filename}, estimated time: ${estimatedPrintTime}s`);
 
   // Transition to preheating after a short delay
@@ -166,23 +166,28 @@ export function createKobraUnleashedSocketMock(server: ViteDevServer) {
   return io;
 }
 
+function getPrinterStateWithoutFiles(p: Printer): Omit<Printer, 'files'> {
+  const printerState = { ...p };
+  delete (printerState as Partial<Printer>).files;
+  return printerState;
+}
+
 function attachSocketListeners(io: SocketIOServer) {
   io.on('connection', (socket) => {
     console.log('🔌 [Kobra Mock] Client connected');
 
-    // Emit initial state on connection
-    socket.emit('printer_list', { [printer.id]: printer });
+    // Emit a minimal initial state to enable the UI, but without files.
+    socket.emit('printer_list', { [printer.id]: getPrinterStateWithoutFiles(printer) });
 
     socket.on('get_printer_list', () => {
-      socket.emit('printer_list', { [printer.id]: printer });
+      socket.emit('printer_list', { [printer.id]: getPrinterStateWithoutFiles(printer) });
     });
 
     socket.on('print_file', (data) => {
       if (printer.state === 'free') {
         const { file } = data;
-        // Find the file in the mock data to get its size
         const fileData = printer.files[0].find((f) => f.filename === file);
-        const fileSize = fileData?.size ?? 200000; // Default to 200KB if not found
+        const fileSize = fileData?.size ?? 200000;
         initiatePrintJob(io, file, fileSize);
       }
     });
@@ -196,7 +201,7 @@ function attachSocketListeners(io: SocketIOServer) {
         printer.state = 'paused';
         printer.print_job.state = 'paused';
         clearAllIntervals();
-        io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+        emitPrinterUpdate(io);
         console.log('📠 [Kobra Mock] Paused print job.');
       }
     });
@@ -211,7 +216,7 @@ function attachSocketListeners(io: SocketIOServer) {
     socket.on('set_fan', (data) => {
       if (printer.print_job) {
         printer.print_job.fan_speed = data.speed;
-        io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+        emitPrinterUpdate(io);
       }
     });
 
@@ -233,6 +238,16 @@ function getPublicPrinterState(): Printer {
   return publicPrinter;
 }
 
+/**
+  * Emits a 'printer_updated' event via WebSocket, ensuring the 'files' array is excluded
+  * to accurately simulate the behavior of the real Kobra Unleashed API.
+  * @param io The Socket.IO server instance.
+  */
+function emitPrinterUpdate(io: SocketIOServer) {
+  const payload = getPublicPrinterState();
+  io.emit('printer_updated', { id: printer.id, printer: getPrinterStateWithoutFiles(payload) });
+}
+
 function startPrintSimulation(io: SocketIOServer) {
   if (printJobInterval || !printer.print_job || !simulation) return;
 
@@ -245,7 +260,7 @@ function startPrintSimulation(io: SocketIOServer) {
   const wallClockTimeEquivalent = (simulatedElapsedTime * 1000) / simulation.speedMultiplier;
   simulation.startTime = Date.now() - wallClockTimeEquivalent;
 
-  io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+  emitPrinterUpdate(io);
   console.log(
     `📠 [Kobra Mock] Starting time-based print simulation (Speed: ${simulation.speedMultiplier}x).`
   );
@@ -271,7 +286,7 @@ function startPrintSimulation(io: SocketIOServer) {
       (Math.random() * 2 + 1) * (simulationInterval / 1000) * sim.speedMultiplier;
     job.supplies_usage += filamentIncrease;
 
-    io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+    emitPrinterUpdate(io);
   }, simulationInterval);
 }
 
@@ -282,7 +297,7 @@ function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') 
   const job = printer.print_job;
   if (!job) {
     printer.state = 'free';
-    io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+    emitPrinterUpdate(io);
     return;
   }
 
@@ -303,11 +318,11 @@ function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') 
   startCooldown(io);
 
   printer.state = 'free';
-  io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+  emitPrinterUpdate(io);
 
   setTimeout(() => {
     printer.print_job = null;
-    io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+    emitPrinterUpdate(io);
   }, 2000);
 }
 
@@ -317,7 +332,7 @@ function startPreheating(io: SocketIOServer) {
   printer.print_job!.state = 'preheating';
   printer.target_nozzle_temp = String(TARGET_NOZZLE_TEMP);
   printer.target_hotbed_temp = String(TARGET_BED_TEMP);
-  io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+  emitPrinterUpdate(io);
   console.log('📠 [Kobra Mock] Preheating...');
 
   const steps = PREHEAT_SECONDS;
@@ -342,7 +357,7 @@ function startPreheating(io: SocketIOServer) {
     printer.hotbed_temp = String(
       Math.round(initialBedTemp + (TARGET_BED_TEMP - initialBedTemp) * fraction)
     );
-    io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+    emitPrinterUpdate(io);
   }, 1000);
 }
 
@@ -350,7 +365,7 @@ function startCooldown(io: SocketIOServer) {
   clearAllIntervals();
   printer.target_nozzle_temp = '0';
   printer.target_hotbed_temp = '0';
-  io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+  emitPrinterUpdate(io);
   console.log('📠 [Kobra Mock] Cooling down...');
 
   const steps = COOLDOWN_SECONDS;
@@ -365,7 +380,7 @@ function startCooldown(io: SocketIOServer) {
       tempInterval = null;
       printer.nozzle_temp = String(ROOM_TEMP);
       printer.hotbed_temp = String(ROOM_TEMP);
-      io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+      emitPrinterUpdate(io);
       return;
     }
 
@@ -376,6 +391,6 @@ function startCooldown(io: SocketIOServer) {
     printer.hotbed_temp = String(
       Math.round(initialBedTemp - (initialBedTemp - ROOM_TEMP) * fraction)
     );
-    io.emit('printer_updated', { id: printer.id, printer: getPublicPrinterState() });
+    emitPrinterUpdate(io);
   }, 1000);
 }
