@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, createEventDispatcher } from "svelte";
   import type { ECharts, EChartsOption } from "echarts";
   import { TooltipComponent, VisualMapComponent } from "echarts/components";
   import { CanvasRenderer } from "echarts/renderers";
@@ -7,6 +7,8 @@
   import { Grid3DComponent } from "echarts-gl/components";
   import { getInstanceByDom, init, use } from "echarts/core";
   import { theme, type Theme } from "$lib/stores/theme";
+  import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+  import { faPencilAlt, faSave } from '@fortawesome/free-solid-svg-icons';
 
   use([
     CanvasRenderer,
@@ -17,9 +19,12 @@
   ]);
 
   export let meshData: number[][] = [];
+  export let isEditing = false;
   let chartContainer: HTMLDivElement;
   let chart: ECharts | undefined;
   let resizeObserver: ResizeObserver;
+
+  const dispatch = createEventDispatcher();
 
   function getThemeColors(currentTheme: Theme) {
     const isDarkMode = currentTheme === 'dark' || (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -129,6 +134,7 @@
           shading: "color",
           itemStyle: {
             color: "#fff",
+            opacity: 0.925
           },
           wireframe: {
             show: true,
@@ -185,11 +191,53 @@
   }
 </script>
 
-<div bind:this={chartContainer} class="chart-container"></div>
+<div class="visualizer-wrapper">
+  <div bind:this={chartContainer} class="chart-container"></div>
+  <div class="fab-container">
+    {#if isEditing}
+      <button class="fab save" on:click={() => dispatch('save')} title="Save Mesh">
+        <FontAwesomeIcon icon={faSave} />
+      </button>
+    {:else}
+      <button class="fab edit" on:click={() => dispatch('edit')} title="Edit Mesh">
+        <FontAwesomeIcon icon={faPencilAlt} />
+      </button>
+    {/if}
+  </div>
+</div>
 
 <style>
+  .visualizer-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
   .chart-container {
     width: 100%;
     height: 100%;
+  }
+  .fab-container {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+  }
+  .fab {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  .fab.edit {
+    background-color: var(--accent-color);
+  }
+  .fab.save {
+    background-color: #28a745;
   }
 </style>

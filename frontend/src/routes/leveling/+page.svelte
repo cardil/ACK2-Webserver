@@ -14,6 +14,7 @@
     faFileMedical,
     faHdd
   } from '@fortawesome/free-solid-svg-icons';
+  import { get } from 'svelte/store';
   import { levelingStore } from '$lib/stores/leveling';
   import type { MeshProfile } from '$lib/stores/leveling';
   import Spinner from '$lib/components/Spinner.svelte';
@@ -31,6 +32,8 @@
 
 
   // --- Component State ---
+  let isEditing = false;
+  let editedMeshData: number[][] = [];
   let visualizedMeshData: number[][] = [];
   let visualizedSlotId: number | string | null = null;
   let activeSlotId: number | string | null = null;
@@ -90,8 +93,21 @@
 
   // --- UI Functions ---
 
+  function enterEditMode() {
+    // Create a deep copy of the data for editing
+    editedMeshData = JSON.parse(JSON.stringify(visualizedMeshData));
+    visualizedSlotId = null; // Remove visualized state
+    isEditing = true;
+  }
+
   function visualizeSlot(slot: MeshProfile) {
     if (slot) {
+      if (isEditing) {
+        if (!confirm('Are you sure you want to cancel editing? All changes will be lost.')) {
+          return;
+        }
+        isEditing = false;
+      }
       visualizedMeshData = slot.data;
       visualizedSlotId = slot.id;
     }
@@ -155,9 +171,24 @@
   }
 
 
-  function handleSaveMesh(event: CustomEvent<{ slot: number }>) {
-    levelingStore.saveActiveMesh(event.detail.slot);
+  async function handleSaveMesh(event: CustomEvent<{ slot: number }>) {
+    const slotId = event.detail.slot;
     isSaveModalOpen = false;
+
+    if (isEditing) {
+      await levelingStore.saveEditedMesh(slotId, editedMeshData);
+      isEditing = false;
+      const savedMesh = get(levelingStore).savedMeshes.find(s => s.id === slotId);
+      if (savedMesh) {
+        visualizeSlot(savedMesh);
+      }
+    } else {
+      await levelingStore.saveActiveMesh(slotId);
+      const savedMesh = get(levelingStore).savedMeshes.find(s => s.id === slotId);
+      if (savedMesh) {
+        visualizeSlot(savedMesh);
+      }
+    }
   }
 
   function deleteSlot(slotId: number) {
@@ -319,11 +350,20 @@
     <!-- Bed Mesh Visualizer Card -->
     <Card style="height: 100%;">
       <div class="tool-section">
-        <h3 class="card-title"><FontAwesomeIcon icon={faFileMedical} /> Bed Mesh Visualizer</h3>
+        <h3 class="card-title"><FontAwesomeIcon icon={faFileMedical} /> {isEditing ? 'Bed Mesh Editor' : 'Bed Mesh Visualizer'}</h3>
         <div style="flex-grow: 1; min-height: 0;">
-          <BedMeshVisualizer meshData={visualizedMeshData} />
+          <BedMeshVisualizer
+            meshData={isEditing ? editedMeshData : visualizedMeshData}
+            {isEditing}
+            on:edit={enterEditMode}
+            on:save={() => (isSaveModalOpen = true)}
+          />
         </div>
-        <BedMeshDataTable meshData={visualizedMeshData} />
+        <BedMeshDataTable
+          meshData={visualizedMeshData}
+          {isEditing}
+          bind:editedMeshData
+        />
       </div>
     </Card>
   </div>

@@ -1,9 +1,17 @@
 <script lang="ts">
+  import { theme } from '$lib/stores/theme';
+
   export let meshData: number[][] = [];
+  export let isEditing = false;
+  export let editedMeshData: number[][] = [];
 
   // Find min and max values for color scaling
   $: min = Math.min(...meshData.flat());
   $: max = Math.max(...meshData.flat());
+
+  // Pre-determined text colors for high contrast on each color scale step
+  const textColorsLight = ['white', 'white', 'white', 'black', 'black', 'black', 'black', 'black', 'white', 'white', 'white'];
+  const textColorsDark = ['white', 'white', 'white', 'white', 'white', 'white', 'black', 'black', 'black', 'black', 'black'];
 
   function getColorInfo(value: number): { class: string; textColor: string } {
     if (min === max) {
@@ -14,20 +22,8 @@
     const colorIndex = Math.round(normalized * 10);
     const className = `color-${colorIndex}`;
 
-    // Determine text color for contrast
-    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    let textColor = 'white';
-    if (isDarkMode) {
-      // Viridis: brightest at the end
-      if (colorIndex > 8) {
-        textColor = 'black';
-      }
-    } else {
-      // RdBu: brightest in the middle
-      if (colorIndex > 3 && colorIndex < 7) {
-        textColor = 'black';
-      }
-    }
+    const isDarkMode = $theme === 'dark' || ($theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const textColor = isDarkMode ? textColorsDark[colorIndex] : textColorsLight[colorIndex];
 
     return { class: className, textColor: textColor };
   }
@@ -36,21 +32,39 @@
 <div class="table-container">
   <table>
     <tbody>
-      {#each meshData as row}
-        <tr>
-          {#each row as cell}
-            {@const { class: className, textColor } = getColorInfo(cell)}
-            <td class="{className}" style="color: {textColor};">
-              {cell.toFixed(4)}
-            </td>
-          {/each}
-        </tr>
-      {/each}
+      {#key $theme}
+        {#each meshData as row, i}
+          <tr>
+            {#each row as cell, j}
+              {@const { class: className, textColor } = getColorInfo(cell)}
+              <td class="{className}" style="color: {textColor};">
+                {#if isEditing}
+                  <input type="number" step="0.001" bind:value={editedMeshData[i][j]} />
+                {:else}
+                  {cell.toFixed(4)}
+                {/if}
+              </td>
+            {/each}
+          </tr>
+        {/each}
+      {/key}
     </tbody>
   </table>
 </div>
 
 <style>
+  input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: inherit;
+    text-align: center;
+    font-family: monospace;
+    font-size: 1em;
+  }
+  input:focus {
+    outline: 1px solid var(--accent-color);
+  }
   /* Define the color scales as CSS variables */
   :root {
     /* RdBu for light mode */
@@ -94,7 +108,7 @@
     text-align: center;
   }
   td {
-    padding: 0.25rem 0.5rem;
+    padding: 0;
     border: 1px solid var(--card-border-color);
   }
 

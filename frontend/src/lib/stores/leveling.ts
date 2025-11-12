@@ -183,6 +183,17 @@ function createLevelingStore() {
     }
   }
 
+  async function saveEditedMesh(slotId: number, editedData: number[][]) {
+    update(s => ({ ...s, isUpdating: true }));
+    try {
+      const meshData = editedData.flat().join(', ');
+      await api.saveActiveMesh(slotId, meshData); // Re-use the same API endpoint
+      await fetchData();
+    } catch (e: any) {
+      update(s => ({ ...s, isUpdating: false, error: e.message || `Failed to save edited mesh to slot ${slotId}.` }));
+    }
+  }
+
   async function activateSlot(slotId: number) {
     update(s => ({ ...s, isUpdating: true }));
     try {
@@ -240,6 +251,7 @@ function createLevelingStore() {
     deleteSlot,
     saveSettings,
     saveActiveMesh,
+    saveEditedMesh,
     activateSlot,
     deleteAllSlots,
     activateAverageMesh
