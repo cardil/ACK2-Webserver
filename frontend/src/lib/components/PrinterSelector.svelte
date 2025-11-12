@@ -1,6 +1,9 @@
 <script lang="ts">
   import { printerStore } from '$lib/stores/printer';
   import { activePrinterIdStore } from '$lib/stores/activePrinterId';
+  import { kobraConnectionStore } from '$lib/stores/kobraConnection';
+  import { webserverStore } from '$lib/stores/webserver';
+  import { get } from 'svelte/store';
 
   $: printers = Object.values($printerStore);
   $: activePrinterId = $activePrinterIdStore;
@@ -18,13 +21,26 @@
     activePrinterIdStore.select(id);
     showSelector = false;
   }
+
+  let tooltip = '';
+  $: {
+    const status = $kobraConnectionStore;
+    const config = get(webserverStore);
+    const printerName = activePrinter?.name;
+
+    if (status === 'connected' && printerName && config?.mqtt_webui_url) {
+      tooltip = `${printerName} printer connected via ${config.mqtt_webui_url}`;
+    } else {
+      tooltip = printerName ?? 'Offline';
+    }
+  }
 </script>
 
 <div class="printer-selector">
   <button
     class="status-orb"
     class:online={activePrinter?.online}
-    title={activePrinter?.name ?? 'Offline'}
+    title={tooltip}
     on:click={handleOrbClick}
     disabled={!activePrinter}
   ></button>
