@@ -8,6 +8,7 @@ interface PrintSimulation {
   totalPrintTime: number; // The total real duration of the print in seconds
   startTime: number; // The timestamp when the print started
   shouldPubliclyHaveEta: boolean; // Flag to control if the UI sees the ETA
+  shouldHaveTotalLayers: boolean; // Flag to control if the UI sees total layers
   speedMultiplier: number;
 }
 
@@ -67,8 +68,12 @@ function initiatePrintJob(io: SocketIOServer, filename: string, fileSize: number
 
   // 50% chance of having no ETA from the slicer
   const hasEta = Math.random() < 0.5;
+  const hasTotalLayers = Math.random() < 0.5;
   if (!hasEta) {
     console.log('📠 [Kobra Mock] Simulating a job with no initial ETA.');
+  }
+  if (!hasTotalLayers) {
+    console.log('📠 [Kobra Mock] Simulating a job with no total layers.');
   }
 
   // Set up the internal simulation state
@@ -77,6 +82,7 @@ function initiatePrintJob(io: SocketIOServer, filename: string, fileSize: number
     totalPrintTime: estimatedPrintTime,
     startTime: 0, // Will be set when preheating finishes
     shouldPubliclyHaveEta: hasEta,
+    shouldHaveTotalLayers: hasTotalLayers,
     speedMultiplier
   };
 
@@ -90,7 +96,7 @@ function initiatePrintJob(io: SocketIOServer, filename: string, fileSize: number
     progress: 0,
     print_time: 0,
     supplies_usage: 0,
-    total_layers: totalLayers,
+    total_layers: hasTotalLayers ? totalLayers : -1,
     curr_layer: 0,
     fan_speed: 100,
     z_offset: 0.01,
@@ -287,7 +293,7 @@ function startPrintSimulation(io: SocketIOServer) {
       return;
     }
 
-    job.print_time = elapsedTime;
+    job.print_time = elapsedTime / 60;
     job.progress = Math.min(100, Math.round((elapsedTime / sim.totalPrintTime) * 100));
     job.remaining_time = sim.totalPrintTime - elapsedTime;
     job.curr_layer = Math.floor((job.progress / 100) * job.total_layers);
@@ -300,6 +306,7 @@ function startPrintSimulation(io: SocketIOServer) {
 }
 
 function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') {
+  const currentSimulation = simulation;
   clearAllIntervals();
   simulation = null;
 
@@ -314,8 +321,8 @@ function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') 
   job.state = finalState;
   job.progress = finalState === 'done' ? 100 : job.progress;
 
-  if (finalState === 'done') {
-    //
+  if (finalState === 'done' && currentSimulation) {
+    job.print_time = currentSimulation.totalPrintTime / 60;
   }
   startCooldown(io);
 
@@ -334,6 +341,9 @@ function startPreheating(io: SocketIOServer) {
   printer.print_job!.state = 'preheating';
   printer.target_nozzle_temp = String(TARGET_NOZZLE_TEMP);
   printer.target_hotbed_temp = String(TARGET_BED_TEMP);
+  if (printer.print_job) {
+    printer.print_job.remaining_time = -1;
+  }
   emitPrinterUpdate(io);
   console.log('📠 [Kobra Mock] Preheating...');
 

@@ -39,35 +39,11 @@ export interface Printer {
   files: FileElement[][];
 }
 
-const staticFileList = [
-  {
-    filename: 'benchy.gcode',
-    size: 123456,
-    timestamp: 1709932644,
-    is_dir: false,
-    is_local: true,
-  },
-  {
-    filename: 'flat-test.gcode',
-    size: 7890,
-    timestamp: 1709932645,
-    is_dir: false,
-    is_local: true,
-  },
-  {
-    filename: 'calibration-cube.gcode',
-    size: 4567,
-    timestamp: 1709932646,
-    is_dir: false,
-    is_local: true,
-  },
-  {
-    filename: 'wh40k-spacemarine.gcode',
-    size: 987654,
-    timestamp: 1709932647,
-    is_dir: false,
-    is_local: true,
-  },
+const staticFileNames = [
+  'benchy.gcode',
+  'flat-test.gcode',
+  'calibration-cube.gcode',
+  'wh40k-spacemarine.gcode',
 ];
 
 function generateRandomString(length: number) {
@@ -81,7 +57,7 @@ function generateRandomString(length: number) {
 }
 
 function formatTimestamp(timestamp: number) {
-  const date = new Date(timestamp * 1000);
+  const date = new Date(timestamp);
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');
@@ -92,14 +68,14 @@ function formatTimestamp(timestamp: number) {
 }
 
 const largeFileList = Array.from({ length: 95 }, (_, i) => {
-  const staticFile = staticFileList[i % staticFileList.length];
-  const maxTimestamp = Date.now() / 1000;
-  const minTimestamp = maxTimestamp - 1.5 * 365 * 24 * 3600;
+  const staticFileName = staticFileNames[i % staticFileNames.length];
+  const maxTimestamp = Date.now();
+  const minTimestamp = maxTimestamp - 1.5 * 365 * 24 * 3600 * 1000;
   const timestamp = Math.floor(Math.random() * (maxTimestamp - minTimestamp) + minTimestamp);
   const randomString = generateRandomString(16);
   const formattedTimestamp = formatTimestamp(timestamp);
   return {
-    filename: `${staticFile.filename.replace(
+    filename: `${staticFileName.replace(
       '.gcode',
       ''
     )}_${randomString}_${formattedTimestamp}.gcode`,

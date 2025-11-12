@@ -55,8 +55,28 @@
   $: status = printer?.state ?? 'offline';
   $: progress = printer?.print_job?.progress ?? 0;
   $: fileName = printer?.print_job?.filename ?? 'No file';
-  $: printTime = formatDuration(printer?.print_job?.print_time ?? 0);
-  $: layers = `${printer?.print_job?.curr_layer ?? 0} / ${printer?.print_job?.total_layers ?? 0}`;
+  $: printTime = formatDuration((printer?.print_job?.print_time ?? 0) * 60);
+  $: layers = (() => {
+    const job = printer?.print_job;
+    const total_layers = job?.total_layers;
+    const curr_layer = job?.curr_layer;
+
+    // Use ?? -1 to handle case where job is null, so check becomes false
+    const total_layers_known = (total_layers ?? -1) >= 0;
+    const curr_layer_known = (curr_layer ?? -1) >= 0;
+
+    if (curr_layer_known && total_layers_known) {
+      return `${curr_layer} / ${total_layers}`;
+    }
+    if (curr_layer_known && !total_layers_known) {
+      return `${curr_layer}`;
+    }
+    if (!curr_layer_known && total_layers_known) {
+      return `? / ${total_layers}`;
+    }
+    // This covers !curr_layer_known && !total_layers_known
+    return 'N/A';
+  })();
   $: fanSpeed = `${printer?.print_job?.fan_speed ?? 0}%`;
   $: zOffset = printer?.print_job?.z_offset ?? 0;
   $: filamentUsed = (() => {
@@ -83,8 +103,8 @@
 
     // Otherwise, calculate it if we have enough data
     if (job.progress > 0 && job.print_time > 0) {
-      const totalEstimatedTime = (job.print_time / job.progress) * 100;
-      const remainingTime = totalEstimatedTime - job.print_time;
+      const totalEstimatedTime = (job.print_time * 60) / (job.progress / 100);
+      const remainingTime = totalEstimatedTime - (job.print_time * 60);
       return formatDuration(remainingTime);
     }
 

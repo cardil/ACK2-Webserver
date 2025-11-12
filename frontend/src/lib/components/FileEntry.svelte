@@ -10,7 +10,7 @@
   export let onReprint: () => void;
   export let disabled = false;
 
-  $: timeAgo = formatTimestamp(file.timestamp, $time / 1000);
+  $: timeAgo = formatTimestamp(file.timestamp / 1000, $time / 1000);
   $: formattedSize = formatFileSize(file.size);
 </script>
 
