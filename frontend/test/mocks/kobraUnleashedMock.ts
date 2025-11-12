@@ -51,6 +51,15 @@ function calculateSpeedMultiplier(totalPrintTimeSeconds: number): number {
 function initiatePrintJob(io: SocketIOServer, filename: string, fileSize: number) {
   clearAllIntervals();
 
+  const newFile = {
+    filename,
+    size: fileSize,
+    timestamp: Math.floor(Date.now() / 1000),
+    is_dir: false,
+    is_local: true,
+  };
+  printer.files[0].unshift(newFile);
+
   // Heuristics for print time and layers
   const fileSizeInKb = fileSize / 1024;
   const estimatedPrintTime = (fileSizeInKb / 100) * 6 * 60; // 100KB = 6 mins
@@ -306,14 +315,7 @@ function stopPrintSimulation(io: SocketIOServer, finalState: 'done' | 'failed') 
   job.progress = finalState === 'done' ? 100 : job.progress;
 
   if (finalState === 'done') {
-    const completedFile = {
-      filename: job.filename,
-      size: Math.floor(Math.random() * 100000),
-      timestamp: job.print_time,
-      is_dir: false,
-      is_local: true
-    };
-    printer.files[0].unshift(completedFile);
+    //
   }
   startCooldown(io);
 

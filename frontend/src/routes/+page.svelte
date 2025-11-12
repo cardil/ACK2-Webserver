@@ -7,6 +7,33 @@
   import { webserverStore } from '$lib/stores/webserver';
   import { kobraConnectionStore } from '$lib/stores/kobraConnection';
   import ConnectionOverlay from '$lib/components/ConnectionOverlay.svelte';
+  import { printerStore, type Printer } from '$lib/stores/printer';
+  import { activePrinterIdStore } from '$lib/stores/activePrinterId';
+  import { derived } from 'svelte/store';
+
+  let activePrinter: Printer | undefined;
+  const activePrinterStore = derived(
+    [printerStore, activePrinterIdStore],
+    ([$printerStore, $activePrinterIdStore]) => {
+      return $activePrinterIdStore ? $printerStore[$activePrinterIdStore] : undefined;
+    }
+  );
+
+  let wasPrinting = false;
+  activePrinterStore.subscribe((printer) => {
+    activePrinter = printer;
+    const isPrinting =
+      activePrinter?.state === 'printing' ||
+      activePrinter?.state === 'paused' ||
+      activePrinter?.state === 'preheating' ||
+      activePrinter?.state === 'downloading';
+
+    if (isPrinting && !wasPrinting && activePrinter) {
+      printerStore.refreshFiles(activePrinter.id);
+    }
+
+    wasPrinting = isPrinting;
+  });
 
   let printerModel = '';
   let fwVersion = '';

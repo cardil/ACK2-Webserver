@@ -130,12 +130,24 @@ function createPrinterStore() {
         }
       });
 
-      socket.on('printer_updated', ({ id, printer }: { id:string; printer: any }) => {
-        update((currentPrinters) => ({
-          ...currentPrinters,
-          [id]: transformRawPrinterData(printer)
-        }));
+      socket.on('printer_updated', ({ id, printer }: { id: string; printer: any }) => {
+        update((currentPrinters) => {
+          const existingPrinter = currentPrinters[id];
+          const updatedPrinter = transformRawPrinterData(printer);
+
+          // Always preserve the file list from the existing state, as the
+          // 'printer_updated' event does not contain it. The file list is
+          // managed separately by the `refreshFiles` function.
+          if (existingPrinter) {
+            updatedPrinter.files = existingPrinter.files;
+          }
+
+          return {
+            ...currentPrinters,
+            [id]: updatedPrinter
+          };
         });
+      });
       socket.on('disconnect', () => {
         kobraConnectionStore.set('error');
         console.log('Disconnected from Kobra Unleashed');
