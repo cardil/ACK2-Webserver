@@ -27,27 +27,78 @@ export interface LevelingStatus {
   saved_meshes: SavedMesh[];
 }
 
+// Function to generate dynamic mesh data for slopes
+type SlopeDirection = 'x-positive' | 'x-negative' | 'y-positive' | 'y-negative' | 'flat';
+
+function generateSlopedMeshData(gridSize: number, direction: SlopeDirection = 'y-positive'): string {
+  const mesh: number[][] = [];
+  for (let i = 0; i < gridSize; i++) {
+    const row: number[] = [];
+    for (let j = 0; j < gridSize; j++) {
+      let value = 0;
+      const curve = Math.sin((i / (gridSize - 1)) * Math.PI) * 0.02; // Gentle sine curve
+
+      switch (direction) {
+        case 'x-positive':
+          value = -0.05 + (0.1 / (gridSize - 1)) * i + curve;
+          break;
+        case 'x-negative':
+          value = 0.05 - (0.1 / (gridSize - 1)) * i + curve;
+          break;
+        case 'y-positive':
+          value = -0.05 + (0.1 / (gridSize - 1)) * j + curve;
+          break;
+        case 'y-negative':
+          value = 0.05 - (0.1 / (gridSize - 1)) * j + curve;
+          break;
+        case 'flat':
+        default:
+          value = 0.01; // A simple flat mesh for contrast
+          break;
+      }
+      row.push(value);
+    }
+    mesh.push(row);
+  }
+  return mesh.flat().map(v => v.toFixed(6)).join(', ');
+}
+
 // Mock data based on the C API structure
 const mockLevelingStatus: LevelingStatus = {
   settings: {
     grid_size: 5,
     bed_temp: 60,
     precision: 0.01,
-    z_offset: 0.123, // z_offset is in settings
+    z_offset: 1.443, // z_offset is in settings
   },
   active_mesh: {
-    mesh_data: "0.01, 0.02, 0.03, 0.02, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.03, 0.04, 0.05, 0.04, 0.03, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.02, 0.03, 0.02, 0.01",
+    mesh_data: generateSlopedMeshData(5, 'y-positive'),
   },
   saved_meshes: [
     {
       id: 1,
       date: "2025-11-12 10:30:00",
-      mesh_data: "0.05, 0.06, 0.07, 0.06, 0.05, 0.06, 0.07, 0.08, 0.07, 0.06, 0.07, 0.08, 0.09, 0.08, 0.07, 0.06, 0.07, 0.08, 0.07, 0.06, 0.05, 0.06, 0.07, 0.06, 0.05",
+      mesh_data: generateSlopedMeshData(5, 'x-positive'),
     },
     {
       id: 2,
       date: "2025-11-11 15:45:00",
-      mesh_data: "-0.01, -0.02, -0.03, -0.02, -0.01, -0.02, -0.03, -0.04, -0.03, -0.02, -0.03, -0.04, -0.05, -0.04, -0.03, -0.02, -0.03, -0.04, -0.03, -0.02, -0.01, -0.02, -0.03, -0.02, -0.01",
+      mesh_data: generateSlopedMeshData(5, 'x-negative'),
+    },
+    {
+      id: 3,
+      date: "2025-11-12 10:30:00",
+      mesh_data: generateSlopedMeshData(5, 'y-positive'),
+    },
+    {
+      id: 4,
+      date: "2025-11-11 15:45:00",
+      mesh_data: generateSlopedMeshData(5, 'y-negative'),
+    },
+    {
+      id: 10,
+      date: "2025-11-12 22:45:00",
+      mesh_data: generateSlopedMeshData(5, 'flat'),
     },
   ],
 };

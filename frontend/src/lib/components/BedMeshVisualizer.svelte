@@ -1,134 +1,195 @@
 <script lang="ts">
-  // @ts-nocheck
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy } from "svelte";
+  import type { ECharts, EChartsOption } from "echarts";
+  import { TooltipComponent, VisualMapComponent } from "echarts/components";
+  import { CanvasRenderer } from "echarts/renderers";
+  import { SurfaceChart } from "echarts-gl/charts";
+  import { Grid3DComponent } from "echarts-gl/components";
+  import { getInstanceByDom, init, use } from "echarts/core";
+  import { theme, type Theme } from "$lib/stores/theme";
+
+  use([
+    CanvasRenderer,
+    SurfaceChart,
+    Grid3DComponent,
+    TooltipComponent,
+    VisualMapComponent,
+  ]);
 
   export let meshData: number[][] = [];
-  let plotContainer: HTMLDivElement;
-  let themeObserver: MutationObserver;
+  let chartContainer: HTMLDivElement;
+  let chart: ECharts | undefined;
   let resizeObserver: ResizeObserver;
-  let Plotly: any;
-  let themeChangeHandler: () => void;
-  let mediaQuery: MediaQueryList;
 
-  function getThemeColors() {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return {
-        backgroundColor: 'rgba(30, 30, 30, 1)',
-        textColor: '#ffffff',
-        gridColor: 'rgba(70, 70, 70, 1)'
-      };
-    }
+  function getThemeColors(currentTheme: Theme) {
+    const isDarkMode = currentTheme === 'dark' || (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     return {
-      backgroundColor: 'rgba(255, 255, 255, 1)',
-      textColor: '#000000',
-      gridColor: 'rgba(220, 220, 220, 1)'
+      backgroundColor: isDarkMode ? "#1e1e1e" : "#ffffff",
+      textColor: isDarkMode ? "#ffffff" : "#000000",
+      axisLineColor: isDarkMode ? "#aaaaaa" : "#333333",
+      // Viridis color scheme for dark mode
+      colorScheme: isDarkMode ?
+        [
+          '#440154',
+          '#482878',
+          '#3e4989',
+          '#31688e',
+          '#26828e',
+          '#1f9e89',
+          '#35b779',
+          '#6ece58',
+          '#b5de2b',
+          '#fde725'
+        ] :
+        // RdBu color scheme for light mode
+        [
+          "#313695",
+          "#4575b4",
+          "#74add1",
+          "#abd9e9",
+          "#e0f3f8",
+          "#ffffbf",
+          "#fee090",
+          "#fdae61",
+          "#f46d43",
+          "#d73027",
+          "#a50026",
+        ]
     };
   }
 
-  function drawPlot() {
-    if (!plotContainer || !meshData || !Array.isArray(meshData) || meshData.length === 0 || !Array.isArray(meshData[0]) || meshData[0].length === 0) {
+  function getChartOption(data: number[][], currentTheme: Theme): EChartsOption {
+    const themeColors = getThemeColors(currentTheme);
+    const flatData = data.flatMap((row, rowIndex) =>
+      row.map((value, colIndex) => [rowIndex, colIndex, value]),
+    );
+    const min = Math.min(...data.flat());
+    const max = Math.max(...data.flat());
+
+    return {
+      tooltip: {},
+      backgroundColor: "transparent",
+      visualMap: {
+        min: min,
+        max: max,
+        inRange: {
+          color: themeColors.colorScheme,
+        },
+        textStyle: {
+          color: themeColors.textColor,
+        },
+        calculable: true,
+        realtime: false,
+        left: "right",
+        top: "center",
+      },
+      xAxis3D: {
+        type: "value",
+      },
+      yAxis3D: {
+        type: "value",
+      },
+      zAxis3D: {
+        type: "value",
+      },
+      grid3D: {
+        boxWidth: 220,
+        boxDepth: 220,
+        viewControl: {
+          projection: "perspective",
+          autoRotate: false,
+          distance: 350,
+          alpha: 15,
+          beta: 105
+        },
+        light: {
+          main: {
+            intensity: 1.2,
+          },
+          ambient: {
+            intensity: 0.3,
+          },
+        },
+        axisLine: {
+          lineStyle: {
+            color: themeColors.axisLineColor,
+          },
+        },
+        axisPointer: {
+          lineStyle: {
+            color: themeColors.axisLineColor,
+          },
+        },
+      },
+      // @ts-ignore
+      series: [
+        {
+          type: "surface",
+          data: flatData,
+          shading: "color",
+          itemStyle: {
+            color: "#fff",
+          },
+          wireframe: {
+            show: true,
+          },
+          emphasis: {
+            label: {
+              show: false,
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  function drawChart(currentTheme: Theme) {
+    if (!chartContainer || !meshData || meshData.length === 0) {
       return;
     }
-
-    const theme = getThemeColors();
-
-    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    const data: Plotly.Data[] = [{
-      z: [...meshData].reverse(),
-      type: 'surface',
-      colorscale: isDarkMode ? 'Viridis' : 'RdBu',
-      contours: {
-        z: {
-          show: true,
-          usecolormap: true,
-          highlightcolor: "#42f462",
-          project: { z: true }
-        }
-      }
-    }];
-
-    const layout: Partial<Plotly.Layout> = {
-      autosize: true,
-      paper_bgcolor: theme.backgroundColor,
-      font: {
-        color: theme.textColor
-      },
-      margin: { l: 0, r: 0, b: 0, t: 0 },
-      scene: {
-        camera: {
-          eye: { x: 0, y: -1.5, z: 1.5 }
-        },
-        aspectmode: 'cube',
-        xaxis: {
-          gridcolor: theme.gridColor,
-          zerolinecolor: theme.gridColor,
-          showbackground: false
-        },
-        yaxis: {
-          gridcolor: theme.gridColor,
-          zerolinecolor: theme.gridColor,
-          showbackground: false
-        },
-        zaxis: {
-          gridcolor: theme.gridColor,
-          zerolinecolor: theme.gridColor,
-          showbackground: false
-        }
-      }
-    };
-
-    Plotly.react(plotContainer, data, layout, { responsive: true });
+    const option = getChartOption(meshData, currentTheme);
+    const currentChart =
+      getInstanceByDom(chartContainer) ||
+      init(chartContainer, undefined, { renderer: "canvas" });
+    currentChart.setOption(option);
+    // @ts-ignore
+    chart = currentChart;
   }
 
-  onMount(async () => {
-    // Dynamically import Plotly only on the client-side
-    const PlotlyModule = await import('plotly.js-dist-min');
-    Plotly = PlotlyModule.default;
-
-    drawPlot();
-
-    // Observe theme changes
-    mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    themeChangeHandler = () => drawPlot();
-    mediaQuery.addEventListener('change', themeChangeHandler);
-
-    // Also handle direct style changes on the body if any
-    themeObserver = new MutationObserver(themeChangeHandler);
-    themeObserver.observe(document.body, { attributes: true, attributeFilter: ['style', 'class'] });
-
-    // Watch for container resize events
-    resizeObserver = new ResizeObserver(() => {
-      if (Plotly && plotContainer) {
-        Plotly.Plots.resize(plotContainer);
-      }
+  onMount(() => {
+    const unsubscribe = theme.subscribe(currentTheme => {
+      drawChart(currentTheme);
     });
-    resizeObserver.observe(plotContainer);
+
+    resizeObserver = new ResizeObserver(() => {
+      chart?.resize();
+    });
+    resizeObserver.observe(chartContainer);
+
+    return () => {
+      unsubscribe();
+      chart?.dispose();
+      resizeObserver.disconnect();
+    };
   });
 
   onDestroy(() => {
-    if (mediaQuery && themeChangeHandler) {
-      mediaQuery.removeEventListener('change', themeChangeHandler);
-    }
-    if (themeObserver) {
-      themeObserver.disconnect();
-    }
+    chart?.dispose();
     if (resizeObserver) {
       resizeObserver.disconnect();
     }
   });
 
-  $: if (meshData && Plotly) {
-    drawPlot();
+  $: if (meshData && chartContainer) {
+    drawChart($theme);
   }
 </script>
 
-<div bind:this={plotContainer} class="plot-container"></div>
+<div bind:this={chartContainer} class="chart-container"></div>
 
 <style>
-  .plot-container {
+  .chart-container {
     width: 100%;
     height: 100%;
-    min-height: 400px; /* Ensure it has a decent size */
   }
 </style>

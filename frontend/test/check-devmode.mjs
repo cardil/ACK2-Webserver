@@ -35,18 +35,20 @@ try {
   }
 
   const port = address.port;
-  const url = `http://localhost:${port}`;
+  const baseUrl = `http://localhost:${port}`;
 
-  console.log(`Vite server listening on ${url}. Making a test request...`);
+  console.log(`Vite server listening on ${baseUrl}. Making test requests...`);
 
-  // Make a request to the root to trigger middleware execution.
-  // We wrap this in a try/catch in case the server is completely broken,
-  // but we expect it to return a 500 without throwing.
-  try {
-    await fetch(url);
-  } catch (fetchError) {
-    // If fetch itself fails, that's a critical error.
-    capturedErrors.push(`Fetch failed: ${fetchError.message}`);
+  const pathsToTest = ['/', '/leveling'];
+
+  for (const path of pathsToTest) {
+    const url = `${baseUrl}${path}`;
+    console.log(`- Testing ${url}...`);
+    try {
+      await fetch(url);
+    } catch (fetchError) {
+      capturedErrors.push(`Fetch failed for ${path}: ${fetchError.message}`);
+    }
   }
 
   // Now, check if our logger captured any errors during the server's lifecycle.
@@ -56,7 +58,7 @@ try {
     throw new Error('Smoke test failed due to logged errors.');
   }
 
-  console.log('✅ Vite server started and handled initial request without errors.');
+  console.log('✅ Vite server started and handled all test requests without errors.');
 
   await server.close();
   process.exit(0);

@@ -49,5 +49,12 @@ export default defineConfig({
         });
       }
     }
-  ]
+  ],
+  ssr: {
+    noExternal: [
+      'echarts',
+      'echarts-gl',
+      'claygl'
+    ]
+  }
 });

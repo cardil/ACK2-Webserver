@@ -4,6 +4,7 @@
   import BedMeshIcon from '$lib/components/icons/BedMeshIcon.svelte';
   import FilesIcon from '$lib/components/icons/FilesIcon.svelte';
   import AboutIcon from '$lib/components/icons/AboutIcon.svelte';
+  import ThemeSwitcher from '$lib/components/ThemeSwitcher.svelte';
   import Logo from '$lib/components/icons/Logo.svelte';
 
   let isOpen = false;
@@ -32,6 +33,9 @@
     <li><a href="/leveling"><LevelingIcon /><span>Leveling Tools</span></a></li>
     <li><a href="/files"><FilesIcon /><span>Logs & Files</span></a></li>
     <li><a href="/about"><AboutIcon /><span>About</span></a></li>
+    <li class="theme-switcher-item">
+      <ThemeSwitcher isOpen={isOpen} />
+    </li>
   </ul>
 </nav>
 
@@ -43,6 +47,8 @@
     transition: width 0.3s;
     overflow-x: hidden; /* Hide horizontal overflow */
     z-index: 100;
+    display: flex;
+    flex-direction: column;
   }
   nav.open {
     width: 250px;
@@ -76,6 +82,9 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Allow the list to grow and push the last item down */
   }
   li a {
     display: flex;
@@ -97,4 +106,8 @@
     opacity: 1;
   }
 
+  li.theme-switcher-item {
+    margin-top: auto; /* Pushes to the bottom */
+    padding: 0.5rem 0;
+  }
 </style>

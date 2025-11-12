@@ -1,98 +1,46 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-
   export let meshData: number[][] = [];
-
-  let isDarkMode = false;
-  let ready = false;
-  let mediaQuery: MediaQueryList | undefined;
-
-  const updateTheme = () => {
-    if (mediaQuery) {
-      isDarkMode = mediaQuery.matches;
-    }
-  };
-
-  onMount(() => {
-    mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', updateTheme);
-    updateTheme();
-    ready = true;
-
-    onDestroy(() => {
-      mediaQuery?.removeEventListener('change', updateTheme);
-    });
-  });
 
   // Find min and max values for color scaling
   $: min = Math.min(...meshData.flat());
   $: max = Math.max(...meshData.flat());
 
-  function getColorForValue(value: number): string {
-    if (min === max) return 'transparent'; // Avoid division by zero
+  function getColorInfo(value: number): { class: string; textColor: string } {
+    if (min === max) {
+      return { class: 'color-5', textColor: 'black' }; // Neutral color
+    }
 
-    const range = max - min;
-    // Normalize the value to a -1 to 1 range, then map to 0-1 for color scale
     const normalized = (value - min) / (max - min);
+    const colorIndex = Math.round(normalized * 10);
+    const className = `color-${colorIndex}`;
 
-    // Viridis color scale - sampled points from the scale
-    const viridis = [
-      [68, 1, 84],
-      [72, 40, 120],
-      [62, 74, 137],
-      [49, 104, 142],
-      [38, 130, 142],
-      [31, 158, 137],
-      [53, 183, 121],
-      [109, 205, 89],
-      [180, 222, 44],
-      [253, 231, 37]
-    ];
+    // Determine text color for contrast
+    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let textColor = 'white';
+    if (isDarkMode) {
+      // Viridis: brightest at the end
+      if (colorIndex > 8) {
+        textColor = 'black';
+      }
+    } else {
+      // RdBu: brightest in the middle
+      if (colorIndex > 3 && colorIndex < 7) {
+        textColor = 'black';
+      }
+    }
 
-    // RdBu (Red-Blue) diverging color scale for light mode
-    const rdBu = [
-      [9, 99, 171],   // Blue (Low)
-      [104, 158, 203],
-      [199, 219, 237],
-      [255, 255, 255], // White (Zero)
-      [249, 207, 200],
-      [227, 134, 122],
-      [194, 59, 44]    // Red (High)
-    ];
-
-    const colors = isDarkMode ? viridis : rdBu;
-
-    const i = Math.floor(normalized * (colors.length - 1));
-    const j = Math.ceil(normalized * (colors.length - 1));
-    const ratio = (normalized * (colors.length - 1)) - i;
-
-    const r = Math.round(colors[i][0] * (1 - ratio) + colors[j][0] * ratio);
-    const g = Math.round(colors[i][1] * (1 - ratio) + colors[j][1] * ratio);
-    const b = Math.round(colors[i][2] * (1 - ratio) + colors[j][2] * ratio);
-
-    return `rgb(${r}, ${g}, ${b})`;
-  }
-
-  // Determine if text should be light or dark based on background
-  function getTextColor(rgbString: string): string {
-    if (!rgbString.startsWith('rgb')) return 'var(--text-color)';
-    const [r, g, b] = rgbString.match(/\d+/g)!.map(Number);
-    // Standard luminance calculation
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.5 ? 'black' : 'white';
+    return { class: className, textColor: textColor };
   }
 </script>
 
-{#if ready}
 <div class="table-container">
   <table>
     <tbody>
-      {#each meshData as row, i}
+      {#each meshData as row}
         <tr>
-          {#each row as cell, j}
-            {@const backgroundColor = getColorForValue(cell)}
-            {@const color = getTextColor(backgroundColor)}
-            <td style="background-color: {backgroundColor}; color: {color}">
+          {#each row as cell}
+            {@const { class: className, textColor } = getColorInfo(cell)}
+            <td class="{className}" style="color: {textColor};">
               {cell.toFixed(4)}
             </td>
           {/each}
@@ -101,9 +49,39 @@
     </tbody>
   </table>
 </div>
-{/if}
 
 <style>
+  /* Define the color scales as CSS variables */
+  :root {
+    /* RdBu for light mode */
+    --color-scale-0: #313695;
+    --color-scale-1: #4575b4;
+    --color-scale-2: #74add1;
+    --color-scale-3: #abd9e9;
+    --color-scale-4: #e0f3f8;
+    --color-scale-5: #ffffbf;
+    --color-scale-6: #fee090;
+    --color-scale-7: #fdae61;
+    --color-scale-8: #f46d43;
+    --color-scale-9: #d73027;
+    --color-scale-10: #a50026;
+  }
+
+  :global(body[data-theme='dark']) {
+    /* Viridis for dark mode */
+    --color-scale-0: #440154;
+    --color-scale-1: #482878;
+    --color-scale-2: #3e4989;
+    --color-scale-3: #31688e;
+    --color-scale-4: #26828e;
+    --color-scale-5: #1f9e89;
+    --color-scale-6: #35b779;
+    --color-scale-7: #6ece58;
+    --color-scale-8: #b5de2b;
+    --color-scale-9: #fde725;
+    --color-scale-10: #fde725; /* Use last color for interpolation */
+  }
+
   .table-container {
     overflow-x: auto;
     width: 100%;
@@ -119,4 +97,17 @@
     padding: 0.25rem 0.5rem;
     border: 1px solid var(--card-border-color);
   }
+
+  /* Assign background colors to classes */
+  .color-0 { background-color: var(--color-scale-0); }
+  .color-1 { background-color: var(--color-scale-1); }
+  .color-2 { background-color: var(--color-scale-2); }
+  .color-3 { background-color: var(--color-scale-3); }
+  .color-4 { background-color: var(--color-scale-4); }
+  .color-5 { background-color: var(--color-scale-5); }
+  .color-6 { background-color: var(--color-scale-6); }
+  .color-7 { background-color: var(--color-scale-7); }
+  .color-8 { background-color: var(--color-scale-8); }
+  .color-9 { background-color: var(--color-scale-9); }
+  .color-10 { background-color: var(--color-scale-10); }
 </style>
