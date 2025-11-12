@@ -2310,6 +2310,7 @@ void parse_request(struct REQUEST *req) {
     // process the custom pages
     if (strncmp(req->path, "/api/leveling", 13) == 0) {
         handle_api_request(req, filename);
+        return; // API request handled, don't continue with file serving
     } else {
         process_custom_pages(filename, req);
     }
@@ -2336,6 +2337,29 @@ void parse_request(struct REQUEST *req) {
         }
 
         if (no_listing) {
+            /* For SvelteKit SPA, serve index.html instead of 403 for non-existent directories */
+            int is_api_route = (strncmp(req->path, "/api/", 5) == 0);
+            int is_static_asset = (strncmp(req->path, "/_app/", 6) == 0) ||
+                                  (strncmp(req->path, "/webcam/", 8) == 0) ||
+                                  (strncmp(req->path, "/files/", 7) == 0) ||
+                                  (strncmp(req->path, "/deprecated/", 12) == 0);
+            
+            if (!is_api_route && !is_static_asset) {
+                /* Try to serve root index.html for SPA routing */
+                char index_path[1024];
+                int index_len = snprintf(index_path, sizeof(index_path) - 1,
+                           "%s%s%s%s",
+                           do_chroot ? "" : doc_root,
+                           virtualhosts ? "/" : "",
+                           virtualhosts ? req->hostname : "",
+                           "/index.html");
+                if (index_len > 0 && index_len < (int)sizeof(index_path)) {
+                    if (-1 != (req->bfd = open(index_path, O_RDONLY))) {
+                        close_on_exec(req->bfd);
+                        goto regular_file;
+                    }
+                }
+            }
             mkerror(req, 403, 1);
             return;
         };
@@ -2344,6 +2368,30 @@ void parse_request(struct REQUEST *req) {
             if (errno == EACCES) {
                 mkerror(req, 403, 1);
             } else {
+                /* Directory doesn't exist - check if this is a SvelteKit SPA route */
+                int is_api_route = (strncmp(req->path, "/api/", 5) == 0);
+                int is_static_asset = (strncmp(req->path, "/_app/", 6) == 0) ||
+                                      (strncmp(req->path, "/webcam/", 8) == 0) ||
+                                      (strncmp(req->path, "/files/", 7) == 0) ||
+                                      (strncmp(req->path, "/deprecated/", 12) == 0);
+                
+                if (!is_api_route && !is_static_asset) {
+                    /* Try to serve root index.html for SPA routing */
+                    char index_path[1024];
+                    int index_len = snprintf(index_path, sizeof(index_path) - 1,
+                               "%s%s%s%s",
+                               do_chroot ? "" : doc_root,
+                               virtualhosts ? "/" : "",
+                               virtualhosts ? req->hostname : "",
+                               "/index.html");
+                    if (index_len > 0 && index_len < (int)sizeof(index_path)) {
+                        if (-1 != (req->bfd = open(index_path, O_RDONLY))) {
+                            close_on_exec(req->bfd);
+                            strcpy(filename, index_path);
+                            goto regular_file;
+                        }
+                    }
+                }
                 mkerror(req, 404, 1);
             }
             return;
@@ -2372,6 +2420,35 @@ void parse_request(struct REQUEST *req) {
     if (-1 == (req->bfd = open(filename, O_RDONLY))) {
         if (errno == EACCES) {
             mkerror(req, 403, 1);
+        } else if (errno == ENOENT) {
+            /* File not found - check if this is a SvelteKit SPA route */
+            /* Don't serve index.html for API routes, static assets, or files with extensions */
+            int is_api_route = (strncmp(req->path, "/api/", 5) == 0);
+            int is_static_asset = (strncmp(req->path, "/_app/", 6) == 0) ||
+                                  (strncmp(req->path, "/webcam/", 8) == 0) ||
+                                  (strncmp(req->path, "/files/", 7) == 0) ||
+                                  (strncmp(req->path, "/deprecated/", 12) == 0) ||
+                                  (strchr(req->path, '.') != NULL); /* Has file extension */
+            
+            if (!is_api_route && !is_static_asset) {
+                /* This is likely a SvelteKit route - serve index.html for SPA routing */
+                char index_path[1024];
+                int index_len = snprintf(index_path, sizeof(index_path) - 1,
+                           "%s%s%s%s",
+                           do_chroot ? "" : doc_root,
+                           virtualhosts ? "/" : "",
+                           virtualhosts ? req->hostname : "",
+                           "/index.html");
+                if (index_len > 0 && index_len < (int)sizeof(index_path)) {
+                    if (-1 != (req->bfd = open(index_path, O_RDONLY))) {
+                        /* Successfully opened index.html - continue to serve it */
+                        strcpy(filename, index_path);
+                        goto regular_file;
+                    }
+                }
+            }
+            /* Fall through to 404 if we couldn't serve index.html */
+            mkerror(req, 404, 1);
         } else {
             mkerror(req, 404, 1);
         }
