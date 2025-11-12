@@ -20,16 +20,24 @@
   );
 
   let wasPrinting = false;
+  let wasOnline = false;
   activePrinterStore.subscribe((printer) => {
     activePrinter = printer;
-    const isPrinting =
-      activePrinter?.state === 'printing' ||
-      activePrinter?.state === 'paused' ||
-      activePrinter?.state === 'preheating' ||
-      activePrinter?.state === 'downloading';
 
-    if (isPrinting && !wasPrinting && activePrinter) {
-      printerStore.refreshFiles(activePrinter.id);
+    const isOnline = printer?.online ?? false;
+    if (isOnline && !wasOnline && printer) {
+      printerStore.refreshFiles(printer.id);
+    }
+    wasOnline = isOnline;
+
+    const isPrinting =
+      printer?.state === 'printing' ||
+      printer?.state === 'paused' ||
+      printer?.state === 'preheating' ||
+      printer?.state === 'downloading';
+
+    if (isPrinting && !wasPrinting && printer) {
+      printerStore.refreshFiles(printer.id);
     }
 
     wasPrinting = isPrinting;
