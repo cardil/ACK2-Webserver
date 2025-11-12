@@ -91,22 +91,26 @@ function formatTimestamp(timestamp: number) {
   return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 }
 
-const largeFileList = Array.from({ length: 90 }, (_, i) => {
+const largeFileList = Array.from({ length: 95 }, (_, i) => {
   const staticFile = staticFileList[i % staticFileList.length];
-  const timestamp = Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 1000000);
+  const maxTimestamp = Date.now() / 1000;
+  const minTimestamp = maxTimestamp - 1.5 * 365 * 24 * 3600;
+  const timestamp = Math.floor(Math.random() * (maxTimestamp - minTimestamp) + minTimestamp);
+  const randomString = generateRandomString(16);
+  const formattedTimestamp = formatTimestamp(timestamp);
   return {
     filename: `${staticFile.filename.replace(
       '.gcode',
       ''
-    )}_${generateRandomString(16)}_${formatTimestamp(timestamp)}.gcode`,
+    )}_${randomString}_${formattedTimestamp}.gcode`,
     size: Math.floor(Math.random() * 2000000),
     timestamp: timestamp,
     is_dir: false,
     is_local: true,
   };
-});
+}).sort((a, b) => b.timestamp - a.timestamp);
 
-const combinedFileList = [...staticFileList, ...largeFileList];
+const combinedFileList = largeFileList;
 
 export const mockPrinter: Printer = {
   id: '9347a110c5423fe412ce45533bfc10e6',

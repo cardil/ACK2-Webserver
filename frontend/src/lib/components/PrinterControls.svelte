@@ -92,7 +92,7 @@
   })();
 </script>
 
-<Card>
+<div style="flex-shrink: 0;"><Card>
   <input
     type="file"
     bind:this={input}
@@ -223,7 +223,7 @@
       <button disabled={!activePrinterId} on:click={() => input.click()}>Upload & Print</button>
     </div>
   {/if}
-</Card>
+</Card></div>
 
 <style>
   .status-row {

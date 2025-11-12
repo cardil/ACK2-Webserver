@@ -133,6 +133,7 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    min-width: 0;
     min-height: 0;
     position: relative;
   }
@@ -144,6 +145,7 @@
     min-height: 0;
     flex-grow: 1;
   }
+
 
   @media (max-width: 768px) {
     .page-container {

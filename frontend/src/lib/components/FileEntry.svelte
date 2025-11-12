@@ -1,24 +1,34 @@
 <script lang="ts">
-  import ReprintIcon from '$lib/components/icons/ReprintIcon.svelte';
-  import ClockIcon from '$lib/components/icons/ClockIcon.svelte';
-  import { formatDuration } from '$lib/utils/time';
+  import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+  import { faDatabase, faRedo } from '@fortawesome/free-solid-svg-icons';
+  import { faClock } from '@fortawesome/free-regular-svg-icons';
+  import { formatTimestamp } from '$lib/utils/time';
+  import { time } from '$lib/stores/time';
+  import { formatFileSize } from '$lib/utils/files';
 
-  export let file: { name: string; timestamp: number };
+  export let file: { name: string; timestamp: number; size: number };
   export let onReprint: () => void;
   export let disabled = false;
 
-  $: duration = formatDuration(file.timestamp);
+  $: timeAgo = formatTimestamp(file.timestamp, $time / 1000);
+  $: formattedSize = formatFileSize(file.size);
 </script>
 
 <div class="file-entry">
   <button class="icon-button" title="Re-print" on:click={onReprint} {disabled}>
-    <ReprintIcon style="width: 1.5em; height: 1.5em;" />
+    <FontAwesomeIcon icon={faRedo} />
   </button>
   <div class="file-details">
     <div class="filename" title={file.name}>{file.name}</div>
-    <div class="print-time" title="Print time: {duration}">
-      <ClockIcon style="width: 0.9em; height: 0.9em;" />
-      <span>{duration}</span>
+    <div class="file-meta">
+      <div class="meta-item" title="File size: {formattedSize}">
+        <FontAwesomeIcon icon={faDatabase} />
+        <span>{formattedSize}</span>
+      </div>
+      <div class="meta-item" title="Printed: {timeAgo}">
+        <FontAwesomeIcon icon={faClock} />
+        <span>{timeAgo}</span>
+      </div>
     </div>
   </div>
 </div>
@@ -57,12 +67,18 @@
     font-weight: bold;
   }
 
-  .print-time {
+  .file-meta {
     display: flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: 1rem;
     font-size: 0.8em;
     opacity: 0.8;
     margin-top: 0.2rem;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
   }
 </style>
