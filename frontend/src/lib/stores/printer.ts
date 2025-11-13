@@ -21,7 +21,7 @@ export interface PrintJob {
   state: string;
   remaining_time: number;
   progress: number;
-  print_time: number;
+  print_time: number; // minutes, as floating number 1.933 means 1m 56s
   supplies_usage: number;
   total_layers: number;
   curr_layer: number;
@@ -159,9 +159,21 @@ function createPrinterStore() {
   });
 
   // Helper to safely emit socket commands
-  const emitCommand = (command: string, printerId: string, extraData: object = {}) => {
+  const emitCommand = (command: string, payload: object) => {
     if (socket?.connected) {
-      socket.emit(command, { printer_id: printerId, ...extraData });
+      socket.timeout(5000).emit(command, payload, (err: Error | null, response: any) => {
+        if (err) {
+          console.error(
+            `Socket command '${command}' timed out. The printer may be unresponsive or the backend service has crashed.`,
+            { payload, error: err }
+          );
+        } else if (response && response.status === 'error') {
+          console.error(`Socket command '${command}' failed with an error response from the server.`, {
+            payload,
+            response
+          });
+        }
+      });
     } else {
       console.warn(`Socket not connected. Cannot emit command '${command}'.`);
     }
@@ -210,23 +222,23 @@ function createPrinterStore() {
     },
 
     startPrint: (printerId: string, filename: string) => {
-      emitCommand('start_print', printerId, { filename });
+      emitCommand('start_print', { printerId: printerId, filename });
     },
 
     pausePrint: (printerId: string) => {
-      emitCommand('pause_print', printerId);
+      emitCommand('pause_print', { id: printerId });
     },
 
     resumePrint: (printerId: string) => {
-      emitCommand('resume_print', printerId);
+      emitCommand('resume_print', { id: printerId });
     },
 
     stopPrint: (printerId: string) => {
-      emitCommand('stop_print', printerId);
+      emitCommand('stop_print', { id: printerId });
     },
 
     reprint: (printerId: string, filename: string) => {
-      emitCommand('print_file', printerId, { file: filename });
+      emitCommand('print_file', { printerId: printerId, file: filename });
     }
   };
 }

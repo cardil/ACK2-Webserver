@@ -77,19 +77,29 @@
     // This covers !curr_layer_known && !total_layers_known
     return 'N/A';
   })();
-  $: fanSpeed = `${printer?.print_job?.fan_speed ?? 0}%`;
+  $: fanSpeed = (() => {
+    const speed = printer?.print_job?.fan_speed;
+    return speed === undefined || speed < 0 ? 'N/A' : `${speed}%`;
+  })();
   $: zOffset = printer?.print_job?.z_offset ?? 0;
   $: filamentUsed = (() => {
-    const usage = printer?.print_job?.supplies_usage ?? 0;
+    const usage = Number(printer?.print_job?.supplies_usage ?? 0);
+    if (usage < 0) {
+      return 'N/A';
+    }
     if (usage >= 1000) {
       return `${(usage / 1000).toFixed(2)} m`;
     }
     return `${Math.round(usage)} mm`;
   })();
-  $: speedMode = ['Silent', 'Normal', 'Sport'][printer?.print_job?.print_speed_mode ?? 1];
-  $: formattedZOffset = `${((printer?.print_job?.z_offset ?? 0) > 0 ? '+' : '')}${(
-    printer?.print_job?.z_offset ?? 0
-  ).toFixed(2)} mm`;
+  $: speedMode = (() => {
+    const mode = printer?.print_job?.print_speed_mode;
+    return mode === undefined || mode < 0 ? 'N/A' : ['Silent', 'Normal', 'Sport'][mode];
+  })();
+  $: formattedZOffset = (() => {
+    const offset = Number(printer?.print_job?.z_offset ?? 0);
+    return `${offset > 0 ? '+' : ''}${offset.toFixed(2)} mm`;
+  })();
 
   // Calculated ETA
   $: eta = (() => {

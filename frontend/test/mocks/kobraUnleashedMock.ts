@@ -52,12 +52,19 @@ function calculateSpeedMultiplier(totalPrintTimeSeconds: number): number {
 function initiatePrintJob(io: SocketIOServer, filename: string, fileSize: number) {
   clearAllIntervals();
 
+  // Remove the file if it already exists in the history to simulate an update
+  const existingFileIndex = printer.files[0].findIndex((f) => f.filename === filename);
+  if (existingFileIndex > -1) {
+    printer.files[0].splice(existingFileIndex, 1);
+  }
+
+  // Add the newly printed file to the top of the history
   const newFile = {
     filename,
     size: fileSize,
-    timestamp: Math.floor(Date.now() / 1000),
+    timestamp: Date.now(),
     is_dir: false,
-    is_local: true,
+    is_local: true
   };
   printer.files[0].unshift(newFile);
 
@@ -98,9 +105,9 @@ function initiatePrintJob(io: SocketIOServer, filename: string, fileSize: number
     supplies_usage: 0,
     total_layers: hasTotalLayers ? totalLayers : -1,
     curr_layer: 0,
-    fan_speed: 100,
-    z_offset: 0.01,
-    print_speed_mode: 1
+    fan_speed: -1,
+    z_offset: 0.0,
+    print_speed_mode: -1
   };
   emitPrinterUpdate(io);
   console.log(`📠 [Kobra Mock] Downloading ${filename}, estimated time: ${estimatedPrintTime}s`);
@@ -198,40 +205,85 @@ function attachSocketListeners(io: SocketIOServer) {
       socket.emit('printer_list', { [printer.id]: getPrinterStateWithoutFiles(printer) });
     });
 
-    socket.on('print_file', (data) => {
+    socket.on('print_file', (data, callback) => {
       if (printer.state === 'free') {
-        const { file } = data;
+        const { printerId, file } = data;
+        if (printerId !== printer.id) {
+          if (callback) callback({ status: 'error', message: 'Printer not found' });
+          return;
+        }
         const fileData = printer.files[0].find((f) => f.filename === file);
         const fileSize = fileData?.size ?? 200000;
         initiatePrintJob(io, file, fileSize);
+        if (callback) callback({ status: 'ok' });
+      } else {
+        if (callback) callback({ status: 'error', message: 'Printer is busy' });
       }
     });
 
-    socket.on('stop_print', () => {
+    socket.on('stop_print', (data, callback) => {
+      const { id } = data;
+      if (id !== printer.id) {
+        if (callback) callback({ status: 'error', message: 'Printer not found' });
+        return;
+      }
       stopPrintSimulation(io, 'failed');
+      if (callback) callback({ status: 'ok' });
     });
 
-    socket.on('pause_print', () => {
+    socket.on('pause_print', (data, callback) => {
+      const { id } = data;
+      if (id !== printer.id) {
+        if (callback) callback({ status: 'error', message: 'Printer not found' });
+        return;
+      }
       if (printer.state === 'printing' && printer.print_job) {
         printer.state = 'paused';
         printer.print_job.state = 'paused';
         clearAllIntervals();
         emitPrinterUpdate(io);
         console.log('📠 [Kobra Mock] Paused print job.');
+        if (callback) callback({ status: 'ok' });
+      } else {
+        if (callback)
+          callback({
+            status: 'error',
+            message: `Cannot pause, printer state is '${printer.state}'`
+          });
       }
     });
 
-    socket.on('resume_print', () => {
+    socket.on('resume_print', (data, callback) => {
+      const { id } = data;
+      if (id !== printer.id) {
+        if (callback) callback({ status: 'error', message: 'Printer not found' });
+        return;
+      }
       if (printer.state === 'paused' && printer.print_job) {
         startPrintSimulation(io);
         console.log('📠 [Kobra Mock] Resumed print job.');
+        if (callback) callback({ status: 'ok' });
+      } else {
+        if (callback)
+          callback({
+            status: 'error',
+            message: `Cannot resume, printer state is '${printer.state}'`
+          });
       }
     });
 
-    socket.on('set_fan', (data) => {
+    socket.on('set_fan', (data, callback) => {
+      const { id, speed } = data;
+      if (id !== printer.id) {
+        if (callback) callback({ status: 'error', message: 'Printer not found' });
+        return;
+      }
       if (printer.print_job) {
-        printer.print_job.fan_speed = data.speed;
+        printer.print_job.fan_speed = speed;
         emitPrinterUpdate(io);
+        if (callback) callback({ status: 'ok' });
+      } else {
+        if (callback) callback({ status: 'error', message: 'No active print job' });
       }
     });
 
@@ -271,8 +323,8 @@ function startPrintSimulation(io: SocketIOServer) {
   // To resume correctly, we calculate what the startTime *would have been*
   // if the print had been running continuously at the accelerated speed to
   // reach the current `print_time`.
-  const simulatedElapsedTime = printer.print_job.print_time;
-  const wallClockTimeEquivalent = (simulatedElapsedTime * 1000) / simulation.speedMultiplier;
+  const simulatedElapsedTimeInSeconds = (printer.print_job.print_time ?? 0) * 60;
+  const wallClockTimeEquivalent = (simulatedElapsedTimeInSeconds * 1000) / simulation.speedMultiplier;
   simulation.startTime = Date.now() - wallClockTimeEquivalent;
 
   emitPrinterUpdate(io);
