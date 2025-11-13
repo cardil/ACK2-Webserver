@@ -1,16 +1,12 @@
 <script lang="ts">
   import favicon from "$lib/assets/favicon.svg";
   import NavMenu from "$lib/components/NavMenu.svelte";
-  import { theme } from "$lib/stores/theme";
+  import { effectiveTheme } from "$lib/stores/theme";
   import { browser } from "$app/environment";
 
   if (browser) {
-    theme.subscribe((value) => {
-      const isDark =
-        value === "dark" ||
-        (value === "auto" &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches);
-      document.body.dataset.theme = isDark ? "dark" : "light";
+    effectiveTheme.subscribe((value) => {
+      document.body.dataset.theme = value;
     });
   }
 
