@@ -1,7 +1,8 @@
 .vscode/
-arm*
+arm-*-cross
 src/*.o
 src/webfsd
+src/webfsd.stripped
 webserver/webserver.zip
 webserver/opt/bin/webfsd
 mybuild.sh

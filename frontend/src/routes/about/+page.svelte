@@ -3,8 +3,10 @@
 </script>
 
 <Card>
-  <div class="about-container">
+  <svelte:fragment slot="title">
     <h1>About</h1>
+  </svelte:fragment>
+  <div class="about-container">
     <p>
       The closed-source nature of these 3D printers imposes limitations on end users, confining
       them to the functionalities predetermined by software designers and dictated by the

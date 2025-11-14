@@ -4,6 +4,7 @@
 </script>
 
 <div class="card" class:no-padding={noPadding} {style}>
+  <slot name="title" />
   <slot />
 </div>
 

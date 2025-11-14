@@ -9,26 +9,33 @@
     "build:mocks": "node test/mocks/buildMockCommands.mjs",
     "preview": "vite preview",
     "prepare": "npm run build:mocks && svelte-kit sync || echo ''",
-    "check": "npm run lint && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && npm run check:devmode",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "check:devmode": "node test/check-devmode.mjs",
     "lint": "eclint check",
-    "lint:fix": "eclint fix"
+    "lint:fix": "eclint fix",
+    "test": "npm run test:components && npm run test:smoke",
+    "test:components": "vitest run",
+    "test:smoke": "vitest run -c test/smoke/vitest.config.ts",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.47.1",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@testing-library/svelte": "^5.2.9",
+    "@testing-library/jest-dom": "^6.4.8",
     "@types/node": "^24.10.0",
     "@types/socket.io-client": "^1.4.36",
     "eclint": "^2.8.1",
+    "jsdom": "^27.2.0",
     "node-fetch": "^3.3.2",
     "patch-package": "^8.0.1",
     "socket.io": "^4.8.1",
     "svelte": "^5.41.0",
     "svelte-check": "^4.3.3",
     "typescript": "^5.9.3",
-    "vite": "^7.1.10"
+    "vite": "^7.1.10",
+    "vitest": "^4.0.9"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",

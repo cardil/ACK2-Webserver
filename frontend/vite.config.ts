@@ -1,5 +1,5 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -50,6 +50,17 @@ export default defineConfig({
       }
     }
   ],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: 'test/setup.ts',
+    include: ['test/components/**/*.test.ts']
+  },
+  resolve: process.env.VITEST
+    ? {
+        conditions: ['browser']
+      }
+    : undefined,
   ssr: {
     noExternal: [
       'echarts',

@@ -219,10 +219,12 @@
     <div class="column-group">
       <!-- Leveling Settings Card -->
       <Card>
-        <div class="tool-section">
+        <svelte:fragment slot="title">
           <h3 class="card-title">
             <FontAwesomeIcon icon={faCogs} /> Leveling Settings
           </h3>
+        </svelte:fragment>
+        <div class="tool-section">
           <div class="settings-form">
             <div class="form-group">
               <label for="grid">Grid Size</label>
@@ -249,8 +251,10 @@
 
       <!-- Bed Mesh Card -->
       <Card>
-        <div class="tool-section">
+        <svelte:fragment slot="title">
           <h3 class="card-title"><FontAwesomeIcon icon={faTh} /> Bed Mesh</h3>
+        </svelte:fragment>
+        <div class="tool-section">
           <div class="mesh-list">
             {#if $levelingStore.activeMesh}
               <div class="mesh-item" class:active={visualizedSlotId === 'active'}>
@@ -303,8 +307,10 @@
 
     <!-- Saved Bed Meshes Card -->
     <Card style="flex-grow: 1; min-height: 0;">
-      <div class="tool-section">
+      <svelte:fragment slot="title">
         <h3 class="card-title"><FontAwesomeIcon icon={faHdd} /> Saved Bed Meshes</h3>
+      </svelte:fragment>
+      <div class="tool-section">
         <div class="mesh-list">
           {#each $levelingStore.savedMeshes as slot (slot.id)}
             <div class="mesh-item" class:active={slot.id === visualizedSlotId}>
@@ -349,8 +355,10 @@
   <div class="column">
     <!-- Bed Mesh Visualizer Card -->
     <Card style="height: 100%;">
-      <div class="tool-section">
+      <svelte:fragment slot="title">
         <h3 class="card-title"><FontAwesomeIcon icon={faFileMedical} /> {isEditing ? 'Bed Mesh Editor' : 'Bed Mesh Visualizer'}</h3>
+      </svelte:fragment>
+      <div class="tool-section">
         <div style="flex-grow: 1; min-height: 0;">
           <BedMeshVisualizer
             meshData={isEditing ? editedMeshData : visualizedMeshData}

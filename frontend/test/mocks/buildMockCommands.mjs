@@ -4,18 +4,6 @@ import { parseMockCommandsFromSources, commandSources } from './mockCommandParse
 
 const outputPath = path.resolve(process.cwd(), 'test/mocks/mockCommands.json');
 
-// "Make" pattern: Only build if the source files are newer than the output.
-if (fs.existsSync(outputPath)) {
-  const sourcePaths = commandSources();
-  const sourceStats = sourcePaths.map(p => fs.statSync(p).mtimeMs);
-  const latestSourceTime = Math.max(...sourceStats);
-  const outputStats = fs.statSync(outputPath);
-  if (latestSourceTime <= outputStats.mtimeMs) {
-    console.log('✅ Mock commands manifest is up to date. Skipping build.');
-    process.exit(0);
-  }
-}
-
 console.log('Building mock commands manifest...');
 
 try {
