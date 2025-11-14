@@ -54,7 +54,6 @@
         title="Dark mode: {currentTheme.name}. Click to switch."
       >
         <FontAwesomeIcon icon={currentTheme.icon} />
-        <span>Theme</span>
       </button>
     {/key}
   {/if}
@@ -85,21 +84,12 @@
     white-space: nowrap;
   }
 
-  .collapsed-switcher span {
-    opacity: 0;
-    width: 0;
-    transition: opacity 0.2s, width 0.2s;
-    overflow: hidden;
+  :global(nav:not(.open)) .collapsed-switcher {
+    justify-content: center;
   }
 
   :global(nav.open) .collapsed-switcher {
     justify-content: flex-start;
-    gap: 1rem;
-  }
-
-  :global(nav.open) .collapsed-switcher span {
-      opacity: 1;
-      width: auto;
   }
 
   button {
@@ -115,5 +105,11 @@
   button.active {
     background-color: var(--accent-color);
     color: var(--background-color);
+  }
+
+  button :global(svg),
+  button :global(.fa-svg) {
+    width: 1rem;
+    height: 1rem;
   }
 </style>

@@ -69,6 +69,15 @@
     padding: 0;
   }
 
+  :global(html),
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+  }
+
   :global(body) {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
       "Helvetica Neue", Arial, sans-serif;
@@ -90,10 +99,14 @@
     display: grid;
     grid-template-columns: auto 1fr; /* Nav is auto, content takes the rest */
     height: 100vh;
+    width: 100vw;
+    overflow: hidden;
   }
   main {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    min-width: 0;
+    overflow: hidden;
   }
 </style>

@@ -8,6 +8,7 @@ import {
 } from './test/mocks/kobraUnleashedMock';
 import { createMockApiMiddleware } from './test/mocks/mockApi';
 import { createLevelingApiMiddleware } from './test/mocks/levelingApi';
+import { createSystemApiMiddleware } from './test/mocks/systemApi';
 
 export default defineConfig({
   plugins: [
@@ -24,6 +25,8 @@ export default defineConfig({
           server.middlewares.use(createKobraUnleashedHttpMiddleware(io));
         }
 
+        // System API must come before mockApi to handle dynamic info.json and do.json
+        server.middlewares.use(createSystemApiMiddleware());
         server.middlewares.use(createMockApiMiddleware(defaultMqttUrl));
         server.middlewares.use(createLevelingApiMiddleware());
         server.middlewares.use((req, res, next) => {

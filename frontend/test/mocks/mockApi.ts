@@ -8,7 +8,8 @@ const API_SOURCE_PATH = path.join(__dirname, '..', '..', '..', 'webserver', 'opt
 function getApiFilePath(url: string): string | null {
     const requestUrl = new URL(url, 'http://localhost');
     const apiEndpoint = requestUrl.pathname.substring('/api/'.length);
-    if (!apiEndpoint || !['do.json', 'info.json', 'webserver.json'].includes(apiEndpoint)) {
+    // Skip info.json and do.json - let systemApi handle them dynamically
+    if (!apiEndpoint || !['webserver.json'].includes(apiEndpoint)) {
         return null;
     }
     return path.join(API_SOURCE_PATH, apiEndpoint);
