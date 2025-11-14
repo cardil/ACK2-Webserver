@@ -1,5 +1,3 @@
-// frontend/test/mocks/kobraData.ts
-
 export interface PrintJob {
   taskid: string;
   filename: string;
@@ -30,7 +28,7 @@ export interface Printer {
   model_id: string;
   fwver: number;
   online: boolean;
-  state: 'free' | 'printing' | 'paused' | 'offline' | 'failed' | 'downloading' | 'checking' | 'preheating';
+  state: 'free' | 'printing' | 'paused' | 'offline' | 'failed' | 'downloading' | 'checking' | 'preheating' | 'busy';
   nozzle_temp: string;
   target_nozzle_temp: string;
   hotbed_temp: string;

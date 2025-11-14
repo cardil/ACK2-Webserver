@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
 
 export interface WebserverConfig {
@@ -8,7 +8,7 @@ export interface WebserverConfig {
 }
 
 function createWebserverStore() {
-  const { subscribe, set } = writable<WebserverConfig | null>(null);
+  const store = writable<WebserverConfig | null>(null);
 
   async function fetchConfig() {
     try {
@@ -24,20 +24,25 @@ function createWebserverStore() {
         throw new Error('Failed to fetch webserver config');
       }
       const config = await response.json();
-      set(config);
+      store.set(config);
     } catch (error) {
       console.error('Error fetching webserver config:', error);
-      set(null); // Explicitly set to null on error
+      store.set(null); // Explicitly set to null on error
     }
   }
 
+  function reinitialize() {
+    fetchConfig();
+  }
 
   if (browser) {
     fetchConfig();
   }
 
   return {
-    subscribe,
+    subscribe: store.subscribe,
+    get: () => get(store),
+    reinitialize,
   };
 }
 

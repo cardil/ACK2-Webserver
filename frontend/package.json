@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:mocks": "node test/mocks/buildMockCommands.mjs",
     "preview": "vite preview",
-    "prepare": "svelte-kit sync || echo ''",
+    "prepare": "npm run build:mocks && svelte-kit sync || echo ''",
     "check": "npm run lint && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && npm run check:devmode",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "check:devmode": "node test/check-devmode.mjs",

@@ -47,7 +47,9 @@
   $: activePrinterId = $activePrinterIdStore;
   $: printer = $printerStore[activePrinterId ?? ''];
 
-  $: isJobActive = ['printing', 'paused', 'preheating', 'downloading'].includes(printer?.state);
+  $: isPrinterIdle = printer?.state === 'free';
+  $: canUploadAndPrint = !!(activePrinterId && isPrinterIdle && printer?.online);
+  $: showExpandedView = !isPrinterIdle && printer?.state !== 'busy';
   $: nozzleTemp = printer?.nozzle_temp ?? '---';
   $: nozzleTarget = printer?.target_nozzle_temp ?? '---';
   $: bedTemp = printer?.hotbed_temp ?? '---';
@@ -157,7 +159,7 @@
     </div>
   </div>
 
-  {#if isJobActive}
+  {#if showExpandedView}
     <div class="status-row">
       <div class="status-item">
         <FanIcon />
@@ -250,7 +252,7 @@
     </div>
   {:else}
     <div class="button-group idle">
-      <button disabled={!activePrinterId} on:click={() => input.click()}>Upload & Print</button>
+      <button disabled={!canUploadAndPrint} on:click={() => input.click()}>Upload & Print</button>
     </div>
   {/if}
 </Card></div>

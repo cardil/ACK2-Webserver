@@ -1,4 +1,3 @@
-// frontend/test/check-devmode.mjs
 import { createServer } from 'vite';
 import fetch from 'node-fetch';
 
