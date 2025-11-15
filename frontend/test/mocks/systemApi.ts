@@ -1,6 +1,13 @@
 import type { Connect } from "vite"
 import fs from "fs"
 import path from "path"
+import {
+  getLogContent,
+  getLogContentSize,
+  getLogContentRange,
+  clearLog,
+  startLogGrowth,
+} from "./logMock"
 
 // Path to the source of truth JSON files (reused from mockApi.ts)
 const API_SOURCE_PATH = path.join(
@@ -25,37 +32,6 @@ const systemState: SystemState = {
   startTime: Date.now(),
   ssh_status: 2, // Running by default
 }
-
-// Mock log content
-let mockLogContent: string[] = [
-  "2025-01-15 10:00:00 [INFO] System initialized",
-  "2025-01-15 10:00:01 [INFO] Starting web server",
-  "2025-01-15 10:00:02 [INFO] Socket.IO server started",
-  "2025-01-15 10:00:02 [INFO] Socket.IO server started",
-  "2025-01-15 10:00:02 [INFO] Socket.IO server started",
-  "2025-01-15 10:00:03 [INFO] API endpoints registered",
-  "2025-01-15 10:00:05 [INFO] Printer connection established",
-  "2025-01-15 10:00:10 [WARN] Temperature sensor reading high",
-  "2025-01-15 10:00:10 [WARN] Temperature sensor reading high",
-  "2025-01-15 10:00:15 [INFO] Print job started: test.gcode",
-  "2025-01-15 10:00:20 [ERROR] Failed to read file: missing.gcode",
-  "2025-01-15 10:00:20 [ERROR] Failed to read file: missing.gcode",
-  "2025-01-15 10:00:20 [ERROR] Failed to read file: missing.gcode",
-  "2025-01-15 10:00:20 [ERROR] Failed to read file: missing.gcode",
-  "2025-01-15 10:00:20 [ERROR] File not found in storage",
-  "2025-01-15 10:00:25 [INFO] Print job paused by user",
-  "2025-01-15 10:00:30 [INFO] Print job resumed",
-  "2025-01-15 10:00:30 [INFO] Print job resumed",
-  "2025-01-15 10:00:35 [INFO] Print job completed successfully",
-  "2025-01-15 10:00:40 [INFO] System idle",
-  "2025-01-15 10:00:40 [INFO] System idle",
-  "2025-01-15 10:00:40 [INFO] System idle",
-  "2025-01-15 10:00:45 [INFO] Processing G-code command: G28 X Y Z\n  Homing all axes\n  Moving to origin position",
-  "2025-01-15 10:00:50 [DEBUG] Long debug message with multiple details: X position: 100.5mm, Y position: 200.3mm, Z position: 0.2mm, Extruder temperature: 200°C, Bed temperature: 60°C, Fan speed: 50%, Print speed: 100mm/s",
-  "2025-01-15 10:00:55 [INFO] Multi-line status update:\n  Current layer: 15/100\n  Progress: 15%\n  Estimated time remaining: 45 minutes\n  Material used: 12.5g",
-  "2025-01-15 10:01:00 [WARN] This is a very long warning message that contains a lot of information about the current state of the printer including temperature readings, position data, and various sensor values that need to be displayed properly in the log viewer",
-  "2025-01-15 10:01:05 [ERROR] Critical error occurred during print operation:\n  Error code: E1234\n  Description: Extruder temperature too low\n  Action: Pausing print job\n  Recovery: Please check extruder heating element",
-]
 
 // Mock file system structure
 interface MockFileSystemEntry {
@@ -144,7 +120,7 @@ const mockFileSystem: MockFileSystemEntry = {
         {
           name: "system.log",
           isDirectory: false,
-          content: mockLogContent.join("\n"),
+          content: getLogContent(),
           mtime: now - 3600,
         },
         {
@@ -553,6 +529,9 @@ function getDynamicInfoJson(): string {
 }
 
 export function createSystemApiMiddleware(): Connect.NextHandleFunction {
+  // Start log growth simulation when middleware is created (not at module load)
+  startLogGrowth()
+
   return (req, res, next) => {
     const url = new URL(req.url!, `http://${req.headers.host}`)
 
@@ -611,9 +590,7 @@ export function createSystemApiMiddleware(): Connect.NextHandleFunction {
 
         case "log_clear":
           console.log("[System Mock] Log clear requested")
-          mockLogContent = [
-            `${new Date().toISOString().slice(0, 19).replace("T", " ")} [INFO] Log cleared`,
-          ]
+          clearLog()
           res.statusCode = 200
           res.end(JSON.stringify({ api_ver: 1, result: 1 }))
           return
@@ -625,11 +602,65 @@ export function createSystemApiMiddleware(): Connect.NextHandleFunction {
       }
     }
 
-    // Handle /files/log
-    if (req.method === "GET" && url.pathname === "/files/log") {
+    // Handle /files/log with HEAD, Range request support
+    if (
+      (req.method === "GET" || req.method === "HEAD") &&
+      url.pathname === "/files/log"
+    ) {
+      const rangeHeader =
+        req.headers["range"] || req.headers["Range"] || req.headers["RANGE"]
+      const logContent = getLogContent()
+      const logSize = getLogContentSize()
+
+      // Handle HEAD request
+      if (req.method === "HEAD") {
+        res.setHeader("Content-Type", "text/plain")
+        res.setHeader("Content-Length", logSize.toString())
+        res.setHeader("Accept-Ranges", "bytes")
+        res.statusCode = 200
+        res.end()
+        return
+      }
+
+      // Parse Range header if present
+      if (
+        rangeHeader &&
+        typeof rangeHeader === "string" &&
+        rangeHeader.startsWith("bytes=")
+      ) {
+        const rangeValue = rangeHeader.substring(6) // Remove "bytes="
+        const rangeMatch = rangeValue.match(/^(\d+)-$/) // Match "start-" format
+
+        if (rangeMatch) {
+          const start = parseInt(rangeMatch[1], 10)
+
+          // Check if range is valid
+          if (start >= 0 && start < logSize) {
+            const rangeContent = getLogContentRange(start)
+            const rangeSize = Buffer.byteLength(rangeContent, "utf8")
+            const end = start + rangeSize - 1
+
+            res.setHeader("Content-Type", "text/plain")
+            res.setHeader("Content-Range", `bytes ${start}-${end}/${logSize}`)
+            res.setHeader("Accept-Ranges", "bytes")
+            res.statusCode = 206 // Partial Content
+            res.end(rangeContent)
+            return
+          } else if (start >= logSize) {
+            // Range Not Satisfiable
+            res.setHeader("Content-Range", `bytes */${logSize}`)
+            res.statusCode = 416
+            res.end("Range Not Satisfiable")
+            return
+          }
+        }
+      }
+
+      // Full content response (no Range header or invalid range)
       res.setHeader("Content-Type", "text/plain")
+      res.setHeader("Accept-Ranges", "bytes")
       res.statusCode = 200
-      res.end(mockLogContent.join("\n"))
+      res.end(logContent)
       return
     }
 
