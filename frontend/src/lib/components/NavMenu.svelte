@@ -1,19 +1,19 @@
 <script lang="ts">
-  import ThemeSwitcher from '$lib/components/ThemeSwitcher.svelte';
-  import Logo from '$lib/components/icons/Logo.svelte';
-  import Fa from 'svelte-fa';
+  import ThemeSwitcher from "$lib/components/ThemeSwitcher.svelte"
+  import Logo from "$lib/components/icons/Logo.svelte"
+  import Fa from "svelte-fa"
   import {
     faHome,
     faTableCells,
     faCog,
     faInfoCircle,
     faBars,
-  } from '@fortawesome/free-solid-svg-icons';
+  } from "@fortawesome/free-solid-svg-icons"
 
-  let isOpen = false;
+  let isOpen = false
 
   function toggleMenu() {
-    isOpen = !isOpen;
+    isOpen = !isOpen
   }
 </script>
 
@@ -28,11 +28,22 @@
   </div>
   <ul>
     <li><a href="/"><Fa icon={faHome} size="1x" /><span>Home</span></a></li>
-    <li><a href="/leveling"><Fa icon={faTableCells} size="1x" /><span>Leveling Tools</span></a></li>
-    <li><a href="/system-tools"><Fa icon={faCog} size="1x" /><span>System</span></a></li>
-    <li><a href="/about"><Fa icon={faInfoCircle} size="1x" /><span>About</span></a></li>
+    <li>
+      <a href="/leveling"
+        ><Fa icon={faTableCells} size="1x" /><span>Leveling Tools</span></a
+      >
+    </li>
+    <li>
+      <a href="/system-tools"
+        ><Fa icon={faCog} size="1x" /><span>System</span></a
+      >
+    </li>
+    <li>
+      <a href="/about"><Fa icon={faInfoCircle} size="1x" /><span>About</span></a
+      >
+    </li>
     <li class="theme-switcher-item">
-      <ThemeSwitcher isOpen={isOpen} />
+      <ThemeSwitcher {isOpen} />
     </li>
   </ul>
 </nav>

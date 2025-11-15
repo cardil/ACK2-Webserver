@@ -1,63 +1,68 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { theme, type Theme } from '$lib/stores/theme';
-  import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
-  import { faSun, faMoon, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+  import { onMount } from "svelte"
+  import { theme, type Theme } from "$lib/stores/theme"
+  import { FontAwesomeIcon } from "@fortawesome/svelte-fontawesome"
+  import {
+    faSun,
+    faMoon,
+    faWandMagicSparkles,
+  } from "@fortawesome/free-solid-svg-icons"
 
-  export let isOpen: boolean = false;
+  export let isOpen: boolean = false
 
   const themes: { name: Theme; icon: any }[] = [
-    { name: 'light', icon: faSun },
-    { name: 'dark', icon: faMoon },
-    { name: 'auto', icon: faWandMagicSparkles }
-  ];
+    { name: "light", icon: faSun },
+    { name: "dark", icon: faMoon },
+    { name: "auto", icon: faWandMagicSparkles },
+  ]
 
-  $: currentTheme = themes.find(t => t.name === $theme) ?? themes[2];
+  $: currentTheme = themes.find((t) => t.name === $theme) ?? themes[2]
 
   function rotateTheme() {
-    const currentIndex = themes.findIndex(t => t.name === currentTheme.name);
-    const nextThemeIndex = (currentIndex + 1) % themes.length;
-    $theme = themes[nextThemeIndex].name;
+    const currentIndex = themes.findIndex((t) => t.name === currentTheme.name)
+    const nextThemeIndex = (currentIndex + 1) % themes.length
+    $theme = themes[nextThemeIndex].name
   }
 
   function setTheme(newTheme: Theme) {
-    $theme = newTheme;
+    $theme = newTheme
   }
 
-  let mounted = false;
+  let mounted = false
   onMount(() => {
-    mounted = true;
-  });
+    mounted = true
+  })
 </script>
 
 {#if mounted}
-<div class="theme-switcher">
-  {#if isOpen}
-    <div class="expanded-switcher">
-      {#each themes as themeItem}
+  <div class="theme-switcher">
+    {#if isOpen}
+      <div class="expanded-switcher">
+        {#each themes as themeItem}
+          <button
+            class:active={$theme === themeItem.name}
+            on:click={() => setTheme(themeItem.name)}
+            aria-label="{themeItem.name} theme"
+            title="{themeItem.name.charAt(0).toUpperCase() +
+              themeItem.name.slice(1)} Theme"
+          >
+            <FontAwesomeIcon icon={themeItem.icon} />
+          </button>
+        {/each}
+      </div>
+    {:else}
+      {#key $theme}
         <button
-          class:active={$theme === themeItem.name}
-          on:click={() => setTheme(themeItem.name)}
-          aria-label="{themeItem.name} theme"
-          title="{themeItem.name.charAt(0).toUpperCase() + themeItem.name.slice(1)} Theme"
+          class="collapsed-switcher"
+          on:click={rotateTheme}
+          aria-label="Rotate theme"
+          title="Dark mode: {currentTheme.name}. Click to switch."
         >
-          <FontAwesomeIcon icon={themeItem.icon} />
+          <FontAwesomeIcon icon={currentTheme.icon} />
         </button>
-      {/each}
-    </div>
-  {:else}
-    {#key $theme}
-      <button
-        class="collapsed-switcher"
-        on:click={rotateTheme}
-        aria-label="Rotate theme"
-        title="Dark mode: {currentTheme.name}. Click to switch."
-      >
-        <FontAwesomeIcon icon={currentTheme.icon} />
-      </button>
-    {/key}
-  {/if}
-</div>
+      {/key}
+    {/if}
+  </div>
 {/if}
 
 <style>

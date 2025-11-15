@@ -1,76 +1,75 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
-  import CameraOffIcon from '$lib/components/icons/CameraOffIcon.svelte';
-  import Card from '$lib/components/Card.svelte';
+  import { onDestroy } from "svelte"
+  import CameraOffIcon from "$lib/components/icons/CameraOffIcon.svelte"
+  import Card from "$lib/components/Card.svelte"
 
-  let webcamActive = false;
-  let webcamSrc = ''; // Default to empty, will be set by the logic
-  let webcamInterval: ReturnType<typeof setInterval> | undefined = undefined;
+  let webcamActive = false
+  let webcamSrc = "" // Default to empty, will be set by the logic
+  let webcamInterval: ReturnType<typeof setInterval> | undefined = undefined
 
   function toggleWebcam() {
-    webcamActive = !webcamActive;
+    webcamActive = !webcamActive
     if (webcamActive) {
       webcamInterval = setInterval(() => {
-        webcamSrc = `/webcam/cam.jpg?_=${new Date().getTime()}`;
-      }, 125);
+        webcamSrc = `/webcam/cam.jpg?_=${new Date().getTime()}`
+      }, 125)
     } else {
       if (webcamInterval) {
-        clearInterval(webcamInterval);
+        clearInterval(webcamInterval)
       }
-      webcamSrc = ''; // Go back to showing the icon
+      webcamSrc = "" // Go back to showing the icon
     }
   }
 
   onDestroy(() => {
     if (webcamInterval) {
-      clearInterval(webcamInterval);
+      clearInterval(webcamInterval)
     }
-  });
+  })
 </script>
 
 <Card noPadding={true}>
   <div class="webcam-container" class:letterbox={webcamActive}>
-  {#if webcamActive}
-    <img src={webcamSrc} alt="Webcam" />
-  {:else}
-    <div class="icon-container">
-      <CameraOffIcon />
-    </div>
-  {/if}
-  <button class="icon-button" on:click={toggleWebcam}>
     {#if webcamActive}
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="white"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <rect x="6" y="6" width="12" height="12"></rect>
-      </svg>
+      <img src={webcamSrc} alt="Webcam" />
     {:else}
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="white"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <polygon points="8 3 22 12 8 21"></polygon>
-      </svg>
+      <div class="icon-container">
+        <CameraOffIcon />
+      </div>
     {/if}
-  </button>
-</div>
+    <button class="icon-button" on:click={toggleWebcam}>
+      {#if webcamActive}
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="6" y="6" width="12" height="12"></rect>
+        </svg>
+      {:else}
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="8 3 22 12 8 21"></polygon>
+        </svg>
+      {/if}
+    </button>
+  </div>
 </Card>
 
 <style>
-
   .webcam-container {
     position: relative;
     padding: 0; /* Remove padding for the image to fill the card */

@@ -31,7 +31,14 @@
       <line x1="20" y1="30" x2="80" y2="80" stroke-width="4" />
     </g>
     <!-- "Camera off" Text -->
-    <text x="50" y="90" font-family="sans-serif" font-size="10" fill="currentColor" text-anchor="middle">
+    <text
+      x="50"
+      y="90"
+      font-family="sans-serif"
+      font-size="10"
+      fill="currentColor"
+      text-anchor="middle"
+    >
       Camera is off
     </text>
   </g>

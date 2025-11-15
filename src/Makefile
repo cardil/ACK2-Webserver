@@ -27,6 +27,8 @@ TARGET := webfsd
 STRIPPED_TARGET := $(TARGET).stripped
 TARGET_DIR := ../webserver/opt/bin
 TARGET_PATH := $(TARGET_DIR)/$(TARGET)
+STAMP_DIR := .stamps
+LINT_STAMP := $(STAMP_DIR)/.lint.stamp
 
 .PHONY: all init build lint compile test clean help \
 	build-only lint-only compile-only test-only \
@@ -61,7 +63,17 @@ $(STRIPPED_TARGET):
 	@echo "$(TICK) $(TARGET) stripped."
 
 test: compile ## Test the code (runs also: compile, init)
-lint: init ## Lint the sources (runs also: init)
+
+lint: init lint-only ## Lint the sources (runs also: init)
+
+lint-only: $(LINT_STAMP) ## Lint the sources
+
+$(LINT_STAMP): $(SOURCE_FILES)
+	@echo "$(BLUE)➜ Checking sources with editorconfig-checker...$(NC)"
+	@npx --yes editorconfig-checker || (echo "$(WARN) Some files don't match EditorConfig. Run 'make lint-fix' to see details." && exit 1)
+	@echo "$(TICK) Sources match EditorConfig."
+	@mkdir -p $(STAMP_DIR)
+	@touch $(LINT_STAMP)
 
 compile-only: $(TARGET) ## Compile the sources
 compile: lint compile-only ## Compile the sources (runs also: init)
@@ -89,7 +101,9 @@ clean: ## Clean the backend
 	rm -f $(OBJ) \
 		$(TARGET) \
 		$(STRIPPED_TARGET) \
-		$(TARGET_PATH)
+		$(TARGET_PATH) \
+		$(LINT_STAMP)
+	rm -rf $(STAMP_DIR)
 
 clean-cc: ## Delete the cross compiler
 	@echo "$(BLUE)➜ Cleaning cross compiler...$(NC)"

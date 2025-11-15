@@ -736,20 +736,20 @@ int read_mesh_from_printer_config(void) {
 
                     result = 0;
                 } else if (b[0] == 'p' && b[1] == 'r' && b[2] == 'o' && b[3] == 'b' && b[4] == 'e' && b[5] == '_' && b[6] == 'c' &&
-                           b[7] == 'o' && b[8] == 'u' && b[9] == 'n' && b[10] == 't' && b[11] == ' ' && b[12] == ':' && b[13] == ' ') {
+                          b[7] == 'o' && b[8] == 'u' && b[9] == 'n' && b[10] == 't' && b[11] == ' ' && b[12] == ':' && b[13] == ' ') {
                     sscanf(&b[14], "%d,%d", &probe_count_x, &probe_count_y);
                 } else if (b[0] == 'x' && b[1] == '_' && b[2] == 'c' && b[3] == 'o' && b[4] == 'u' &&
-                           b[5] == 'n' && b[6] == 't' && b[7] == ' ' && b[8] == ':' && b[9] == ' ') {
+                          b[5] == 'n' && b[6] == 't' && b[7] == ' ' && b[8] == ':' && b[9] == ' ') {
                     sscanf(&b[10], "%d", &x_count);
                 } else if (b[0] == 'y' && b[1] == '_' && b[2] == 'c' && b[3] == 'o' && b[4] == 'u' &&
-                           b[5] == 'n' && b[6] == 't' && b[7] == ' ' && b[8] == ':' && b[9] == ' ') {
+                          b[5] == 'n' && b[6] == 't' && b[7] == ' ' && b[8] == ':' && b[9] == ' ') {
                     sscanf(&b[10], "%d", &y_count);
                 } else if (b[0] == 'z' && b[1] == '_' && b[2] == 'o' && b[3] == 'f' && b[4] == 'f' &&
-                           b[5] == 's' && b[6] == 'e' && b[7] == 't' && b[8] == ' ' && b[9] == ':' && b[10] == ' ') {
+                          b[5] == 's' && b[6] == 'e' && b[7] == 't' && b[8] == ' ' && b[9] == ':' && b[10] == ' ') {
                     z_offset = atof(&b[11]);
                 } else if (b[0] == 'b' && b[1] == 'e' && b[2] == 'd' && b[3] == '_' && b[4] == 'm' &&
-                           b[5] == 'e' && b[6] == 's' && b[7] == 'h' && b[8] == '_' && b[9] == 't' && b[10] == 'e' &&
-                           b[11] == 'm' && b[12] == 'p' && b[13] == ' ' && b[14] == ':' && b[15] == ' ') {
+                          b[5] == 'e' && b[6] == 's' && b[7] == 'h' && b[8] == '_' && b[9] == 't' && b[10] == 'e' &&
+                          b[11] == 'm' && b[12] == 'p' && b[13] == ' ' && b[14] == ':' && b[15] == ' ') {
                     bed_temp = atoi(&b[16]);
                 }
             }
@@ -1361,7 +1361,7 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
         if (access("/tmp/cam.jpg", F_OK) == -1) {
             custom_copy_file("/mnt/UDISK/webfs/webcam/default.jpg", "/tmp/cam.jpg", "wb", NULL);
         }
-        
+
         // Point the server to the image in tmpfs
         strcpy(filename_str, "/tmp/cam.jpg");
         goto e_x_i_t;
@@ -1728,7 +1728,7 @@ restart:
     }
 
     /* check if this looks like a http request after
-             the first few bytes... */
+            the first few bytes... */
     if (req->hdata < 5)
         return;
     if (strncmp(req->hreq, "GET ", 4) != 0 &&
@@ -2182,7 +2182,7 @@ void parse_request(struct REQUEST *req) {
             if (2 != sscanf(h + 6, "%" S(MAX_HOST) "[a-zA-Z0-9.-]:%d",
                             req->hostname, &port))
                 sscanf(h + 6, "%" S(MAX_HOST) "[a-zA-Z0-9.-]",
-                       req->hostname);
+                      req->hostname);
         } else if (0 == strncasecmp(h, "If-Modified-Since: ", 19)) {
             req->if_modified = h + 19;
         } else if (0 == strncasecmp(h, "If-Unmodified-Since: ", 21)) {
@@ -2195,7 +2195,7 @@ void parse_request(struct REQUEST *req) {
                 fprintf(stderr, "%03d: auth: %s\n", req->fd, req->auth);
         } else if (0 == strncasecmp(h, "Range: bytes=", 13)) {
             /* parsing must be done after fstat, we need the file size
-                     for the boundary checks */
+                    for the boundary checks */
             req->range_hdr = h + 13;
         } else if (0 == strncasecmp(h, "Content-Length: ", 16)) {
             req->content_length = atoi(h + 16);
@@ -2225,7 +2225,7 @@ void parse_request(struct REQUEST *req) {
             mkerror(req, 500, 0);
             return;
         }
-        
+
         int body_read = 0;
         char *header_end = strstr(req->hreq, "\r\n\r\n");
         if (header_end) {
@@ -2281,7 +2281,7 @@ void parse_request(struct REQUEST *req) {
     /* build filename */
     if (userdir && '~' == req->path[1]) {
         /* expand user directories, i.e.
-                 /~user/path/file => $HOME/public_html/path/file */
+                /~user/path/file => $HOME/public_html/path/file */
         h = strchr(req->path + 2, '/');
         if (NULL == h) {
             mkerror(req, 404, 1);
@@ -2295,14 +2295,14 @@ void parse_request(struct REQUEST *req) {
             return;
         }
         len = snprintf(filename, sizeof(filename) - 1,
-                       "%s/%s/%s", pw->pw_dir, userdir, h + 1);
+                      "%s/%s/%s", pw->pw_dir, userdir, h + 1);
     } else {
         len = snprintf(filename, sizeof(filename) - 1,
-                       "%s%s%s%s",
-                       do_chroot ? "" : doc_root,
-                       virtualhosts ? "/" : "",
-                       virtualhosts ? req->hostname : "",
-                       req->path);
+                      "%s%s%s%s",
+                      do_chroot ? "" : doc_root,
+                      virtualhosts ? "/" : "",
+                      virtualhosts ? req->hostname : "",
+                      req->path);
     }
 
     req->cache_turn_off = 'N';
@@ -2343,16 +2343,16 @@ void parse_request(struct REQUEST *req) {
                                   (strncmp(req->path, "/webcam/", 8) == 0) ||
                                   (strncmp(req->path, "/files/", 7) == 0) ||
                                   (strncmp(req->path, "/deprecated/", 12) == 0);
-            
+
             if (!is_api_route && !is_static_asset) {
                 /* Try to serve root index.html for SPA routing */
                 char index_path[1024];
                 int index_len = snprintf(index_path, sizeof(index_path) - 1,
-                           "%s%s%s%s",
-                           do_chroot ? "" : doc_root,
-                           virtualhosts ? "/" : "",
-                           virtualhosts ? req->hostname : "",
-                           "/index.html");
+                          "%s%s%s%s",
+                          do_chroot ? "" : doc_root,
+                          virtualhosts ? "/" : "",
+                          virtualhosts ? req->hostname : "",
+                          "/index.html");
                 if (index_len > 0 && index_len < (int)sizeof(index_path)) {
                     if (-1 != (req->bfd = open(index_path, O_RDONLY))) {
                         close_on_exec(req->bfd);
@@ -2374,16 +2374,16 @@ void parse_request(struct REQUEST *req) {
                                       (strncmp(req->path, "/webcam/", 8) == 0) ||
                                       (strncmp(req->path, "/files/", 7) == 0) ||
                                       (strncmp(req->path, "/deprecated/", 12) == 0);
-                
+
                 if (!is_api_route && !is_static_asset) {
                     /* Try to serve root index.html for SPA routing */
                     char index_path[1024];
                     int index_len = snprintf(index_path, sizeof(index_path) - 1,
-                               "%s%s%s%s",
-                               do_chroot ? "" : doc_root,
-                               virtualhosts ? "/" : "",
-                               virtualhosts ? req->hostname : "",
-                               "/index.html");
+                              "%s%s%s%s",
+                              do_chroot ? "" : doc_root,
+                              virtualhosts ? "/" : "",
+                              virtualhosts ? req->hostname : "",
+                              "/index.html");
                     if (index_len > 0 && index_len < (int)sizeof(index_path)) {
                         if (-1 != (req->bfd = open(index_path, O_RDONLY))) {
                             close_on_exec(req->bfd);
@@ -2401,11 +2401,11 @@ void parse_request(struct REQUEST *req) {
         req->dir = get_dir(req, filename);
         if (NULL == req->body) {
             /* We arrive here if opendir failed, probably due to -EPERM
-             * It does exist (see the stat() call above) */
+            * It does exist (see the stat() call above) */
             mkerror(req, 403, 1);
             return;
         } else if (NULL != req->if_modified &&
-                   0 == strcmp(req->if_modified, req->mtime)) {
+                  0 == strcmp(req->if_modified, req->mtime)) {
             /* 304 not modified */
             mkheader(req, 304);
             req->head_only = 1;
@@ -2429,16 +2429,16 @@ void parse_request(struct REQUEST *req) {
                                   (strncmp(req->path, "/files/", 7) == 0) ||
                                   (strncmp(req->path, "/deprecated/", 12) == 0) ||
                                   (strchr(req->path, '.') != NULL); /* Has file extension */
-            
+
             if (!is_api_route && !is_static_asset) {
                 /* This is likely a SvelteKit route - serve index.html for SPA routing */
                 char index_path[1024];
                 int index_len = snprintf(index_path, sizeof(index_path) - 1,
-                           "%s%s%s%s",
-                           do_chroot ? "" : doc_root,
-                           virtualhosts ? "/" : "",
-                           virtualhosts ? req->hostname : "",
-                           "/index.html");
+                          "%s%s%s%s",
+                          do_chroot ? "" : doc_root,
+                          virtualhosts ? "/" : "",
+                          virtualhosts ? req->hostname : "",
+                          "/index.html");
                 if (index_len > 0 && index_len < (int)sizeof(index_path)) {
                     if (-1 != (req->bfd = open(index_path, O_RDONLY))) {
                         /* Successfully opened index.html - continue to serve it */

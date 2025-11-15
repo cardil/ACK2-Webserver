@@ -1,6 +1,6 @@
 <script lang="ts">
-  export let label: string;
-  export let title: string = '';
+  export let label: string
+  export let title: string = ""
 </script>
 
 <div class="info-widget" {title}>

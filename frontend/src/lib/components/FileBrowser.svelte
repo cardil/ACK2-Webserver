@@ -1,80 +1,93 @@
 <script lang="ts">
-  import { fileBrowserStore } from '$lib/stores/fileBrowser';
-  import { onMount } from 'svelte';
-  import Fa from 'svelte-fa';
-  import { faFolder, faFolderOpen, faFile, faEye, faEyeSlash, faArrowUp, faDatabase } from '@fortawesome/free-solid-svg-icons';
-  import { faClock } from '@fortawesome/free-regular-svg-icons';
-  import InfoModal from './InfoModal.svelte';
-  import { formatFileSize } from '$lib/utils/files';
-  import { formatTimestamp } from '$lib/utils/time';
-  import { time } from '$lib/stores/time';
+  import { fileBrowserStore } from "$lib/stores/fileBrowser"
+  import { onMount } from "svelte"
+  import Fa from "svelte-fa"
+  import {
+    faFolder,
+    faFolderOpen,
+    faFile,
+    faEye,
+    faEyeSlash,
+    faArrowUp,
+    faDatabase,
+  } from "@fortawesome/free-solid-svg-icons"
+  import { faClock } from "@fortawesome/free-regular-svg-icons"
+  import InfoModal from "./InfoModal.svelte"
+  import { formatFileSize } from "$lib/utils/files"
+  import { formatTimestamp } from "$lib/utils/time"
+  import { time } from "$lib/stores/time"
 
-  let isPreviewOpen = false;
-  let previewContent = '';
-  let previewTitle = '';
+  let isPreviewOpen = false
+  let previewContent = ""
+  let previewTitle = ""
 
   onMount(() => {
-    fileBrowserStore.fetchFiles();
-  });
+    fileBrowserStore.fetchFiles()
+  })
 
   function handleFileClick(file: { name: string; isDirectory: boolean }) {
     if (file.isDirectory) {
-      fileBrowserStore.navigate(file.name);
+      fileBrowserStore.navigate(file.name)
     } else {
-      downloadFile(file.name);
+      downloadFile(file.name)
     }
   }
 
   async function downloadFile(fileName: string) {
     try {
-      const currentPath = fileBrowserStore.getCurrentPath();
-      const filePath = currentPath === '/'
-        ? `/files/${fileName}`
-        : `/files${currentPath}${fileName}`;
-      const response = await fetch(filePath);
+      const currentPath = fileBrowserStore.getCurrentPath()
+      const filePath =
+        currentPath === "/"
+          ? `/files/${fileName}`
+          : `/files${currentPath}${fileName}`
+      const response = await fetch(filePath)
       if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = fileName
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
       }
     } catch (error) {
-      console.error('Error downloading file:', error);
+      console.error("Error downloading file:", error)
     }
   }
 
   async function showPreview(fileName: string) {
     try {
-      const currentPath = fileBrowserStore.getCurrentPath();
-      const filePath = currentPath === '/'
-        ? `/files/${fileName}`
-        : `/files${currentPath}${fileName}`;
-      const response = await fetch(filePath);
+      const currentPath = fileBrowserStore.getCurrentPath()
+      const filePath =
+        currentPath === "/"
+          ? `/files/${fileName}`
+          : `/files${currentPath}${fileName}`
+      const response = await fetch(filePath)
       if (response.ok) {
-        previewContent = await response.text();
-        previewTitle = fileName;
-        isPreviewOpen = true;
+        previewContent = await response.text()
+        previewTitle = fileName
+        isPreviewOpen = true
       }
     } catch (error) {
-      console.error('Error fetching file content:', error);
+      console.error("Error fetching file content:", error)
     }
   }
 
-  const currentPathStore = fileBrowserStore.currentPath;
-  $: displayPath = ($currentPathStore || '/files/').replace('/files', '') || '/';
-  $: canGoUp = ($currentPathStore || '/files/').replace('/files/', '').replace(/^\/+|\/+$/g, '').length > 0;
+  const currentPathStore = fileBrowserStore.currentPath
+  $: displayPath = ($currentPathStore || "/files/").replace("/files", "") || "/"
+  $: canGoUp =
+    ($currentPathStore || "/files/")
+      .replace("/files/", "")
+      .replace(/^\/+|\/+$/g, "").length > 0
 </script>
 
 <InfoModal
   isOpen={isPreviewOpen}
   title={previewTitle}
   message={previewContent}
-  buttons={[{ label: 'Close', event: 'close' }]}
+  buttons={[{ label: "Close", event: "close" }]}
   on:close={() => (isPreviewOpen = false)}
 />
 
@@ -83,15 +96,21 @@
     <span class="path-icon">
       <Fa icon={faFolderOpen} />
     </span>
-    {#if displayPath === '/' || displayPath === ''}
+    {#if displayPath === "/" || displayPath === ""}
       <span class="path-segment path-current">fs:</span>
     {:else}
-      {@const pathParts = displayPath.split('/').filter((p: string) => p)}
-      <button class="path-segment" on:click={() => fileBrowserStore.navigateToPath(-1)}>fs:</button>
+      {@const pathParts = displayPath.split("/").filter((p: string) => p)}
+      <button
+        class="path-segment"
+        on:click={() => fileBrowserStore.navigateToPath(-1)}>fs:</button
+      >
       {#each pathParts as part, i}
         <span class="path-separator">/</span>
         {#if i < pathParts.length - 1}
-          <button class="path-segment" on:click={() => fileBrowserStore.navigateToPath(i)}>{part}</button>
+          <button
+            class="path-segment"
+            on:click={() => fileBrowserStore.navigateToPath(i)}>{part}</button
+          >
         {:else}
           <span class="path-segment path-current">{part}</span>
         {/if}
@@ -101,7 +120,10 @@
   <ul class="file-list">
     {#if canGoUp}
       <div class="file-item">
-        <button class="directory-btn go-up-btn" on:click={() => fileBrowserStore.goUp()}>
+        <button
+          class="directory-btn go-up-btn"
+          on:click={() => fileBrowserStore.goUp()}
+        >
           <span class="file-icon">
             <Fa icon={faArrowUp} />
           </span>
@@ -128,9 +150,9 @@
             tabindex="0"
             on:click={() => handleFileClick(file)}
             on:keydown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleFileClick(file);
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                handleFileClick(file)
               }
             }}
           >
@@ -142,7 +164,10 @@
               {#if file.size !== undefined || file.mtime !== undefined}
                 <div class="file-meta">
                   {#if file.size !== undefined}
-                    <div class="meta-item" title="File size: {formatFileSize(file.size)}">
+                    <div
+                      class="meta-item"
+                      title="File size: {formatFileSize(file.size)}"
+                    >
                       <Fa icon={faDatabase} />
                       <span>{formatFileSize(file.size)}</span>
                     </div>
@@ -158,11 +183,19 @@
               {/if}
             </div>
             {#if file.size !== undefined && file.size < 100 * 1024}
-              <button class="preview-btn" on:click|stopPropagation={() => showPreview(file.name)} title="Preview file">
+              <button
+                class="preview-btn"
+                on:click|stopPropagation={() => showPreview(file.name)}
+                title="Preview file"
+              >
                 <Fa icon={faEye} />
               </button>
             {:else}
-              <button class="preview-btn preview-btn-disabled" disabled title="Too large to show in preview window">
+              <button
+                class="preview-btn preview-btn-disabled"
+                disabled
+                title="Too large to show in preview window"
+              >
                 <Fa icon={faEyeSlash} />
               </button>
             {/if}

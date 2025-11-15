@@ -1,97 +1,99 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import Webcam from '$lib/components/Webcam.svelte';
-  import PrinterStats from '$lib/components/PrinterStats.svelte';
-  import PrinterControls from '$lib/components/PrinterControls.svelte';
-  import PrintHistory from '$lib/components/PrintHistory.svelte';
-  import { webserverStore } from '$lib/stores/webserver';
-  import { kobraConnectionStore } from '$lib/stores/kobraConnection';
-  import ConnectionOverlay from '$lib/components/ConnectionOverlay.svelte';
-  import { printerStore, type Printer } from '$lib/stores/printer';
-  import { activePrinterIdStore } from '$lib/stores/activePrinterId';
-  import { derived } from 'svelte/store';
+  import { onMount } from "svelte"
+  import Webcam from "$lib/components/Webcam.svelte"
+  import PrinterStats from "$lib/components/PrinterStats.svelte"
+  import PrinterControls from "$lib/components/PrinterControls.svelte"
+  import PrintHistory from "$lib/components/PrintHistory.svelte"
+  import { webserverStore } from "$lib/stores/webserver"
+  import { kobraConnectionStore } from "$lib/stores/kobraConnection"
+  import ConnectionOverlay from "$lib/components/ConnectionOverlay.svelte"
+  import { printerStore, type Printer } from "$lib/stores/printer"
+  import { activePrinterIdStore } from "$lib/stores/activePrinterId"
+  import { derived } from "svelte/store"
 
-  let activePrinter: Printer | undefined;
+  let activePrinter: Printer | undefined
   const activePrinterStore = derived(
     [printerStore, activePrinterIdStore],
     ([$printerStore, $activePrinterIdStore]) => {
-      return $activePrinterIdStore ? $printerStore[$activePrinterIdStore] : undefined;
-    }
-  );
+      return $activePrinterIdStore
+        ? $printerStore[$activePrinterIdStore]
+        : undefined
+    },
+  )
 
-  let wasPrinting = false;
-  let wasOnline = false;
+  let wasPrinting = false
+  let wasOnline = false
   activePrinterStore.subscribe((printer) => {
-    activePrinter = printer;
+    activePrinter = printer
 
-    const isOnline = printer?.online ?? false;
+    const isOnline = printer?.online ?? false
     if (isOnline && !wasOnline && printer) {
-      printerStore.refreshFiles(printer.id);
+      printerStore.refreshFiles(printer.id)
     }
-    wasOnline = isOnline;
+    wasOnline = isOnline
 
     const isPrinting =
-      printer?.state === 'printing' ||
-      printer?.state === 'paused' ||
-      printer?.state === 'preheating' ||
-      printer?.state === 'downloading';
+      printer?.state === "printing" ||
+      printer?.state === "paused" ||
+      printer?.state === "preheating" ||
+      printer?.state === "downloading"
 
     if (isPrinting && !wasPrinting && printer) {
-      printerStore.refreshFiles(printer.id);
+      printerStore.refreshFiles(printer.id)
     }
 
-    wasPrinting = isPrinting;
-  });
+    wasPrinting = isPrinting
+  })
 
-  let printerModel = '';
-  let fwVersion = '';
-  let unleashedLink = '#';
-  let totalMemory = 0;
-  let freeMemory = 0;
-  let freeMemoryPercentage = 0;
-  let cpuTotalUsage = 0;
-  let cpuUserUsage = 0;
-  let cpuSystemUsage = 0;
-  let sshStatus = '';
-  let uptime = '';
+  let printerModel = ""
+  let fwVersion = ""
+  let unleashedLink = "#"
+  let totalMemory = 0
+  let freeMemory = 0
+  let freeMemoryPercentage = 0
+  let cpuTotalUsage = 0
+  let cpuUserUsage = 0
+  let cpuSystemUsage = 0
+  let sshStatus = ""
+  let uptime = ""
 
-  webserverStore.subscribe(config => {
+  webserverStore.subscribe((config) => {
     if (config) {
-      printerModel = config.printer_model;
-      fwVersion = config.update_version;
-      unleashedLink = config.mqtt_webui_url;
+      printerModel = config.printer_model
+      fwVersion = config.update_version
+      unleashedLink = config.mqtt_webui_url
     }
-  });
+  })
 
   onMount(() => {
     function fetchData() {
-      fetch('/api/info.json')
+      fetch("/api/info.json")
         .then((response) => response.json())
         .then((data) => {
-          totalMemory = Math.round(data.total_mem / 1024 / 1024);
-          freeMemory = Math.round(data.free_mem / 1024 / 1024);
-          freeMemoryPercentage = data.free_mem_per;
-          cpuTotalUsage = data.cpu_use;
-          cpuUserUsage = data.cpu_usr_use;
-          cpuSystemUsage = data.cpu_sys_use;
+          totalMemory = Math.round(data.total_mem / 1024 / 1024)
+          freeMemory = Math.round(data.free_mem / 1024 / 1024)
+          freeMemoryPercentage = data.free_mem_per
+          cpuTotalUsage = data.cpu_use
+          cpuUserUsage = data.cpu_usr_use
+          cpuSystemUsage = data.cpu_sys_use
           sshStatus =
             data.ssh_status == 2
-              ? 'Started'
+              ? "Started"
               : data.ssh_status == 1
-              ? 'Stopped'
-              : 'N/A';
-          uptime = data.uptime;
+                ? "Stopped"
+                : "N/A"
+          uptime = data.uptime
         })
-        .catch((error) => console.error('Error fetching info data:', error));
+        .catch((error) => console.error("Error fetching info data:", error))
     }
 
-    fetchData();
-    const interval = setInterval(fetchData, 1000);
+    fetchData()
+    const interval = setInterval(fetchData, 1000)
 
     return () => {
-      clearInterval(interval);
-    };
-  });
+      clearInterval(interval)
+    }
+  })
 </script>
 
 <div class="page-container">
@@ -153,7 +155,6 @@
     min-height: 0;
     flex-grow: 1;
   }
-
 
   @media (max-width: 768px) {
     .page-container {

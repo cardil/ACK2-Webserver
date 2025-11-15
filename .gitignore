@@ -13,4 +13,5 @@ originals/
 !/webserver/opt/webfs/files
 !/webserver/opt/webfs/deprecated
 .continue/
-
+src/.stamps/
+AGENTS.md

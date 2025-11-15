@@ -39,24 +39,24 @@ static void handle_get_leveling_status(struct REQUEST *req) {
     trim_trailing_whitespace(mesh_config);
 
     int len = snprintf(api_response_buffer, sizeof(api_response_buffer),
-             "{"
-             "\"settings\": {"
-             "\"grid_size\": %d,"
-             "\"bed_temp\": %d,"
-             "\"precision\": %.4f,"
-             "\"z_offset\": %.4f"
-             "},"
-             "\"active_mesh\": {"
-             "\"mesh_data\": \"%s\""
-             "},"
-             "\"saved_meshes\": [",
-             mesh_grid, bed_temp, precision, z_offset, mesh_config);
+            "{"
+            "\"settings\": {"
+            "\"grid_size\": %d,"
+            "\"bed_temp\": %d,"
+            "\"precision\": %.4f,"
+            "\"z_offset\": %.4f"
+            "},"
+            "\"active_mesh\": {"
+            "\"mesh_data\": \"%s\""
+            "},"
+            "\"saved_meshes\": [",
+            mesh_grid, bed_temp, precision, z_offset, mesh_config);
 
     int first_mesh = 1;
     for (int i = 1; i < 100; i++) {
         char fn_buf[64];
         sprintf(fn_buf, "/user/webfs/data_slot_%d.txt", i);
-        
+
         struct stat st;
         if (stat(fn_buf, &st) == 0) {
             FILE *file = fopen(fn_buf, "r");
@@ -68,7 +68,7 @@ static void handle_get_leveling_status(struct REQUEST *req) {
                 fread(mesh_data, 1, sizeof(mesh_data) - 1, file);
                 fclose(file);
                 trim_trailing_whitespace(mesh_data);
-                
+
                 char date_buf[20];
                 strftime(date_buf, sizeof(date_buf), "%%Y-%%m-%%d %%H:%%M:%%S", localtime(&st.st_mtime));
 
@@ -79,7 +79,7 @@ static void handle_get_leveling_status(struct REQUEST *req) {
             }
         }
     }
-    
+
     len += snprintf(api_response_buffer + len, sizeof(api_response_buffer) - len, "]}");
 
     req->body = api_response_buffer;
@@ -97,11 +97,11 @@ static void handle_delete_mesh_slot(struct REQUEST *req) {
         sprintf(fn_buf, "/user/webfs/data_slot_%d.txt", slot_id);
         if (remove(fn_buf) == 0) {
             snprintf(api_response_buffer, sizeof(api_response_buffer),
-                     "{\"status\": \"success\", \"message\": \"Mesh slot %d deleted.\"}", slot_id);
+                    "{\"status\": \"success\", \"message\": \"Mesh slot %d deleted.\"}", slot_id);
             mkheader(req, 200);
         } else {
             snprintf(api_response_buffer, sizeof(api_response_buffer),
-                     "{\"status\": \"error\", \"message\": \"Could not delete mesh slot %d. It may not exist.\"}", slot_id);
+                    "{\"status\": \"error\", \"message\": \"Could not delete mesh slot %d. It may not exist.\"}", slot_id);
             mkheader(req, 404);
         }
     } else {
@@ -202,9 +202,9 @@ static void handle_put_mesh_slot(struct REQUEST *req) {
             char fn_buf[64];
             sprintf(fn_buf, "/user/webfs/data_slot_%d.txt", slot_id);
             if (custom_copy_file(NULL, fn_buf, "wb", mesh_data) == 0) {
-                 snprintf(api_response_buffer, sizeof(api_response_buffer),
-                         "{\"status\": \"success\", \"message\": \"Mesh saved to slot %d.\"}", slot_id);
-                 mkheader(req, 200);
+                snprintf(api_response_buffer, sizeof(api_response_buffer),
+                        "{\"status\": \"success\", \"message\": \"Mesh saved to slot %d.\"}", slot_id);
+                mkheader(req, 200);
             } else {
                 snprintf(api_response_buffer, sizeof(api_response_buffer), "{\"status\": \"error\", \"message\": \"Failed to write to file.\"}");
                 mkheader(req, 500);
@@ -267,7 +267,7 @@ static void handle_put_settings(struct REQUEST *req) {
         char* grid_size_str = get_json_value(body_copy, "\"grid_size\"");
         char* bed_temp_str = get_json_value(body_copy, "\"bed_temp\"");
         char* precision_str = get_json_value(body_copy, "\"precision\"");
-        
+
         const char *config_file;
         if (detect_printer_defaults(NULL, &config_file, NULL, NULL) != 0) {
             snprintf(api_response_buffer, sizeof(api_response_buffer), "{\"status\": \"error\", \"message\": \"Could not detect printer configuration file.\"}");

@@ -1,1 +1,1 @@
-declare module 'svelte-fa';
+declare module "svelte-fa"

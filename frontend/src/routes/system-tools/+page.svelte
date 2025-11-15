@@ -1,59 +1,61 @@
 <script lang="ts">
-  import InfoModal from '$lib/components/InfoModal.svelte';
-  import { systemInfo } from '$lib/stores/system';
-  import { logStore } from '$lib/stores/log';
-  import SystemCard from '$lib/components/system-tools/SystemCard.svelte';
-  import ServicesCard from '$lib/components/system-tools/ServicesCard.svelte';
-  import SecurityCard from '$lib/components/system-tools/SecurityCard.svelte';
-  import PrinterLogCard from '$lib/components/system-tools/PrinterLogCard.svelte';
-  import FileBrowserCard from '$lib/components/system-tools/FileBrowserCard.svelte';
+  import InfoModal from "$lib/components/InfoModal.svelte"
+  import { systemInfo } from "$lib/stores/system"
+  import { logStore } from "$lib/stores/log"
+  import SystemCard from "$lib/components/system-tools/SystemCard.svelte"
+  import ServicesCard from "$lib/components/system-tools/ServicesCard.svelte"
+  import SecurityCard from "$lib/components/system-tools/SecurityCard.svelte"
+  import PrinterLogCard from "$lib/components/system-tools/PrinterLogCard.svelte"
+  import FileBrowserCard from "$lib/components/system-tools/FileBrowserCard.svelte"
 
-  let isModalOpen = false;
-  let modalTitle = '';
-  let modalMessage = '';
-  let modalButtons: { label: string; class?: string; event: string }[] = [];
-  let modalAction: 'reboot' | 'poweroff' | 'clearLog' | null = null;
+  let isModalOpen = false
+  let modalTitle = ""
+  let modalMessage = ""
+  let modalButtons: { label: string; class?: string; event: string }[] = []
+  let modalAction: "reboot" | "poweroff" | "clearLog" | null = null
 
-  function showConfirmationModal(action: 'reboot' | 'poweroff' | 'clearLog') {
-    modalAction = action;
-    modalTitle = 'Confirm Action';
-    if (action === 'clearLog') {
-      modalMessage = 'Are you sure you want to clear the printer log?';
+  function showConfirmationModal(action: "reboot" | "poweroff" | "clearLog") {
+    modalAction = action
+    modalTitle = "Confirm Action"
+    if (action === "clearLog") {
+      modalMessage = "Are you sure you want to clear the printer log?"
       modalButtons = [
-        { label: 'Cancel', event: 'close' },
-        { label: 'Yes, Clear Log', class: 'danger', event: 'confirm' },
-      ];
+        { label: "Cancel", event: "close" },
+        { label: "Yes, Clear Log", class: "danger", event: "confirm" },
+      ]
     } else {
-      modalTitle = `Confirm ${action}`;
-      modalMessage = `Are you sure you want to ${action} the printer?`;
+      modalTitle = `Confirm ${action}`
+      modalMessage = `Are you sure you want to ${action} the printer?`
       modalButtons = [
-        { label: 'Cancel', event: 'close' },
-        { label: `Yes, ${action}`, class: 'danger', event: 'confirm' },
-      ];
+        { label: "Cancel", event: "close" },
+        { label: `Yes, ${action}`, class: "danger", event: "confirm" },
+      ]
     }
-    isModalOpen = true;
+    isModalOpen = true
   }
 
   async function handleModalConfirm() {
-    if (!modalAction) return;
+    if (!modalAction) return
 
-    isModalOpen = false;
-    if (modalAction === 'reboot' || modalAction === 'poweroff') {
-      await handleSystemAction(modalAction);
-    } else if (modalAction === 'clearLog') {
-      await logStore.clearLog();
+    isModalOpen = false
+    if (modalAction === "reboot" || modalAction === "poweroff") {
+      await handleSystemAction(modalAction)
+    } else if (modalAction === "clearLog") {
+      await logStore.clearLog()
     }
-    modalAction = null;
+    modalAction = null
   }
 
-  async function handleSystemAction(action: 'reboot' | 'poweroff' | 'ssh_start' | 'ssh_stop' | 'ssh_restart') {
+  async function handleSystemAction(
+    action: "reboot" | "poweroff" | "ssh_start" | "ssh_stop" | "ssh_restart",
+  ) {
     try {
-      await fetch(`/api/do.json?action=${action}`);
+      await fetch(`/api/do.json?action=${action}`)
       setTimeout(() => {
-        systemInfo.forceUpdate();
-      }, 1000);
+        systemInfo.forceUpdate()
+      }, 1000)
     } catch (error) {
-      console.error(`Error during ${action}:`, error);
+      console.error(`Error during ${action}:`, error)
     }
   }
 </script>
@@ -122,4 +124,3 @@
     box-sizing: border-box;
   }
 </style>
-

@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
-  import { faDatabase, faRedo } from '@fortawesome/free-solid-svg-icons';
-  import { faClock } from '@fortawesome/free-regular-svg-icons';
-  import { formatTimestamp } from '$lib/utils/time';
-  import { time } from '$lib/stores/time';
-  import { formatFileSize } from '$lib/utils/files';
+  import { FontAwesomeIcon } from "@fortawesome/svelte-fontawesome"
+  import { faDatabase, faRedo } from "@fortawesome/free-solid-svg-icons"
+  import { faClock } from "@fortawesome/free-regular-svg-icons"
+  import { formatTimestamp } from "$lib/utils/time"
+  import { time } from "$lib/stores/time"
+  import { formatFileSize } from "$lib/utils/files"
 
-  export let file: { name: string; timestamp: number; size: number };
-  export let onReprint: () => void;
-  export let disabled = false;
+  export let file: { name: string; timestamp: number; size: number }
+  export let onReprint: () => void
+  export let disabled = false
 
-  $: timeAgo = formatTimestamp(file.timestamp / 1000, $time / 1000);
-  $: formattedSize = formatFileSize(file.size);
+  $: timeAgo = formatTimestamp(file.timestamp / 1000, $time / 1000)
+  $: formattedSize = formatFileSize(file.size)
 </script>
 
 <div class="file-entry">

@@ -225,7 +225,7 @@ fix_ug(void) {
     struct group *gr = NULL;
 
     /* root is allowed to use any uid/gid,
-     * others will get their real uid/gid */
+    * others will get their real uid/gid */
     if (0 == getuid() && strlen(user) > 0) {
         if (NULL == (pw = getpwnam(user)))
             pw = getpwuid(atoi(user));
@@ -249,7 +249,7 @@ fix_ug(void) {
     }
 
     /* chroot to $DOCUMENT_ROOT (must be done here as getpwuid needs
-             /etc and chroot works as root only) */
+            /etc and chroot works as root only) */
     if (do_chroot) {
         chdir(doc_root);
         if (-1 == chroot(doc_root)) {
@@ -321,13 +321,13 @@ access_log(struct REQUEST *req, time_t now) {
 }
 
 /*
- * loglevel usage
- *   ERR    : fatal errors (which are followed by exit(1))
- *   WARNING: this should'nt happen error (oom, ...)
- *   NOTICE : start/stop of the daemon
- *   INFO   : "normal" errors (canceled downloads, timeouts,
- *            stuff what happens all the time)
- */
+* loglevel usage
+*   ERR    : fatal errors (which are followed by exit(1))
+*   WARNING: this should'nt happen error (oom, ...)
+*   NOTICE : start/stop of the daemon
+*   INFO   : "normal" errors (canceled downloads, timeouts,
+*            stuff what happens all the time)
+*/
 
 static void
 syslog_init(void) {
@@ -337,16 +337,16 @@ syslog_init(void) {
 static void
 syslog_start(void) {
     syslog(LOG_NOTICE,
-           "started (listen on %s:%d, root=%s, user=%s, group=%s)\n",
-           listen_ip ? listen_ip : "*",
-           tcp_port, doc_root, user, group);
+          "started (listen on %s:%d, root=%s, user=%s, group=%s)\n",
+          listen_ip ? listen_ip : "*",
+          tcp_port, doc_root, user, group);
 }
 
 static void
 syslog_stop(void) {
     if (termsig)
         syslog(LOG_NOTICE, "stopped on signal %d (%s)\n",
-               termsig, strsignal(termsig));
+              termsig, strsignal(termsig));
     else
         syslog(LOG_NOTICE, "stopped\n");
     closelog();
@@ -367,7 +367,7 @@ void xperror(int loglevel, char *txt, char *peerhost) {
             syslog(loglevel, "%s: %s\n", txt, strerror(errno));
         else
             syslog(loglevel, "%s: %s (peer=%s)\n", txt, strerror(errno),
-                   peerhost);
+                  peerhost);
     }
 }
 
@@ -834,8 +834,8 @@ int main(int argc, char *argv[]) {
     if (res->ai_canonname)
         strcpy(server_host, res->ai_canonname);
     if (0 != (rc = getnameinfo((struct sockaddr *)&ss, ss_len,
-                               host, INET6_ADDRSTRLEN, serv, 15,
-                               NI_NUMERICHOST | NI_NUMERICSERV))) {
+                              host, INET6_ADDRSTRLEN, serv, 15,
+                              NI_NUMERICHOST | NI_NUMERICSERV))) {
         fprintf(stderr, "getnameinfo: %s\n", gai_strerror(rc));
         exit(1);
     }

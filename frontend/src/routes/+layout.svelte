@@ -1,22 +1,22 @@
 <script lang="ts">
-  import favicon from "$lib/assets/favicon.svg";
-  import NavMenu from "$lib/components/NavMenu.svelte";
-  import { effectiveTheme } from "$lib/stores/theme";
-  import { browser } from "$app/environment";
+  import favicon from "$lib/assets/favicon.svg"
+  import NavMenu from "$lib/components/NavMenu.svelte"
+  import { effectiveTheme } from "$lib/stores/theme"
+  import { browser } from "$app/environment"
 
   if (browser) {
     effectiveTheme.subscribe((value) => {
-      document.body.dataset.theme = value;
-    });
+      document.body.dataset.theme = value
+    })
   }
 
   if (browser && import.meta.env.DEV) {
-    import('$lib/dev/mockProxy').then(({ initializeMockProxy }) => {
-      initializeMockProxy();
-    });
+    import("$lib/dev/mockProxy").then(({ initializeMockProxy }) => {
+      initializeMockProxy()
+    })
   }
 
-  let { children } = $props();
+  let { children } = $props()
 </script>
 
 <svelte:head>
@@ -62,7 +62,6 @@
     color-scheme: dark;
   }
 
-
   :global(*) {
     box-sizing: border-box;
     margin: 0;
@@ -79,8 +78,9 @@
   }
 
   :global(body) {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      "Helvetica Neue", Arial, sans-serif;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+      Arial, sans-serif;
     background-color: var(--background-color);
     color: var(--text-color);
     transition:

@@ -1,29 +1,30 @@
 <script lang="ts">
-  import Card from '$lib/components/Card.svelte';
-  import InfoWidget from '$lib/components/InfoWidget.svelte';
-  import { systemInfo } from '$lib/stores/system';
-  import {
-    faPowerOff,
-    faSync,
-  } from '@fortawesome/free-solid-svg-icons';
-  import Fa from 'svelte-fa';
-  import { formatDuration } from '$lib/utils/time';
-  import './system-tools.css';
+  import Card from "$lib/components/Card.svelte"
+  import InfoWidget from "$lib/components/InfoWidget.svelte"
+  import { systemInfo } from "$lib/stores/system"
+  import { faPowerOff, faSync } from "@fortawesome/free-solid-svg-icons"
+  import Fa from "svelte-fa"
+  import { formatDuration } from "$lib/utils/time"
+  import "./system-tools.css"
 
-  export let onShowConfirmationModal: (action: 'reboot' | 'poweroff') => void;
+  export let onShowConfirmationModal: (action: "reboot" | "poweroff") => void
 
-  $: uptimeInSeconds = parseUptime($systemInfo?.uptime ?? '');
-  $: memoryTitle = $systemInfo ? `Free memory: ${Math.round($systemInfo.free_mem / (1024 * 1024))} MB of ${Math.round($systemInfo.total_mem / (1024 * 1024))} MB` : '';
-  $: cpuTitle = $systemInfo ? `Used CPU: ${$systemInfo.cpu_use}%; User: ${$systemInfo.cpu_usr_use}%; System: ${$systemInfo.cpu_sys_use}%` : '';
+  $: uptimeInSeconds = parseUptime($systemInfo?.uptime ?? "")
+  $: memoryTitle = $systemInfo
+    ? `Free memory: ${Math.round($systemInfo.free_mem / (1024 * 1024))} MB of ${Math.round($systemInfo.total_mem / (1024 * 1024))} MB`
+    : ""
+  $: cpuTitle = $systemInfo
+    ? `Used CPU: ${$systemInfo.cpu_use}%; User: ${$systemInfo.cpu_usr_use}%; System: ${$systemInfo.cpu_sys_use}%`
+    : ""
 
   function parseUptime(uptimeString: string): number {
-    if (!uptimeString || typeof uptimeString !== 'string') return 0;
-    const parts = uptimeString.split(':').map(Number);
-    if (parts.length === 3 && parts.every(p => !isNaN(p))) {
-      const [hours, minutes, seconds] = parts;
-      return hours * 3600 + minutes * 60 + seconds;
+    if (!uptimeString || typeof uptimeString !== "string") return 0
+    const parts = uptimeString.split(":").map(Number)
+    if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
+      const [hours, minutes, seconds] = parts
+      return hours * 3600 + minutes * 60 + seconds
     }
-    return 0;
+    return 0
   }
 </script>
 
@@ -37,14 +38,26 @@
         <InfoWidget label="Uptime" title={$systemInfo.uptime}>
           {formatDuration(uptimeInSeconds)}
         </InfoWidget>
-        <InfoWidget label="CPU" title={cpuTitle}>{$systemInfo.cpu_use}%</InfoWidget>
+        <InfoWidget label="CPU" title={cpuTitle}
+          >{$systemInfo.cpu_use}%</InfoWidget
+        >
         <InfoWidget label="Memory" title={memoryTitle}>
-          {Math.round(($systemInfo.total_mem - $systemInfo.free_mem) / (1024 * 1024))}/{Math.round($systemInfo.total_mem / (1024 * 1024))} MB
+          {Math.round(
+            ($systemInfo.total_mem - $systemInfo.free_mem) / (1024 * 1024),
+          )}/{Math.round($systemInfo.total_mem / (1024 * 1024))} MB
         </InfoWidget>
       </div>
       <div class="button-group">
-        <button class="reboot" on:click={() => onShowConfirmationModal('reboot')}><Fa icon={faSync} /> Reboot</button>
-        <button class="danger" on:click={() => onShowConfirmationModal('poweroff')}><Fa icon={faPowerOff} /> Shutdown</button>
+        <button
+          class="reboot"
+          on:click={() => onShowConfirmationModal("reboot")}
+          ><Fa icon={faSync} /> Reboot</button
+        >
+        <button
+          class="danger"
+          on:click={() => onShowConfirmationModal("poweroff")}
+          ><Fa icon={faPowerOff} /> Shutdown</button
+        >
       </div>
     {:else}
       <p>Loading...</p>

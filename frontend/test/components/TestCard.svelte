@@ -1,6 +1,6 @@
 <script>
-  import Card from '../../src/lib/components/Card.svelte';
-  export let title;
+  import Card from "../../src/lib/components/Card.svelte"
+  export let title
 </script>
 
 <Card>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Card from '$lib/components/Card.svelte';
+  import Card from "$lib/components/Card.svelte"
 </script>
 
 <Card>
@@ -8,33 +8,37 @@
   </svelte:fragment>
   <div class="about-container">
     <p>
-      The closed-source nature of these 3D printers imposes limitations on end users, confining
-      them to the functionalities predetermined by software designers and dictated by the
-      manufacturer.
+      The closed-source nature of these 3D printers imposes limitations on end
+      users, confining them to the functionalities predetermined by software
+      designers and dictated by the manufacturer.
     </p>
     <p>
-      This lack of flexibility stifles innovation and prevents users from implementing their own
-      ideas for product enhancements. Recognizing these limitations, we set out to address these
-      gaps with this Custom Webserver solution.
+      This lack of flexibility stifles innovation and prevents users from
+      implementing their own ideas for product enhancements. Recognizing these
+      limitations, we set out to address these gaps with this Custom Webserver
+      solution.
     </p>
     <p>
-      The Custom Webserver offers additional features unavailable in the stock firmware. Among
-      these enhancements you'll find advanced bed mesh leveling tools, 3D bed mesh visualization
-      capabilities, mesh leveling profiles, custom level temperature, custom grid empowering users
-      with greater control over their printing processes.
+      The Custom Webserver offers additional features unavailable in the stock
+      firmware. Among these enhancements you'll find advanced bed mesh leveling
+      tools, 3D bed mesh visualization capabilities, mesh leveling profiles,
+      custom level temperature, custom grid empowering users with greater
+      control over their printing processes.
     </p>
     <p>
-      Furthermore, we've integrated essential printer information, including alternative cloud
-      solutions that enable remote printing, file upload, printer status monitoring, and more,
-      alongside CPU usage, free memory, SSH status, printer log access, and additional features,
-      directly into the interface.
+      Furthermore, we've integrated essential printer information, including
+      alternative cloud solutions that enable remote printing, file upload,
+      printer status monitoring, and more, alongside CPU usage, free memory, SSH
+      status, printer log access, and additional features, directly into the
+      interface.
     </p>
     <p>
-      Designed for optimal performance, the Webserver operates with remarkable efficiency,
-      utilizing system resources such as memory with less than 1% utilization. CPU load remains
-      minimal, only spiking during web page requests, ensuring a seamless user experience. This
-      project has demanded a significant investment of time and effort, and any help in
-      contributing to the project will be greatly appreciated.
+      Designed for optimal performance, the Webserver operates with remarkable
+      efficiency, utilizing system resources such as memory with less than 1%
+      utilization. CPU load remains minimal, only spiking during web page
+      requests, ensuring a seamless user experience. This project has demanded a
+      significant investment of time and effort, and any help in contributing to
+      the project will be greatly appreciated.
     </p>
     <ul>
       <li>
@@ -43,13 +47,19 @@
         >
       </li>
       <li>
-        <a href="https://github.com/cardil/ACK2-Webserver">AK2 Custom webserver</a>
+        <a href="https://github.com/cardil/ACK2-Webserver"
+          >AK2 Custom webserver</a
+        >
       </li>
       <li>
-        <a href="https://github.com/anjomro/kobra-unleashed">Kobra Unleashed original project</a>
+        <a href="https://github.com/anjomro/kobra-unleashed"
+          >Kobra Unleashed original project</a
+        >
       </li>
       <li>
-        <a href="https://github.com/cardil/kobra-unleashed">Kobra Unleashed updated fork</a>
+        <a href="https://github.com/cardil/kobra-unleashed"
+          >Kobra Unleashed updated fork</a
+        >
       </li>
     </ul>
   </div>

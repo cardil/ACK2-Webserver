@@ -20,20 +20,20 @@
 /* os-specific sendfile() wrapper                                         */
 
 /*
- * int xsendfile(out,in,offset,bytes)
- *
- *	out    - outgoing filedescriptor (i.e. the socket)
- *	in     - incoming filedescriptor (i.e. the file to send out)
- *	offset - file offset (where to start)
- *      bytes  - number of bytes to send
- *
- * return value
- *	on error:   -1 and errno set.
- *	on success: the number of successfully written bytes (which might
- *		    be smaller than bytes, we are doing nonblocking I/O).
- *	extra hint: much like write(2) works.
- *
- */
+* int xsendfile(out,in,offset,bytes)
+*
+*	out    - outgoing filedescriptor (i.e. the socket)
+*	in     - incoming filedescriptor (i.e. the file to send out)
+*	offset - file offset (where to start)
+*      bytes  - number of bytes to send
+*
+* return value
+*	on error:   -1 and errno set.
+*	on success: the number of successfully written bytes (which might
+*		    be smaller than bytes, we are doing nonblocking I/O).
+*	extra hint: much like write(2) works.
+*
+*/
 
 static inline size_t off_to_size(off_t off_bytes) {
     if (off_bytes > MAX_SENDFILE)
@@ -95,7 +95,7 @@ static ssize_t xsendfile(int out, int in, off_t offset, off_t off_bytes) {
         nsent_total += nsent;
         if (nsent < nread)
             /* that was a partial write only.  Queue full.  Bailout here,
-                     the next write would return EAGAIN anyway... */
+                    the next write would return EAGAIN anyway... */
             break;
 
         bytes -= nread;
@@ -143,8 +143,8 @@ static void
 mkcors(struct REQUEST *req) {
     if (NULL != req->cors) {
         req->lres += sprintf(req->hres + req->lres,
-                             "Access-Control-Allow-Origin: %s\r\n",
-                             req->cors);
+                            "Access-Control-Allow-Origin: %s\r\n",
+                            req->cors);
         if (debug)
             fprintf(stderr, "%03d: CORS added: CORS=%s\n",
                     req->fd, req->cors);
@@ -169,7 +169,7 @@ void mkerror(struct REQUEST *req, int status, int ka) {
                         (int64_t)req->lbody);
     if (401 == status)
         req->lres += sprintf(req->hres + req->lres,
-                             "WWW-Authenticate: Basic realm=\"webfs\"\r\n");
+                            "WWW-Authenticate: Basic realm=\"webfs\"\r\n");
     mkcors(req);
     req->lres += strftime(req->hres + req->lres, 80,
                           "Date: " RFC1123 "\r\n\r\n",
@@ -206,16 +206,16 @@ void mkredirect(struct REQUEST *req) {
 static int
 mkmulti(struct REQUEST *req, int i) {
     req->r_hlen[i] = sprintf(req->r_head + i * BR_HEADER,
-                             "\r\n--" BOUNDARY
-                             "\r\n"
-                             "Content-type: %s\r\n"
-                             "Content-range: bytes %" PRId64 "-%" PRId64 "/%" PRId64
-                             "\r\n"
-                             "\r\n",
-                             now, req->mime,
-                             (int64_t)req->r_start[i],
-                             (int64_t)req->r_end[i] - 1,
-                             (int64_t)req->bst.st_size);
+                            "\r\n--" BOUNDARY
+                            "\r\n"
+                            "Content-type: %s\r\n"
+                            "Content-range: bytes %" PRId64 "-%" PRId64 "/%" PRId64
+                            "\r\n"
+                            "\r\n",
+                            now, req->mime,
+                            (int64_t)req->r_start[i],
+                            (int64_t)req->r_end[i] - 1,
+                            (int64_t)req->bst.st_size);
     if (debug)
         fprintf(stderr, "%03d: send range: %" PRId64 "-%" PRId64 "/%" PRId64 " (%" PRId64 " byte)\n",
                 req->fd,
@@ -241,36 +241,36 @@ void mkheader(struct REQUEST *req, int status) {
                         req->keep_alive ? "Keep-Alive" : "Close");
     if (req->ranges == 0) {
         req->lres += sprintf(req->hres + req->lres,
-                             "Content-Type: %s\r\n"
-                             "Content-Length: %" PRId64 "\r\n",
-                             req->mime,
-                             (int64_t)(req->body ? req->lbody : req->bst.st_size));
+                            "Content-Type: %s\r\n"
+                            "Content-Length: %" PRId64 "\r\n",
+                            req->mime,
+                            (int64_t)(req->body ? req->lbody : req->bst.st_size));
     } else if (req->ranges == 1) {
         req->lres += sprintf(req->hres + req->lres,
-                             "Content-Type: %s\r\n"
-                             "Content-Range: bytes %" PRId64 "-%" PRId64 "/%" PRId64
-                             "\r\n"
-                             "Content-Length: %" PRId64 "\r\n",
-                             req->mime,
-                             (int64_t)req->r_start[0],
-                             (int64_t)req->r_end[0] - 1,
-                             (int64_t)req->bst.st_size,
-                             (int64_t)(req->r_end[0] - req->r_start[0]));
+                            "Content-Type: %s\r\n"
+                            "Content-Range: bytes %" PRId64 "-%" PRId64 "/%" PRId64
+                            "\r\n"
+                            "Content-Length: %" PRId64 "\r\n",
+                            req->mime,
+                            (int64_t)req->r_start[0],
+                            (int64_t)req->r_end[0] - 1,
+                            (int64_t)req->bst.st_size,
+                            (int64_t)(req->r_end[0] - req->r_start[0]));
     } else {
         for (i = 0, len = 0; i < req->ranges; i++) {
             len += mkmulti(req, i);
             len += req->r_end[i] - req->r_start[i];
         }
         req->r_hlen[i] = sprintf(req->r_head + i * BR_HEADER,
-                                 "\r\n--" BOUNDARY "--\r\n",
-                                 now);
+                                "\r\n--" BOUNDARY "--\r\n",
+                                now);
         len += req->r_hlen[i];
         req->lres += sprintf(req->hres + req->lres,
-                             "Content-Type: multipart/byteranges;"
-                             " boundary=" BOUNDARY
-                             "\r\n"
-                             "Content-Length: %" PRId64 "\r\n",
-                             now, (int64_t)len);
+                            "Content-Type: multipart/byteranges;"
+                            " boundary=" BOUNDARY
+                            "\r\n"
+                            "Content-Length: %" PRId64 "\r\n",
+                            now, (int64_t)len);
     }
     if (req->mtime[0] != '\0') {
         req->lres += sprintf(req->hres + req->lres, "Last-Modified: %s\r\n", req->mtime);

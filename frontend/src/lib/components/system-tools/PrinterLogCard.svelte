@@ -1,20 +1,20 @@
 <script lang="ts">
-  import Card from '$lib/components/Card.svelte';
-  import { logStore } from '$lib/stores/log';
+  import Card from "$lib/components/Card.svelte"
+  import { logStore } from "$lib/stores/log"
   import {
     faFileLines,
     faSync,
     faTimes,
-  } from '@fortawesome/free-solid-svg-icons';
-  import Fa from 'svelte-fa';
-  import { onMount } from 'svelte';
-  import './system-tools.css';
+  } from "@fortawesome/free-solid-svg-icons"
+  import Fa from "svelte-fa"
+  import { onMount } from "svelte"
+  import "./system-tools.css"
 
-  export let onShowConfirmationModal: (action: 'clearLog') => void;
+  export let onShowConfirmationModal: (action: "clearLog") => void
 
   onMount(() => {
-    logStore.fetchLog();
-  });
+    logStore.fetchLog()
+  })
 </script>
 
 <Card>
@@ -24,15 +24,29 @@
   <div class="tool-section log-container">
     <div class="log-content">
       {#each $logStore as entry}
-        <div class="log-line" class:error={entry.line.toLowerCase().includes('error')}>{entry.line}{#if entry.count > 1}<span class="log-count">x{entry.count}</span>{/if}</div>
+        <div
+          class="log-line"
+          class:error={entry.line.toLowerCase().includes("error")}
+        >
+          {entry.line}{#if entry.count > 1}<span class="log-count"
+              >x{entry.count}</span
+            >{/if}
+        </div>
       {/each}
     </div>
     <div class="fab-container">
-      <button class="fab" on:click={logStore.fetchLog}><Fa icon={faSync} /></button>
-      <button class="fab danger" on:click={() => onShowConfirmationModal('clearLog')}><Fa icon={faTimes} /></button>
+      <button class="fab" on:click={logStore.fetchLog}
+        ><Fa icon={faSync} /></button
+      >
+      <button
+        class="fab danger"
+        on:click={() => onShowConfirmationModal("clearLog")}
+        ><Fa icon={faTimes} /></button
+      >
     </div>
   </div>
 </Card>
+
 <style>
   /* Styles imported from system-tools.css */
 
@@ -129,4 +143,3 @@
     background-color: #dc3545;
   }
 </style>
-

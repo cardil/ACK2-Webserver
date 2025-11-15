@@ -1,33 +1,33 @@
 <script lang="ts">
-  import Card from '$lib/components/Card.svelte';
-  import { formatDuration } from '$lib/utils/time';
+  import Card from "$lib/components/Card.svelte"
+  import { formatDuration } from "$lib/utils/time"
 
-  export let totalMemory: number;
-  export let freeMemory: number;
-  export let freeMemoryPercentage: number;
-  export let cpuTotalUsage: number;
-  export let cpuUserUsage: number;
-  export let cpuSystemUsage: number;
-  export let printerModel: string;
-  export let fwVersion: string;
-  export let sshStatus: string;
-  export let uptime: string;
+  export let totalMemory: number
+  export let freeMemory: number
+  export let freeMemoryPercentage: number
+  export let cpuTotalUsage: number
+  export let cpuUserUsage: number
+  export let cpuSystemUsage: number
+  export let printerModel: string
+  export let fwVersion: string
+  export let sshStatus: string
+  export let uptime: string
 
-  $: memoryUsedPercentage = 100 - freeMemoryPercentage;
-  $: memoryTitle = `Free memory: ${freeMemoryPercentage}%; ${freeMemory} MB of ${totalMemory} MB`;
-  $: cpuValue = `${cpuTotalUsage}%`;
-  $: cpuTitle = `Used CPU: ${cpuTotalUsage}%; User: ${cpuUserUsage}%; System: ${cpuSystemUsage}%`;
+  $: memoryUsedPercentage = 100 - freeMemoryPercentage
+  $: memoryTitle = `Free memory: ${freeMemoryPercentage}%; ${freeMemory} MB of ${totalMemory} MB`
+  $: cpuValue = `${cpuTotalUsage}%`
+  $: cpuTitle = `Used CPU: ${cpuTotalUsage}%; User: ${cpuUserUsage}%; System: ${cpuSystemUsage}%`
 
-$: uptimeInSeconds = parseUptime(uptime);
+  $: uptimeInSeconds = parseUptime(uptime)
 
   function parseUptime(uptimeString: string): number {
-    if (!uptimeString || typeof uptimeString !== 'string') return 0;
-    const parts = uptimeString.split(':').map(Number);
-    if (parts.length === 3 && parts.every(p => !isNaN(p))) {
-      const [hours, minutes, seconds] = parts;
-      return hours * 3600 + minutes * 60 + seconds;
+    if (!uptimeString || typeof uptimeString !== "string") return 0
+    const parts = uptimeString.split(":").map(Number)
+    if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
+      const [hours, minutes, seconds] = parts
+      return hours * 3600 + minutes * 60 + seconds
     }
-    return 0;
+    return 0
   }
 </script>
 
@@ -54,7 +54,9 @@ $: uptimeInSeconds = parseUptime(uptime);
     </div>
     <div class="stat-item">
       <span class="label">Model</span>
-      <span class="value">{printerModel} <span class="divider">ver.</span> {fwVersion}</span>
+      <span class="value"
+        >{printerModel} <span class="divider">ver.</span> {fwVersion}</span
+      >
     </div>
   </div>
 </Card>

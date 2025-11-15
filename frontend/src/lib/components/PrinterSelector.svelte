@@ -1,37 +1,37 @@
 <script lang="ts">
-  import { printerStore } from '$lib/stores/printer';
-  import { activePrinterIdStore } from '$lib/stores/activePrinterId';
-  import { kobraConnectionStore } from '$lib/stores/kobraConnection';
-  import { webserverStore } from '$lib/stores/webserver';
-  import { get } from 'svelte/store';
+  import { printerStore } from "$lib/stores/printer"
+  import { activePrinterIdStore } from "$lib/stores/activePrinterId"
+  import { kobraConnectionStore } from "$lib/stores/kobraConnection"
+  import { webserverStore } from "$lib/stores/webserver"
+  import { get } from "svelte/store"
 
-  $: printers = Object.values($printerStore);
-  $: activePrinterId = $activePrinterIdStore;
-  $: activePrinter = $printerStore[activePrinterId ?? ''];
+  $: printers = Object.values($printerStore)
+  $: activePrinterId = $activePrinterIdStore
+  $: activePrinter = $printerStore[activePrinterId ?? ""]
 
-  let showSelector = false;
+  let showSelector = false
 
   function handleOrbClick() {
     if (printers.length > 1) {
-      showSelector = !showSelector;
+      showSelector = !showSelector
     }
   }
 
   function handleSelectPrinter(id: string) {
-    activePrinterIdStore.select(id);
-    showSelector = false;
+    activePrinterIdStore.select(id)
+    showSelector = false
   }
 
-  let tooltip = '';
+  let tooltip = ""
   $: {
-    const status = $kobraConnectionStore;
-    const config = get(webserverStore);
-    const printerName = activePrinter?.name;
+    const status = $kobraConnectionStore
+    const config = get(webserverStore)
+    const printerName = activePrinter?.name
 
-    if (status === 'connected' && printerName && config?.mqtt_webui_url) {
-      tooltip = `${printerName} printer connected via ${config.mqtt_webui_url}`;
+    if (status === "connected" && printerName && config?.mqtt_webui_url) {
+      tooltip = `${printerName} printer connected via ${config.mqtt_webui_url}`
     } else {
-      tooltip = printerName ?? 'Offline';
+      tooltip = printerName ?? "Offline"
     }
   }
 </script>

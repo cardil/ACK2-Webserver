@@ -1,40 +1,54 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher } from "svelte"
 
-  export let isOpen = false;
-  let slotNumber: number | null = null;
+  export let isOpen = false
+  let slotNumber: number | null = null
 
-  const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher()
 
   function handleSave() {
     if (slotNumber !== null && slotNumber >= 0 && slotNumber <= 99) {
-      dispatch('save', { slot: slotNumber });
+      dispatch("save", { slot: slotNumber })
     }
   }
 
   function handleClose() {
-    dispatch('close');
+    dispatch("close")
   }
 
-    function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      handleClose();
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      handleClose()
     }
-    if (event.key === 'Enter') {
-      handleSave();
+    if (event.key === "Enter") {
+      handleSave()
     }
   }
 
   function handleBackdropKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      handleClose();
+    if (event.key === "Escape") {
+      handleClose()
     }
   }
 </script>
 
 {#if isOpen}
-  <div class="modal-backdrop" on:click={handleClose} on:keydown={handleBackdropKeydown} role="button" tabindex="0">
-    <div class="modal" on:click|stopPropagation on:keydown={handleKeydown} role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+  <div
+    class="modal-backdrop"
+    on:click={handleClose}
+    on:keydown={handleBackdropKeydown}
+    role="button"
+    tabindex="0"
+  >
+    <div
+      class="modal"
+      on:click|stopPropagation
+      on:keydown={handleKeydown}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      tabindex="-1"
+    >
       <h3 id="modal-title">Save Active Mesh</h3>
       <p>Enter a slot number (0-99) to save the current active mesh.</p>
       <div class="form-group">
@@ -50,7 +64,11 @@
       </div>
       <div class="button-group">
         <button on:click={handleClose}>Cancel</button>
-        <button class="primary" on:click={handleSave} disabled={slotNumber === null}>Save</button>
+        <button
+          class="primary"
+          on:click={handleSave}
+          disabled={slotNumber === null}>Save</button
+        >
       </div>
     </div>
   </div>
@@ -83,7 +101,7 @@
   }
 
   h3 {
-      margin: 0;
+    margin: 0;
   }
 
   .form-group {

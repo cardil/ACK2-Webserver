@@ -1,11 +1,11 @@
 /*
- *  V4L2 video capture example
- *	http://linuxtv.org/downloads/v4l-dvb-apis/capture-example.html
- *  This program can be used and distributed without restrictions.
- *
- *      This program is provided with the V4L2 API
- * see http://linuxtv.org/docs.php for more information
- */
+*  V4L2 video capture example
+*	http://linuxtv.org/downloads/v4l-dvb-apis/capture-example.html
+*  This program can be used and distributed without restrictions.
+*
+*      This program is provided with the V4L2 API
+* see http://linuxtv.org/docs.php for more information
+*/
 
 #include <assert.h>
 #include <ctype.h>
@@ -504,10 +504,10 @@ static int v_init_mmap(void) {
         v_buffers[n_buffers].length = buf.length;
         v_buffers[n_buffers].start =
             mmap(NULL /* start anywhere */,
-                 buf.length,
-                 PROT_READ | PROT_WRITE /* required */,
-                 MAP_SHARED /* recommended */,
-                 v_fd, buf.m.offset);
+                buf.length,
+                PROT_READ | PROT_WRITE /* required */,
+                MAP_SHARED /* recommended */,
+                v_fd, buf.m.offset);
 
         if (MAP_FAILED == v_buffers[n_buffers].start) {
             v_errno_print("mmap");
@@ -716,19 +716,19 @@ static int v_open_device(void) {
 static void usage(FILE *fp, int argc, char **argv)
 {
         fprintf(fp,
-                 "Usage: %s [options]\n\n"
-                 "Version 1.3\n"
-                 "Options:\n"
-                 "-d | --device name   Video device name [%s]\n"
-                 "-h | --help          Print this message\n"
-                 "-m | --mmap          Use memory mapped buffers [default]\n"
-                 "-r | --read          Use read() calls\n"
-                 "-u | --userp         Use application allocated buffers\n"
-                 "-o | --output        Outputs stream to stdout\n"
-                 "-f | --format        Force format to 640x480 YUYV\n"
-                 "-c | --count         Number of frames to grab [%i]\n"
-                 "",
-                 argv[0], v_dev_name, v_frame_count);
+                "Usage: %s [options]\n\n"
+                "Version 1.3\n"
+                "Options:\n"
+                "-d | --device name   Video device name [%s]\n"
+                "-h | --help          Print this message\n"
+                "-m | --mmap          Use memory mapped buffers [default]\n"
+                "-r | --read          Use read() calls\n"
+                "-u | --userp         Use application allocated buffers\n"
+                "-o | --output        Outputs stream to stdout\n"
+                "-f | --format        Force format to 640x480 YUYV\n"
+                "-c | --count         Number of frames to grab [%i]\n"
+                "",
+                argv[0], v_dev_name, v_frame_count);
 }
 */
 

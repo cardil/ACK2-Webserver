@@ -1,26 +1,35 @@
 <script lang="ts">
-  import { kobraConnectionStore, type KobraConnectionStatus } from '$lib/stores/kobraConnection';
+  import {
+    kobraConnectionStore,
+    type KobraConnectionStatus,
+  } from "$lib/stores/kobraConnection"
 
-  let status: KobraConnectionStatus;
+  let status: KobraConnectionStatus
   kobraConnectionStore.subscribe((value) => {
-    status = value;
-  });
+    status = value
+  })
 
-  const messages: Record<KobraConnectionStatus, { title: string; body: string } | null> = {
+  const messages: Record<
+    KobraConnectionStatus,
+    { title: string; body: string } | null
+  > = {
     initializing: null,
-    connecting: { title: 'Connecting...', body: 'Connecting to Kobra Unleashed API...' },
+    connecting: {
+      title: "Connecting...",
+      body: "Connecting to Kobra Unleashed API...",
+    },
     connected: null,
     error: {
-      title: 'Connection Error',
-      body: 'Could not connect to the Kobra Unleashed API. Please ensure it is running and the URL is configured correctly.'
+      title: "Connection Error",
+      body: "Could not connect to the Kobra Unleashed API. Please ensure it is running and the URL is configured correctly.",
     },
     unavailable: {
-      title: 'API Not Configured',
-      body: 'The Kobra Unleashed API URL has not been configured in the webserver settings.'
-    }
-  };
+      title: "API Not Configured",
+      body: "The Kobra Unleashed API URL has not been configured in the webserver settings.",
+    },
+  }
 
-  $: message = messages[status];
+  $: message = messages[status]
 </script>
 
 {#if message}
@@ -28,7 +37,11 @@
     <div class="message-box">
       <h3>{message.title}</h3>
       <p>{message.body}</p>
-      <a href="https://github.com/cardil/ACK2-Webserver/blob/master/webserver/deprecated/documentation/index.html" target="_blank" rel="noopener noreferrer">
+      <a
+        href="https://github.com/cardil/ACK2-Webserver/blob/master/webserver/deprecated/documentation/index.html"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         View Setup Instructions
       </a>
     </div>

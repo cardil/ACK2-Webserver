@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { onMount, onDestroy, createEventDispatcher } from "svelte";
-  import type { ECharts, EChartsOption } from "echarts";
-  import { TooltipComponent, VisualMapComponent } from "echarts/components";
-  import { CanvasRenderer } from "echarts/renderers";
-  import { SurfaceChart } from "echarts-gl/charts";
-  import { Grid3DComponent } from "echarts-gl/components";
-  import { getInstanceByDom, init, use } from "echarts/core";
-  import { theme, type Theme } from "$lib/stores/theme";
-  import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
-  import { faPencilAlt, faSave } from '@fortawesome/free-solid-svg-icons';
+  import { onMount, onDestroy, createEventDispatcher } from "svelte"
+  import type { ECharts, EChartsOption } from "echarts"
+  import { TooltipComponent, VisualMapComponent } from "echarts/components"
+  import { CanvasRenderer } from "echarts/renderers"
+  import { SurfaceChart } from "echarts-gl/charts"
+  import { Grid3DComponent } from "echarts-gl/components"
+  import { getInstanceByDom, init, use } from "echarts/core"
+  import { theme, type Theme } from "$lib/stores/theme"
+  import { FontAwesomeIcon } from "@fortawesome/svelte-fontawesome"
+  import { faPencilAlt, faSave } from "@fortawesome/free-solid-svg-icons"
 
   use([
     CanvasRenderer,
@@ -16,60 +16,66 @@
     Grid3DComponent,
     TooltipComponent,
     VisualMapComponent,
-  ]);
+  ])
 
-  export let meshData: number[][] = [];
-  export let isEditing = false;
-  let chartContainer: HTMLDivElement;
-  let chart: ECharts | undefined;
-  let resizeObserver: ResizeObserver;
+  export let meshData: number[][] = []
+  export let isEditing = false
+  let chartContainer: HTMLDivElement
+  let chart: ECharts | undefined
+  let resizeObserver: ResizeObserver
 
-  const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher()
 
   function getThemeColors(currentTheme: Theme) {
-    const isDarkMode = currentTheme === 'dark' || (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const isDarkMode =
+      currentTheme === "dark" ||
+      (currentTheme === "auto" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
     return {
       backgroundColor: isDarkMode ? "#1e1e1e" : "#ffffff",
       textColor: isDarkMode ? "#ffffff" : "#000000",
       axisLineColor: isDarkMode ? "#aaaaaa" : "#333333",
       // Viridis color scheme for dark mode
-      colorScheme: isDarkMode ?
-        [
-          '#440154',
-          '#482878',
-          '#3e4989',
-          '#31688e',
-          '#26828e',
-          '#1f9e89',
-          '#35b779',
-          '#6ece58',
-          '#b5de2b',
-          '#fde725'
-        ] :
-        // RdBu color scheme for light mode
-        [
-          "#313695",
-          "#4575b4",
-          "#74add1",
-          "#abd9e9",
-          "#e0f3f8",
-          "#ffffbf",
-          "#fee090",
-          "#fdae61",
-          "#f46d43",
-          "#d73027",
-          "#a50026",
-        ]
-    };
+      colorScheme: isDarkMode
+        ? [
+            "#440154",
+            "#482878",
+            "#3e4989",
+            "#31688e",
+            "#26828e",
+            "#1f9e89",
+            "#35b779",
+            "#6ece58",
+            "#b5de2b",
+            "#fde725",
+          ]
+        : // RdBu color scheme for light mode
+          [
+            "#313695",
+            "#4575b4",
+            "#74add1",
+            "#abd9e9",
+            "#e0f3f8",
+            "#ffffbf",
+            "#fee090",
+            "#fdae61",
+            "#f46d43",
+            "#d73027",
+            "#a50026",
+          ],
+    }
   }
 
-  function getChartOption(data: number[][], currentTheme: Theme): EChartsOption {
-    const themeColors = getThemeColors(currentTheme);
+  function getChartOption(
+    data: number[][],
+    currentTheme: Theme,
+  ): EChartsOption {
+    const themeColors = getThemeColors(currentTheme)
     const flatData = data.flatMap((row, rowIndex) =>
       row.map((value, colIndex) => [rowIndex, colIndex, value]),
-    );
-    const min = Math.min(...data.flat());
-    const max = Math.max(...data.flat());
+    )
+    const min = Math.min(...data.flat())
+    const max = Math.max(...data.flat())
 
     return {
       tooltip: {},
@@ -105,7 +111,7 @@
           autoRotate: false,
           distance: 350,
           alpha: 15,
-          beta: 105
+          beta: 105,
         },
         light: {
           main: {
@@ -134,7 +140,7 @@
           shading: "color",
           itemStyle: {
             color: "#fff",
-            opacity: 0.925
+            opacity: 0.925,
           },
           wireframe: {
             show: true,
@@ -146,48 +152,48 @@
           },
         },
       ],
-    };
+    }
   }
 
   function drawChart(currentTheme: Theme) {
     if (!chartContainer || !meshData || meshData.length === 0) {
-      return;
+      return
     }
-    const option = getChartOption(meshData, currentTheme);
+    const option = getChartOption(meshData, currentTheme)
     const currentChart =
       getInstanceByDom(chartContainer) ||
-      init(chartContainer, undefined, { renderer: "canvas" });
-    currentChart.setOption(option);
+      init(chartContainer, undefined, { renderer: "canvas" })
+    currentChart.setOption(option)
     // @ts-ignore
-    chart = currentChart;
+    chart = currentChart
   }
 
   onMount(() => {
-    const unsubscribe = theme.subscribe(currentTheme => {
-      drawChart(currentTheme);
-    });
+    const unsubscribe = theme.subscribe((currentTheme) => {
+      drawChart(currentTheme)
+    })
 
     resizeObserver = new ResizeObserver(() => {
-      chart?.resize();
-    });
-    resizeObserver.observe(chartContainer);
+      chart?.resize()
+    })
+    resizeObserver.observe(chartContainer)
 
     return () => {
-      unsubscribe();
-      chart?.dispose();
-      resizeObserver.disconnect();
-    };
-  });
+      unsubscribe()
+      chart?.dispose()
+      resizeObserver.disconnect()
+    }
+  })
 
   onDestroy(() => {
-    chart?.dispose();
+    chart?.dispose()
     if (resizeObserver) {
-      resizeObserver.disconnect();
+      resizeObserver.disconnect()
     }
-  });
+  })
 
   $: if (meshData && chartContainer) {
-    drawChart($theme);
+    drawChart($theme)
   }
 </script>
 
@@ -195,11 +201,19 @@
   <div bind:this={chartContainer} class="chart-container"></div>
   <div class="fab-container">
     {#if isEditing}
-      <button class="fab save" on:click={() => dispatch('save')} title="Save Mesh">
+      <button
+        class="fab save"
+        on:click={() => dispatch("save")}
+        title="Save Mesh"
+      >
         <FontAwesomeIcon icon={faSave} />
       </button>
     {:else}
-      <button class="fab edit" on:click={() => dispatch('edit')} title="Edit Mesh">
+      <button
+        class="fab edit"
+        on:click={() => dispatch("edit")}
+        title="Edit Mesh"
+      >
         <FontAwesomeIcon icon={faPencilAlt} />
       </button>
     {/if}
@@ -232,7 +246,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   }
   .fab.edit {
     background-color: var(--accent-color);

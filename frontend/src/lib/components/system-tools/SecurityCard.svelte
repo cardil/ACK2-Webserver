@@ -1,26 +1,26 @@
 <script lang="ts">
-  import Card from '$lib/components/Card.svelte';
-  import {
-    faShieldHalved,
-    faLock,
-  } from '@fortawesome/free-solid-svg-icons';
-  import Fa from 'svelte-fa';
-  import './system-tools.css';
+  import Card from "$lib/components/Card.svelte"
+  import { faShieldHalved, faLock } from "@fortawesome/free-solid-svg-icons"
+  import Fa from "svelte-fa"
+  import "./system-tools.css"
 
-  let newPassword = '';
-  let confirmPassword = '';
-  let passwordsMatch = false;
-  let showMismatch = false;
+  let newPassword = ""
+  let confirmPassword = ""
+  let passwordsMatch = false
+  let showMismatch = false
 
-  $: passwordsMatch = newPassword === confirmPassword && newPassword !== '';
-  $: showMismatch = newPassword !== '' && confirmPassword !== '' && newPassword !== confirmPassword;
+  $: passwordsMatch = newPassword === confirmPassword && newPassword !== ""
+  $: showMismatch =
+    newPassword !== "" &&
+    confirmPassword !== "" &&
+    newPassword !== confirmPassword
 
   function handlePasswordChange() {
     if (passwordsMatch) {
-      console.log('New password:', newPassword);
+      console.log("New password:", newPassword)
       // TODO: Call API to change password
-      newPassword = '';
-      confirmPassword = '';
+      newPassword = ""
+      confirmPassword = ""
     }
   }
 </script>
@@ -31,12 +31,25 @@
   </svelte:fragment>
   <div class="tool-section">
     <form class="password-form" on:submit|preventDefault={handlePasswordChange}>
-      <input type="password" placeholder="Root Password" bind:value={newPassword} class:error={showMismatch} />
-      <input type="password" placeholder="Confirm" bind:value={confirmPassword} class:error={showMismatch} />
-      <button type="submit" class="primary" disabled={!passwordsMatch}><Fa icon={faLock} /> Change</button>
+      <input
+        type="password"
+        placeholder="Root Password"
+        bind:value={newPassword}
+        class:error={showMismatch}
+      />
+      <input
+        type="password"
+        placeholder="Confirm"
+        bind:value={confirmPassword}
+        class:error={showMismatch}
+      />
+      <button type="submit" class="primary" disabled={!passwordsMatch}
+        ><Fa icon={faLock} /> Change</button
+      >
     </form>
   </div>
 </Card>
+
 <style>
   /* Styles imported from system-tools.css */
 
@@ -62,4 +75,3 @@
     background-color: rgba(220, 53, 69, 0.1);
   }
 </style>
-

@@ -1,48 +1,68 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher } from "svelte"
 
-  export let isOpen = false;
-  export let title = '';
-  export let message = '';
-  export let buttons: { label: string; class?: string; event: string }[] = [];
+  export let isOpen = false
+  export let title = ""
+  export let message = ""
+  export let buttons: { label: string; class?: string; event: string }[] = []
 
-  const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher()
 
   function handleAction(event: string) {
-    dispatch(event);
+    dispatch(event)
   }
 
   function handleBackdropClick() {
     // Find a cancel or close button to dispatch its event
-    const cancelBtn = buttons.find(b => b.event === 'close' || b.event === 'cancel');
+    const cancelBtn = buttons.find(
+      (b) => b.event === "close" || b.event === "cancel",
+    )
     if (cancelBtn) {
-      dispatch(cancelBtn.event);
+      dispatch(cancelBtn.event)
     }
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      handleBackdropClick();
+    if (event.key === "Escape") {
+      handleBackdropClick()
     }
   }
 
   function handleBackdropKeydown(event: KeyboardEvent) {
     // Handle keyboard events on backdrop for accessibility
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleBackdropClick();
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault()
+      handleBackdropClick()
     }
   }
 </script>
 
 {#if isOpen}
-  <div class="modal-backdrop" on:click={handleBackdropClick} on:keydown={handleBackdropKeydown} role="button" tabindex="0" aria-label="Close modal">
-    <div class="modal" on:click|stopPropagation on:keydown={handleKeydown} role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+  <div
+    class="modal-backdrop"
+    on:click={handleBackdropClick}
+    on:keydown={handleBackdropKeydown}
+    role="button"
+    tabindex="0"
+    aria-label="Close modal"
+  >
+    <div
+      class="modal"
+      on:click|stopPropagation
+      on:keydown={handleKeydown}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      tabindex="-1"
+    >
       <h3 id="modal-title">{title}</h3>
       <p>{message}</p>
       <div class="button-group">
         {#each buttons as button}
-          <button class={button.class || ''} on:click={() => handleAction(button.event)}>
+          <button
+            class={button.class || ""}
+            on:click={() => handleAction(button.event)}
+          >
             {button.label}
           </button>
         {/each}

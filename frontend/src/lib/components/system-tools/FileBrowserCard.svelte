@@ -1,11 +1,9 @@
 <script lang="ts">
-  import Card from '$lib/components/Card.svelte';
-  import FileBrowser from '$lib/components/FileBrowser.svelte';
-  import {
-    faFolderOpen,
-  } from '@fortawesome/free-solid-svg-icons';
-  import Fa from 'svelte-fa';
-  import './system-tools.css';
+  import Card from "$lib/components/Card.svelte"
+  import FileBrowser from "$lib/components/FileBrowser.svelte"
+  import { faFolderOpen } from "@fortawesome/free-solid-svg-icons"
+  import Fa from "svelte-fa"
+  import "./system-tools.css"
 </script>
 
 <Card>
@@ -16,6 +14,7 @@
     <FileBrowser />
   </div>
 </Card>
+
 <style>
   /* Styles imported from system-tools.css */
 
@@ -26,4 +25,3 @@
     min-width: 0;
   }
 </style>
-

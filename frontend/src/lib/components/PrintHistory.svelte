@@ -1,26 +1,28 @@
 <script lang="ts">
-  import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
-  import Card from '$lib/components/Card.svelte';
-  import { printerStore } from '$lib/stores/printer';
-  import { activePrinterIdStore } from '$lib/stores/activePrinterId';
-  import FileEntry from './FileEntry.svelte';
+  import RefreshIcon from "$lib/components/icons/RefreshIcon.svelte"
+  import Card from "$lib/components/Card.svelte"
+  import { printerStore } from "$lib/stores/printer"
+  import { activePrinterIdStore } from "$lib/stores/activePrinterId"
+  import FileEntry from "./FileEntry.svelte"
 
   // Get the active printer from the store
-  $: activePrinterId = $activePrinterIdStore;
-  $: printer = $printerStore[activePrinterId ?? ''];
+  $: activePrinterId = $activePrinterIdStore
+  $: printer = $printerStore[activePrinterId ?? ""]
 
-  $: localFiles = printer?.files ?? [];
-  $: isPrinterIdle = printer?.state === 'free';
+  $: localFiles = printer?.files ?? []
+  $: isPrinterIdle = printer?.state === "free"
 </script>
 
-  <Card style="flex-grow: 1;">
+<Card style="flex-grow: 1;">
   <div class="list-container-wrapper">
     <div class="list-container">
       {#if localFiles.length > 0}
         {#each localFiles as file}
           <FileEntry
             {file}
-            onReprint={() => activePrinterId && printerStore.reprint(activePrinterId, file.name)}
+            onReprint={() =>
+              activePrinterId &&
+              printerStore.reprint(activePrinterId, file.name)}
             disabled={!isPrinterIdle}
           />
         {/each}
@@ -32,9 +34,9 @@
       <button
         title="Refresh"
         class="refresh-button"
-        on:click={() => activePrinterId && printerStore.refreshFiles(activePrinterId)}
-        disabled={!activePrinterId}
-        ><RefreshIcon /></button
+        on:click={() =>
+          activePrinterId && printerStore.refreshFiles(activePrinterId)}
+        disabled={!activePrinterId}><RefreshIcon /></button
       >
     </div>
   </div>
