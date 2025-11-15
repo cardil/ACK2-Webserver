@@ -137,6 +137,7 @@
         {
           type: "surface",
           data: flatData,
+          dataShape: [data.length, data[0]?.length || 0],
           shading: "color",
           itemStyle: {
             color: "#fff",
