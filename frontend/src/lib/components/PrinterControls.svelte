@@ -243,6 +243,7 @@
               activePrinterId && printerStore.pausePrint(activePrinterId)}
             disabled={printer?.state === "preheating" ||
               printer?.state === "downloading"}
+            title="Pause print"
           >
             <PauseIcon /> Pause
           </button>
@@ -250,6 +251,7 @@
           <button
             on:click={() =>
               activePrinterId && printerStore.resumePrint(activePrinterId)}
+            title="Resume print"
           >
             <PlayIcon /> Resume</button
           >
@@ -257,13 +259,16 @@
         <button
           on:click={() =>
             activePrinterId && printerStore.stopPrint(activePrinterId)}
-          class="danger"><StopIcon /> Stop</button
+          class="danger"
+          title="Stop print"><StopIcon /> Stop</button
         >
       </div>
     {:else}
       <div class="button-group idle">
-        <button disabled={!canUploadAndPrint} on:click={() => input.click()}
-          >Upload & Print</button
+        <button
+          disabled={!canUploadAndPrint}
+          on:click={() => input.click()}
+          title="Upload and print file">Upload & Print</button
         >
       </div>
     {/if}

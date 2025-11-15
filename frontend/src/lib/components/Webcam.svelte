@@ -37,7 +37,11 @@
         <CameraOffIcon />
       </div>
     {/if}
-    <button class="icon-button" on:click={toggleWebcam}>
+    <button
+      class="icon-button"
+      on:click={toggleWebcam}
+      title={webcamActive ? "Stop webcam" : "Start webcam"}
+    >
       {#if webcamActive}
         <svg
           width="24"

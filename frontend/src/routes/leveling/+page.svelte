@@ -19,6 +19,7 @@
   import type { MeshProfile } from "$lib/stores/leveling"
   import Spinner from "$lib/components/Spinner.svelte"
   import InfoModal from "$lib/components/InfoModal.svelte"
+  import { toast } from "svelte-sonner"
 
   type ModalButton = {
     label: string
@@ -162,22 +163,26 @@
   }
 
   async function executeSaveSettings() {
-    const response = await levelingStore.saveSettings(localSettings)
-    modalState = "closed"
-    if (response.grid_size_changed) {
-      modalInfo = {
-        title: "Reboot Required",
-        message:
-          "Grid size has been changed and all mesh data has been reset.\n\nA printer reboot is required for the changes to take full effect.",
-        buttons: [
-          { label: "Later", event: "close", class: "" },
-          { label: "Reboot Printer", event: "reboot", class: "reboot" },
-        ],
+    try {
+      const response = await levelingStore.saveSettings(localSettings)
+      modalState = "closed"
+      if (response.grid_size_changed) {
+        modalInfo = {
+          title: "Reboot Required",
+          message:
+            "Grid size has been changed and all mesh data has been reset.\n\nA printer reboot is required for the changes to take full effect.",
+          buttons: [
+            { label: "Later", event: "close", class: "" },
+            { label: "Reboot Printer", event: "reboot", class: "reboot" },
+          ],
+        }
+        modalState = "reboot_needed"
+        toast.warning("Settings saved. Reboot required for grid size change.")
+      } else {
+        toast.success("Settings saved successfully")
       }
-      modalState = "reboot_needed"
-    } else {
-      // You can have a simple success notification modal here if you want
-      // For now, we'll do nothing on a simple save.
+    } catch (error) {
+      toast.error("Failed to save settings")
     }
   }
 
@@ -190,23 +195,29 @@
     const slotId = event.detail.slot
     isSaveModalOpen = false
 
-    if (isEditing) {
-      await levelingStore.saveEditedMesh(slotId, editedMeshData)
-      isEditing = false
-      const savedMesh = get(levelingStore).savedMeshes.find(
-        (s) => s.id === slotId,
-      )
-      if (savedMesh) {
-        visualizeSlot(savedMesh)
+    try {
+      if (isEditing) {
+        await levelingStore.saveEditedMesh(slotId, editedMeshData)
+        isEditing = false
+        toast.success(`Mesh saved to slot ${slotId}`)
+        const savedMesh = get(levelingStore).savedMeshes.find(
+          (s) => s.id === slotId,
+        )
+        if (savedMesh) {
+          visualizeSlot(savedMesh)
+        }
+      } else {
+        await levelingStore.saveActiveMesh(slotId)
+        toast.success(`Active mesh saved to slot ${slotId}`)
+        const savedMesh = get(levelingStore).savedMeshes.find(
+          (s) => s.id === slotId,
+        )
+        if (savedMesh) {
+          visualizeSlot(savedMesh)
+        }
       }
-    } else {
-      await levelingStore.saveActiveMesh(slotId)
-      const savedMesh = get(levelingStore).savedMeshes.find(
-        (s) => s.id === slotId,
-      )
-      if (savedMesh) {
-        visualizeSlot(savedMesh)
-      }
+    } catch (error) {
+      toast.error(`Failed to save mesh to slot ${slotId}`)
     }
   }
 

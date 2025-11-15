@@ -35,13 +35,13 @@
       {/each}
     </div>
     <div class="fab-container">
-      <button class="fab" on:click={logStore.fetchLog}
+      <button class="fab" on:click={logStore.fetchLog} title="Refresh log"
         ><Fa icon={faSync} /></button
       >
       <button
         class="fab danger"
         on:click={() => onShowConfirmationModal("clearLog")}
-        ><Fa icon={faTimes} /></button
+        title="Clear log"><Fa icon={faTimes} /></button
       >
     </div>
   </div>

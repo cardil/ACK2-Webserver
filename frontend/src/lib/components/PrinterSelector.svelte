@@ -43,6 +43,7 @@
     title={tooltip}
     on:click={handleOrbClick}
     disabled={!activePrinter}
+    aria-label={tooltip}
   ></button>
 
   {#if showSelector}

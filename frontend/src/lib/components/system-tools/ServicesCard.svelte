@@ -35,6 +35,9 @@
             onHandleSystemAction(
               $systemInfo.ssh_status === 2 ? "ssh_stop" : "ssh_start",
             )}
+          title={$systemInfo.ssh_status === 2
+            ? "Stop SSH service"
+            : "Start SSH service"}
         >
           <Fa icon={$systemInfo.ssh_status === 2 ? faStop : faPlay} />
           {$systemInfo.ssh_status === 2 ? "Stop" : "Start"}
@@ -42,7 +45,7 @@
         <button
           class="reboot"
           on:click={() => onHandleSystemAction("ssh_restart")}
-          ><Fa icon={faSync} /> Restart</button
+          title="Restart SSH service"><Fa icon={faSync} /> Restart</button
         >
       </div>
     {:else}

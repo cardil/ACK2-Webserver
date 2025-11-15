@@ -51,12 +51,12 @@
         <button
           class="reboot"
           on:click={() => onShowConfirmationModal("reboot")}
-          ><Fa icon={faSync} /> Reboot</button
+          title="Reboot printer"><Fa icon={faSync} /> Reboot</button
         >
         <button
           class="danger"
           on:click={() => onShowConfirmationModal("poweroff")}
-          ><Fa icon={faPowerOff} /> Shutdown</button
+          title="Shutdown printer"><Fa icon={faPowerOff} /> Shutdown</button
         >
       </div>
     {:else}

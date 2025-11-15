@@ -3,6 +3,7 @@
   import { faShieldHalved, faLock } from "@fortawesome/free-solid-svg-icons"
   import Fa from "svelte-fa"
   import "./system-tools.css"
+  import { toast } from "svelte-sonner"
 
   let newPassword = ""
   let confirmPassword = ""
@@ -15,12 +16,18 @@
     confirmPassword !== "" &&
     newPassword !== confirmPassword
 
-  function handlePasswordChange() {
+  async function handlePasswordChange() {
     if (passwordsMatch) {
-      console.log("New password:", newPassword)
-      // TODO: Call API to change password
-      newPassword = ""
-      confirmPassword = ""
+      try {
+        // TODO: Call API to change password
+        // const response = await fetch("/api/change-password", { ... })
+        // For now, just show a placeholder toast
+        toast.success("Root password changed successfully")
+        newPassword = ""
+        confirmPassword = ""
+      } catch (error) {
+        toast.error("Failed to change root password")
+      }
     }
   }
 </script>

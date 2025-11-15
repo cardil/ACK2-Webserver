@@ -3,6 +3,7 @@
   import NavMenu from "$lib/components/NavMenu.svelte"
   import { effectiveTheme } from "$lib/stores/theme"
   import { browser } from "$app/environment"
+  import { Toaster } from "svelte-sonner"
 
   if (browser) {
     effectiveTheme.subscribe((value) => {
@@ -40,6 +41,7 @@
   <main>
     {@render children()}
   </main>
+  <Toaster position="top-center" theme={$effectiveTheme} />
 </div>
 
 <style>
@@ -108,5 +110,16 @@
     height: 100vh;
     min-width: 0;
     overflow: hidden;
+  }
+
+  /* Ensure toaster appears on top and matches card background */
+  :global([data-sonner-toaster]) {
+    z-index: 1000;
+  }
+
+  :global([data-sonner-toast]) {
+    background-color: var(--card-background-color) !important;
+    color: var(--text-color) !important;
+    border: 2px solid var(--card-border-color) !important;
   }
 </style>

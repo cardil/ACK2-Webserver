@@ -7,6 +7,7 @@
   import SecurityCard from "$lib/components/system-tools/SecurityCard.svelte"
   import PrinterLogCard from "$lib/components/system-tools/PrinterLogCard.svelte"
   import FileBrowserCard from "$lib/components/system-tools/FileBrowserCard.svelte"
+  import { toast } from "svelte-sonner"
 
   let isModalOpen = false
   let modalTitle = ""
@@ -41,7 +42,12 @@
     if (modalAction === "reboot" || modalAction === "poweroff") {
       await handleSystemAction(modalAction)
     } else if (modalAction === "clearLog") {
-      await logStore.clearLog()
+      try {
+        await logStore.clearLog()
+        toast.success("Printer log cleared successfully")
+      } catch (error) {
+        toast.error("Failed to clear printer log")
+      }
     }
     modalAction = null
   }
@@ -50,12 +56,25 @@
     action: "reboot" | "poweroff" | "ssh_start" | "ssh_stop" | "ssh_restart",
   ) {
     try {
-      await fetch(`/api/do.json?action=${action}`)
-      setTimeout(() => {
-        systemInfo.forceUpdate()
-      }, 1000)
+      const response = await fetch(`/api/do.json?action=${action}`)
+      if (response.ok) {
+        const actionMessages: Record<typeof action, string> = {
+          reboot: "Printer is rebooting...",
+          poweroff: "Printer is shutting down...",
+          ssh_start: "SSH service started",
+          ssh_stop: "SSH service stopped",
+          ssh_restart: "SSH service restarted",
+        }
+        toast.success(actionMessages[action])
+        setTimeout(() => {
+          systemInfo.forceUpdate()
+        }, 1000)
+      } else {
+        throw new Error("Action failed")
+      }
     } catch (error) {
       console.error(`Error during ${action}:`, error)
+      toast.error(`Failed to ${action.replace("_", " ")}`)
     }
   }
 </script>

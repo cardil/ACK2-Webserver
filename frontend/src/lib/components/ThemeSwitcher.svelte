@@ -7,6 +7,7 @@
     faMoon,
     faWandMagicSparkles,
   } from "@fortawesome/free-solid-svg-icons"
+  import { toast } from "svelte-sonner"
 
   export let isOpen: boolean = false
 
@@ -18,14 +19,23 @@
 
   $: currentTheme = themes.find((t) => t.name === $theme) ?? themes[2]
 
+  const themeLabels: Record<Theme, string> = {
+    light: "Light",
+    dark: "Dark",
+    auto: "Auto",
+  }
+
   function rotateTheme() {
     const currentIndex = themes.findIndex((t) => t.name === currentTheme.name)
     const nextThemeIndex = (currentIndex + 1) % themes.length
-    $theme = themes[nextThemeIndex].name
+    const newTheme = themes[nextThemeIndex].name
+    $theme = newTheme
+    toast.success(`Theme changed to ${themeLabels[newTheme]}`)
   }
 
   function setTheme(newTheme: Theme) {
     $theme = newTheme
+    toast.success(`Theme changed to ${themeLabels[newTheme]}`)
   }
 
   let mounted = false
@@ -56,7 +66,7 @@
           class="collapsed-switcher"
           on:click={rotateTheme}
           aria-label="Rotate theme"
-          title="Dark mode: {currentTheme.name}. Click to switch."
+          title="Theme: {themeLabels[currentTheme.name]}. Click to switch."
         >
           <FontAwesomeIcon icon={currentTheme.icon} />
         </button>
