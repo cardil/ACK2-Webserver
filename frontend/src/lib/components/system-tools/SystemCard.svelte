@@ -44,7 +44,7 @@
         <InfoWidget label="Memory" title={memoryTitle}>
           {Math.round(
             ($systemInfo.total_mem - $systemInfo.free_mem) / (1024 * 1024),
-          )}/{Math.round($systemInfo.total_mem / (1024 * 1024))} MB
+          )} / {Math.round($systemInfo.total_mem / (1024 * 1024))} MB
         </InfoWidget>
       </div>
       <div class="button-group">

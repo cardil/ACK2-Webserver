@@ -132,7 +132,6 @@
     overflow: auto;
     overflow-x: auto;
     overflow-y: auto;
-    background-color: var(--input-bg-color);
     padding: 0;
     margin: 0;
     border-radius: 5px;

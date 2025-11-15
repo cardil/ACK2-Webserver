@@ -12,6 +12,16 @@ function createFileBrowserStore() {
   const { subscribe, set } = writable<FileEntry[]>([])
   const currentPathStore = writable<string>("/files/")
 
+  function sortFiles(files: FileEntry[]): FileEntry[] {
+    return files.sort((a, b) => {
+      // Directories come first
+      if (a.isDirectory && !b.isDirectory) return -1
+      if (!a.isDirectory && b.isDirectory) return 1
+      // Within same type, sort alphabetically by name (case-insensitive)
+      return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    })
+  }
+
   async function fetchFiles() {
     if (!browser) return
     const currentPath = get(currentPathStore)
@@ -30,7 +40,7 @@ function createFileBrowserStore() {
         if (contentType.includes("application/json")) {
           // JSON API response (mock mode)
           const files: FileEntry[] = await response.json()
-          set(files)
+          set(sortFiles(files))
         } else {
           // HTML directory listing (real backend)
           const html = await response.text()
@@ -47,7 +57,7 @@ function createFileBrowserStore() {
               }
             })
             .filter((file) => file.name !== ".." && file.name !== ".") // Exclude parent and current directory
-          set(files)
+          set(sortFiles(files))
         }
       } else {
         set([])

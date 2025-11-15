@@ -4,32 +4,48 @@
   import Fa from "svelte-fa"
   import {
     faFolder,
-    faFolderOpen,
     faFile,
     faEye,
-    faEyeSlash,
+    faDownload,
     faArrowUp,
     faDatabase,
+    faHome,
   } from "@fortawesome/free-solid-svg-icons"
   import { faClock } from "@fortawesome/free-regular-svg-icons"
-  import InfoModal from "./InfoModal.svelte"
+  import EditorModal from "./EditorModal.svelte"
   import { formatFileSize } from "$lib/utils/files"
   import { formatTimestamp } from "$lib/utils/time"
   import { time } from "$lib/stores/time"
+  import { toast } from "svelte-sonner"
+  import { isBinaryContent, generateHexDump } from "$lib/utils/binary"
 
   let isPreviewOpen = false
   let previewContent = ""
   let previewTitle = ""
+  let previewLanguage = "text"
+  let previewIsBinary = false
+  let editorModalRef: any
 
   onMount(() => {
     fileBrowserStore.fetchFiles()
   })
 
-  function handleFileClick(file: { name: string; isDirectory: boolean }) {
+  function handleFileClick(file: {
+    name: string
+    isDirectory: boolean
+    size?: number
+  }) {
     if (file.isDirectory) {
       fileBrowserStore.navigate(file.name)
     } else {
-      downloadFile(file.name)
+      // Click to preview
+      if (file.size !== undefined && file.size < 100 * 1024) {
+        showPreview(file.name)
+      } else {
+        toast.error(
+          "File too large for preview.\n\nUse the download button to save it.",
+        )
+      }
     }
   }
 
@@ -66,12 +82,33 @@
           : `/files${currentPath}${fileName}`
       const response = await fetch(filePath)
       if (response.ok) {
-        previewContent = await response.text()
-        previewTitle = fileName
+        // Get as array buffer first to detect binary
+        const arrayBuffer = await response.arrayBuffer()
+        const uint8Array = new Uint8Array(arrayBuffer)
+
+        // Check if binary
+        const isBinary = isBinaryContent(uint8Array)
+        previewIsBinary = isBinary
+
+        if (isBinary) {
+          // Generate hex dump
+          previewContent = generateHexDump(uint8Array)
+          previewTitle = fileName
+        } else {
+          // Decode as text
+          const decoder = new TextDecoder("utf-8")
+          previewContent = decoder.decode(uint8Array)
+          previewTitle = fileName
+          if (editorModalRef) {
+            editorModalRef.setLanguageFromFilename(fileName)
+          }
+        }
+
         isPreviewOpen = true
       }
     } catch (error) {
       console.error("Error fetching file content:", error)
+      toast.error("Failed to load file preview")
     }
   }
 
@@ -83,29 +120,31 @@
       .replace(/^\/+|\/+$/g, "").length > 0
 </script>
 
-<InfoModal
+<EditorModal
+  bind:this={editorModalRef}
   isOpen={isPreviewOpen}
   title={previewTitle}
-  message={previewContent}
-  buttons={[{ label: "Close", event: "close" }]}
+  content={previewContent}
+  isBinary={previewIsBinary}
+  readonly={true}
   on:close={() => (isPreviewOpen = false)}
 />
 
 <div class="file-browser">
   <div class="path-bar">
     <span class="path-icon">
-      <Fa icon={faFolderOpen} />
+      <Fa icon={faHome} />
     </span>
     {#if displayPath === "/" || displayPath === ""}
-      <span class="path-segment path-current">fs:</span>
+      <span class="path-segment path-current">webfs:</span>
     {:else}
       {@const pathParts = displayPath.split("/").filter((p: string) => p)}
       <button
         class="path-segment"
-        on:click={() => fileBrowserStore.navigateToPath(-1)}>fs:</button
+        on:click={() => fileBrowserStore.navigateToPath(-1)}>webfs:</button
       >
       {#each pathParts as part, i}
-        <span class="path-separator">/</span>
+        <span class="path-separator">»</span>
         {#if i < pathParts.length - 1}
           <button
             class="path-segment"
@@ -182,23 +221,13 @@
                 </div>
               {/if}
             </div>
-            {#if file.size !== undefined && file.size < 100 * 1024}
-              <button
-                class="preview-btn"
-                on:click|stopPropagation={() => showPreview(file.name)}
-                title="Preview file"
-              >
-                <Fa icon={faEye} />
-              </button>
-            {:else}
-              <button
-                class="preview-btn preview-btn-disabled"
-                disabled
-                title="Too large to show in preview window"
-              >
-                <Fa icon={faEyeSlash} />
-              </button>
-            {/if}
+            <button
+              class="preview-btn"
+              on:click|stopPropagation={() => downloadFile(file.name)}
+              title="Download file"
+            >
+              <Fa icon={faDownload} />
+            </button>
           </div>
         {/if}
       </div>
@@ -217,9 +246,9 @@
   }
 
   .path-bar {
-    padding: 0 0.5rem;
-    background-color: var(--input-bg-color);
-    border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem;
+    border: 1px solid var(--card-border-color);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
@@ -227,6 +256,7 @@
     white-space: nowrap;
     overflow-x: auto;
     min-height: calc(0.5rem * 2 + 1em + 0.2rem + 1.2em);
+    margin-bottom: 0.5rem;
   }
 
   .path-icon {
@@ -234,6 +264,7 @@
     align-items: center;
     flex-shrink: 0;
     padding: 0.25rem;
+    margin-right: 0.5rem;
   }
 
   .file-list {
@@ -249,7 +280,6 @@
   .file-item {
     display: flex;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
   }
 
   .file-item:hover {
@@ -276,7 +306,7 @@
   }
 
   .directory-btn:hover {
-    background-color: var(--input-bg-color);
+    background-color: var(--card-background-color);
   }
 
   .go-up-btn {
@@ -288,6 +318,7 @@
     align-items: center;
     justify-content: center;
     padding: 0.25rem;
+    margin-right: 0.75rem;
     font-size: 1.25em;
     flex-shrink: 0;
   }
@@ -337,11 +368,17 @@
     color: var(--text-color);
     cursor: pointer;
     flex-shrink: 0;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
   }
 
-  .preview-btn-disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .preview-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  :global(body[data-theme="dark"]) .preview-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
   }
 
   .path-segment {

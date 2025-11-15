@@ -37,7 +37,7 @@ const systemState: SystemState = {
 interface MockFileSystemEntry {
   name: string
   isDirectory: boolean
-  content?: string // For files
+  content?: string | Uint8Array // For files (can be binary)
   children?: MockFileSystemEntry[] // For directories
   size?: number // File size in bytes
   mtime?: number // Modification time in seconds (Unix timestamp)
@@ -445,6 +445,230 @@ const mockFileSystem: MockFileSystemEntry = {
       mtime: oneMonthAgo,
     },
     {
+      name: "scripts",
+      isDirectory: true,
+      children: [
+        {
+          name: "long_example.py",
+          isDirectory: false,
+          content: `#!/usr/bin/env python3
+"""\nThis is a very long Python script designed to test the file viewer's handling of long lines and large files.\nIt contains various examples of code with extremely long lines that exceed 150 characters to test horizontal scrolling.\n"""
+
+import os
+import sys
+import json
+import time
+import threading
+import subprocess
+from typing import Dict, List, Optional, Tuple, Any, Union, Set, Callable, Iterator, Generator
+from dataclasses import dataclass, field
+from pathlib import Path
+
+# This is an extremely long comment line that goes on and on and on to test how the editor handles horizontal scrolling with very long lines of text that exceed the normal viewing width
+
+@dataclass
+class VeryLongClassName WithMultipleWordsAndDescriptiveNamingConventionThatExceedsNormalLineLengthToTestHorizontalScrollingCapabilities:
+    """A class with a ridiculously long name to test horizontal scrolling."""
+    very_long_parameter_name_that_describes_something_important: str = "default_value_that_is_also_quite_long_to_make_the_line_even_longer"
+    another_extremely_long_parameter_name_for_testing_purposes: int = 12345678901234567890
+    yet_another_parameter_with_a_descriptive_but_unnecessarily_long_name: float = 3.14159265358979323846264338327950288419716939937510
+    list_of_items_with_very_long_strings: List[str] = field(default_factory=lambda: ["item_1_with_long_name", "item_2_with_long_name", "item_3_with_long_name"])
+
+class ConfigurationManager:
+    """Manages configuration with very long method names and parameters."""
+    
+    def __init__(self, configuration_file_path: str, enable_verbose_logging: bool = False, maximum_retry_attempts: int = 3, connection_timeout_in_seconds: int = 30):
+        self.configuration_file_path = configuration_file_path
+        self.enable_verbose_logging = enable_verbose_logging
+        self.maximum_retry_attempts = maximum_retry_attempts
+        self.connection_timeout_in_seconds = connection_timeout_in_seconds
+        
+    def load_configuration_from_json_file_with_error_handling_and_validation(self, validate_schema: bool = True, apply_defaults: bool = True) -> Dict[str, Any]:
+        """Load configuration with an unnecessarily long method name to test horizontal scrolling in the editor."""
+        try:
+            with open(self.configuration_file_path, 'r', encoding='utf-8') as configuration_file_handle:
+                configuration_data = json.load(configuration_file_handle)
+                if validate_schema:
+                    self._validate_configuration_schema_against_predefined_rules_and_constraints(configuration_data)
+                if apply_defaults:
+                    configuration_data = self._apply_default_values_to_missing_configuration_parameters(configuration_data)
+                return configuration_data
+        except FileNotFoundError as file_not_found_exception:
+            print(f"ERROR: Configuration file not found at path: {self.configuration_file_path}. Please check the file path and try again. Exception details: {str(file_not_found_exception)}")
+            raise
+        except json.JSONDecodeError as json_decode_exception:
+            print(f"ERROR: Failed to parse JSON configuration file. The file may be corrupted or contain invalid JSON syntax. Exception details: {str(json_decode_exception)}")
+            raise
+            
+    def _validate_configuration_schema_against_predefined_rules_and_constraints(self, configuration_data: Dict[str, Any]) -> bool:
+        """Validate configuration with very long variable names."""
+        required_configuration_keys = ['database_connection_string', 'api_endpoint_url', 'authentication_token', 'maximum_concurrent_connections', 'request_timeout_milliseconds']
+        
+        for required_configuration_key_name in required_configuration_keys:
+            if required_configuration_key_name not in configuration_data:
+                raise ValueError(f"Missing required configuration key: {required_configuration_key_name}. Please ensure all required configuration parameters are present in the configuration file.")
+                
+        return True
+        
+    def _apply_default_values_to_missing_configuration_parameters(self, configuration_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply defaults with long dictionary keys and values."""
+        default_configuration_values = {
+            'enable_debug_mode': False,
+            'log_level': 'INFO',
+            'maximum_log_file_size_in_megabytes': 100,
+            'log_file_rotation_count': 5,
+            'enable_performance_monitoring': True,
+            'performance_monitoring_interval_seconds': 60,
+            'enable_automatic_error_reporting': False,
+            'error_reporting_endpoint_url': 'https://errors.example.com/api/v1/reports',
+            'connection_pool_size': 10,
+            'connection_pool_timeout_seconds': 30,
+            'enable_connection_pool_recycling': True,
+            'connection_pool_recycle_interval_seconds': 3600
+        }
+        
+        for default_configuration_key, default_configuration_value in default_configuration_values.items():
+            if default_configuration_key not in configuration_data:
+                configuration_data[default_configuration_key] = default_configuration_value
+                if self.enable_verbose_logging:
+                    print(f"Applied default value '{default_configuration_value}' for configuration key '{default_configuration_key}' because it was not present in the configuration file.")
+                    
+        return configuration_data
+
+class DataProcessingPipeline:
+    """Data processing with long lines."""
+    
+    def process_large_dataset_with_multiple_transformations_and_aggregations(self, input_data: List[Dict[str, Any]], apply_filtering: bool = True, apply_transformation: bool = True, apply_aggregation: bool = True) -> List[Dict[str, Any]]:
+        """Process data with very long conditional statements."""
+        processed_data_results = []
+        
+        for data_item_index, data_item in enumerate(input_data):
+            # This is a very long condition that checks multiple criteria to test how the editor handles long conditional expressions with many boolean operators
+            if apply_filtering and 'status' in data_item and data_item['status'] == 'active' and 'priority' in data_item and data_item['priority'] > 5 and 'created_at' in data_item and self._is_timestamp_within_last_30_days(data_item['created_at']):
+                if apply_transformation:
+                    transformed_data_item = self._apply_complex_transformation_with_multiple_steps_and_calculations(data_item)
+                else:
+                    transformed_data_item = data_item
+                    
+                processed_data_results.append(transformed_data_item)
+                
+                if self.enable_verbose_logging:
+                    print(f"Processed data item {data_item_index + 1}/{len(input_data)}: status={data_item.get('status')}, priority={data_item.get('priority')}, created_at={data_item.get('created_at')}")
+                    
+        if apply_aggregation:
+            aggregated_results = self._aggregate_processed_data_by_category_and_compute_statistics(processed_data_results)
+            return aggregated_results
+        else:
+            return processed_data_results
+            
+    def _is_timestamp_within_last_30_days(self, timestamp: int) -> bool:
+        """Check if timestamp is recent."""
+        current_timestamp = int(time.time())
+        thirty_days_in_seconds = 30 * 24 * 60 * 60
+        return (current_timestamp - timestamp) <= thirty_days_in_seconds
+        
+    def _apply_complex_transformation_with_multiple_steps_and_calculations(self, data_item: Dict[str, Any]) -> Dict[str, Any]:
+        """Transform data item with complex calculations."""
+        transformed_item = data_item.copy()
+        
+        # Apply multiple transformations
+        if 'value' in transformed_item:
+            transformed_item['normalized_value'] = (transformed_item['value'] - self.minimum_value) / (self.maximum_value - self.minimum_value) if self.maximum_value != self.minimum_value else 0
+            transformed_item['logarithmic_value'] = math.log(transformed_item['value'] + 1) if transformed_item['value'] >= 0 else 0
+            transformed_item['exponential_value'] = math.exp(min(transformed_item['value'], 10)) if transformed_item['value'] <= 10 else math.exp(10)
+            
+        return transformed_item
+        
+    def _aggregate_processed_data_by_category_and_compute_statistics(self, processed_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Aggregate data with statistical computations."""
+        aggregated_results_by_category = {}
+        
+        for data_item in processed_data:
+            category = data_item.get('category', 'uncategorized')
+            if category not in aggregated_results_by_category:
+                aggregated_results_by_category[category] = {'count': 0, 'total_value': 0, 'items': []}
+                
+            aggregated_results_by_category[category]['count'] += 1
+            aggregated_results_by_category[category]['total_value'] += data_item.get('value', 0)
+            aggregated_results_by_category[category]['items'].append(data_item)
+            
+        return [{'category': category, 'statistics': stats} for category, stats in aggregated_results_by_category.items()]
+
+def execute_complex_database_query_with_multiple_joins_and_filters(connection_string: str, table_name: str, filter_conditions: Dict[str, Any], join_tables: List[str], order_by_columns: List[str]) -> List[Dict[str, Any]]:
+    """Execute database query with very long SQL statements."""
+    sql_query = f"SELECT * FROM {table_name} WHERE {' AND '.join([f'{key} = {value}' for key, value in filter_conditions.items()])} ORDER BY {', '.join(order_by_columns)}"
+    print(f"Executing SQL query: {sql_query}")
+    # Simulated query execution
+    return []
+
+def generate_comprehensive_report_with_multiple_sections_and_detailed_analysis(data: List[Dict[str, Any]], include_charts: bool = True, include_statistics: bool = True, export_format: str = 'pdf') -> str:
+    """Generate report with very long string formatting."""
+    report_header = f"=" * 150 + "\n" + f"COMPREHENSIVE DATA ANALYSIS REPORT - Generated on {time.strftime('%Y-%m-%d %H:%M:%S')}" + "\n" + f"=" * 150 + "\n"
+    report_content = report_header
+    
+    report_content += f"\nTotal number of data items analyzed: {len(data)}\n"
+    report_content += f"Report includes charts: {include_charts}, includes statistics: {include_statistics}, export format: {export_format}\n"
+    report_content += "\n" + "-" * 150 + "\n"
+    
+    return report_content
+
+if __name__ == "__main__":
+    print("Starting very long example script with extensive logging and detailed output messages that exceed normal line lengths for testing purposes")
+    
+    configuration_manager_instance = ConfigurationManager(
+        configuration_file_path="/path/to/configuration/file/that/has/a/very/long/path/name/to/test/horizontal/scrolling.json",
+        enable_verbose_logging=True,
+        maximum_retry_attempts=5,
+        connection_timeout_in_seconds=60
+    )
+    
+    print("Application initialized successfully with all configuration parameters loaded and validated against the predefined schema and business rules")
+`,
+          mtime: oneDayAgo,
+        },
+      ],
+    },
+    {
+      name: "firmware",
+      isDirectory: true,
+      children: [
+        {
+          name: "bootloader.bin",
+          isDirectory: false,
+          // ELF binary header
+          content: new Uint8Array([
+            0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x3e, 0x00, 0x01, 0x00,
+            0x00, 0x00, 0x50, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x38,
+            0x00, 0x09, 0x00, 0x40, 0x00, 0x1c, 0x00, 0x1b, 0x00, 0x06, 0x00,
+            0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x40, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
+          ]),
+          mtime: oneMonthAgo,
+        },
+        {
+          name: "image.png",
+          isDirectory: false,
+          // PNG header
+          content: new Uint8Array([
+            0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00,
+            0x0d, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
+            0x00, 0x10, 0x08, 0x02, 0x00, 0x00, 0x00,
+          ]),
+          mtime: oneWeekAgo,
+        },
+        {
+          name: "firmware.hex",
+          isDirectory: false,
+          content:
+            ":100000000C9434000C9451000C9451000C945100EC\n:100010000C9451000C9451000C9451000C94510098\n",
+          mtime: oneDayAgo,
+        },
+      ],
+    },
+    {
       name: "very_long_readme_filename_that_tests_file_browser_display_capabilities_with_extended_descriptive_text.txt",
       isDirectory: false,
       content: "Long filename readme\n",
@@ -702,9 +926,18 @@ export function createSystemApiMiddleware(): Connect.NextHandleFunction {
           return
         } else {
           // Serve file content
-          res.setHeader("Content-Type", "text/plain")
-          res.statusCode = 200
-          res.end(entry.content || "")
+          const content = entry.content || ""
+          if (content instanceof Uint8Array) {
+            // Binary content
+            res.setHeader("Content-Type", "application/octet-stream")
+            res.statusCode = 200
+            res.end(Buffer.from(content))
+          } else {
+            // Text content
+            res.setHeader("Content-Type", "text/plain")
+            res.statusCode = 200
+            res.end(content)
+          }
           return
         }
       } else {

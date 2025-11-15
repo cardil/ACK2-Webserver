@@ -13,6 +13,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
+    "format": "npm run lint:fix",
     "test": "npm run test:components && npm run test:smoke",
     "test:components": "vitest run",
     "test:smoke": "vitest run -c test/smoke/vitest.config.ts",
@@ -25,6 +26,7 @@
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/svelte": "^5.2.9",
     "@types/node": "^24.10.0",
+    "@types/prismjs": "^1.26.5",
     "@types/socket.io-client": "^1.4.36",
     "jsdom": "^27.2.0",
     "node-fetch": "^3.3.2",
@@ -46,6 +48,7 @@
     "@fortawesome/svelte-fontawesome": "^0.2.4",
     "@svelte-plugins/tooltips": "^3.0.3",
     "echarts-gl": "^2.0.9",
+    "prismjs": "^1.30.0",
     "socket.io-client": "^4.8.1",
     "svelte-sonner": "^1.0.6"
   }
