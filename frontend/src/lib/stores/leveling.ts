@@ -48,12 +48,28 @@ function parseMeshString(meshString: string, gridSize: number): number[][] {
 }
 
 /**
+  * Applies precision rounding to mesh data, matching the C backend's apply_precision function.
+  * @param meshData 2D array of mesh values.
+  * @param precision The precision value (e.g., 0.01 means round to nearest 0.01).
+  */
+function applyPrecision(meshData: number[][], precision: number): void {
+  if (precision === 0.0) return;
+
+  for (let i = 0; i < meshData.length; i++) {
+    for (let j = 0; j < meshData[i].length; j++) {
+      meshData[i][j] = Math.round(meshData[i][j] / precision) * precision;
+    }
+  }
+}
+
+/**
   * Calculates the average of a list of saved mesh profiles.
   * @param meshes An array of saved mesh profiles.
   * @param gridSize The size of the grid.
+  * @param precision The precision value to apply to the averaged mesh (default: 0.01).
   * @returns A new MeshProfile representing the average, or null if no meshes are provided.
   */
-function calculateAverageMesh(meshes: MeshProfile[], gridSize: number): MeshProfile | null {
+function calculateAverageMesh(meshes: MeshProfile[], gridSize: number, precision: number = 0.01): MeshProfile | null {
   if (meshes.length === 0) return null;
 
   const avgData = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
@@ -67,9 +83,12 @@ function calculateAverageMesh(meshes: MeshProfile[], gridSize: number): MeshProf
 
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
-      avgData[i][j] = parseFloat((avgData[i][j] / meshes.length).toFixed(4));
+      avgData[i][j] = avgData[i][j] / meshes.length;
     }
   }
+
+  // Apply precision rounding, matching the C backend behavior
+  applyPrecision(avgData, precision);
 
   return { id: 'average', name: 'Average', data: avgData };
 }
@@ -114,7 +133,8 @@ function createLevelingStore() {
         data: parseMeshString(sm.mesh_data, gridSize),
       }));
 
-      const averageMesh = calculateAverageMesh(savedMeshes, gridSize);
+      const precision = status.settings.precision;
+      const averageMesh = calculateAverageMesh(savedMeshes, gridSize, precision);
 
       set({
         ...get(levelingStore), // Preserve existing state like rebootNeeded
@@ -147,6 +167,9 @@ function createLevelingStore() {
 
 
   async function saveSettings(settings: LevelingSettings): Promise<api.SaveSettingsResponse> {
+    const currentStore = get(levelingStore);
+    const precisionChanged = currentStore.settings?.precision !== settings.precision;
+
     update(s => ({ ...s, isUpdating: true }));
     try {
       const apiSettings: Omit<api.LevelingSettings, 'z_offset'> = {
@@ -158,6 +181,16 @@ function createLevelingStore() {
 
       if (response.grid_size_changed) {
         update(s => ({ ...s, rebootNeeded: true }));
+      }
+
+      // If precision changed, recalculate average mesh immediately if we have saved meshes
+      if (precisionChanged && currentStore.savedMeshes.length > 0 && currentStore.settings) {
+        const newAverageMesh = calculateAverageMesh(
+          currentStore.savedMeshes,
+          currentStore.settings.gridSize,
+          settings.precision
+        );
+        update(s => ({ ...s, averageMesh: newAverageMesh }));
       }
 
       await fetchData(); // Refetch data to update the state

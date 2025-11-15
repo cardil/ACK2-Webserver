@@ -89,6 +89,11 @@
     visualizedMeshData = $levelingStore.activeMesh.data;
   }
 
+  // Ensure the visualizer updates when the average mesh data changes from the store
+  $: if (visualizedSlotId === 'average' && $levelingStore.averageMesh) {
+    visualizedMeshData = $levelingStore.averageMesh.data;
+  }
+
 
 
   // --- UI Functions ---
@@ -235,8 +240,8 @@
               <input type="number" id="bed_temp" bind:value={localSettings.bedTemp} min="0" max="90" disabled={$levelingStore.rebootNeeded} />
             </div>
             <div class="form-group">
-              <label for="precision">Probe Precision</label>
-              <input type="number" id="precision" bind:value={localSettings.precision} step="0.001" disabled={$levelingStore.rebootNeeded} />
+              <label for="precision" title="Controls the rounding precision when calculating the average of saved mesh profiles. Values are rounded to the nearest precision step (e.g., 0.01 rounds to nearest 0.01mm).">Avg. Precision</label>
+              <input type="number" id="precision" bind:value={localSettings.precision} step="0.001" disabled={$levelingStore.rebootNeeded} title="Controls the rounding precision when calculating the average of saved mesh profiles. Values are rounded to the nearest precision step (e.g., 0.01 rounds to nearest 0.01mm)." />
             </div>
             <div class="form-group button-group">
               {#if $levelingStore.rebootNeeded}
