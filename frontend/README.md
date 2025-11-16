@@ -1,38 +1,79 @@
-# sv
+# Frontend Development Guide
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Modern Svelte-based frontend for the AK2 Dashboard.
 
-## Creating a project
+## Overview
 
-If you're seeing this, you've probably already done this step. Congrats!
+The frontend is a reactive single-page application built with Svelte and SvelteKit. It provides a modern, responsive interface for printer control, bed mesh leveling, system tools, and file management.
 
-```sh
-# create a new project in the current directory
-npx sv create
+### Technology Stack
 
-# create a new project in my-app
-npx sv create my-app
+- **[Svelte](https://svelte.dev/)** - Reactive UI framework
+- **[SvelteKit](https://kit.svelte.dev/)** - Application framework with routing
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe development
+- **[Vite](https://vitejs.dev/)** - Fast build tool and dev server
+- **[ECharts](https://echarts.apache.org/)** - 3D bed mesh visualization
+- **[Prism.js](https://prismjs.com/)** - Syntax highlighting for code viewer
+
+## Development Setup
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- Modern web browser
+
+### Installation
+
+```bash
+cd frontend
+npm install
 ```
 
-## Developing
+### Development Server
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Start the dev server with hot module reloading:
 
-```sh
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+Open browser at `http://localhost:5173`
 
-To create a production version of your app:
+The dev server includes:
 
-```sh
+- **Hot Module Replacement** - Instant updates without page reload
+- **Mock API Server** - Simulates printer API for testing
+- **Source Maps** - Debug TypeScript directly in browser
+- **Fast Refresh** - Preserves component state during edits
+
+## Building for Production
+
+### Build Commands
+
+**Production Build:**
+
+```bash
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+Outputs to `build/` directory as a static site.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+**Preview Production Build:**
+
+```bash
+npm run preview
+```
+
+**Full Build from Project Root:**
+
+```bash
+make
+```
+
+Builds frontend and packages into `webserver/` for deployment.
+
+For detailed architecture, API integration, testing, and best practices, see the complete guide above.
+
+---
+
+For backend development, see [../src/README.md](../src/README.md).
