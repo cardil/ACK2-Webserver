@@ -33,15 +33,28 @@ If you have `unzip` and `openssh-sftp-server` installed on your printer:
 git clone https://github.com/cardil/ACK2-Webserver
 cd ACK2-Webserver
 
-# Deploy directly to printer
+# Interactive deployment (recommended - prompts for configuration)
+make deploy
+
+# Or specify parameters directly
 make deploy PRINTER_IP=192.168.1.100
 ```
 
-**Customization:**
+The interactive deployment will:
+- Prompt for printer IP, SSH username, port, and webserver port
+- Save configuration to `~/.config/kobra2/ssh.cfg` (shared with kobra2-fw-tools)
+- Reuse saved values as defaults for next deployment
+
+**Command-line Parameters:**
+
+You can still override any parameter via command line:
 
 ```bash
-# Custom SSH port, user, or webserver port
-make deploy PRINTER_IP=192.168.1.100 PRINTER_PORT=2222 PRINTER_USER=admin WEBFSD_PORT=8080
+# All parameters
+make deploy PRINTER_IP=192.168.1.100 PRINTER_USER=root PRINTER_PORT=22 WEBFSD_PORT=8000
+
+# Or override specific values
+make deploy PRINTER_IP=192.168.1.50 WEBFSD_PORT=8080
 ```
 
 **Prerequisites on Printer:**
@@ -198,7 +211,17 @@ git pull
 # Flash update/update.swu as before
 ```
 
-### Option 2: Manual Update (SSH Required)
+### Option 2: Deploy via Make (Recommended)
+
+```bash
+# Build and deploy in one step
+cd ACK2-Webserver
+make deploy
+
+# The deploy command will prompt for configuration if not already set
+```
+
+### Option 3: Manual Update (SSH Required)
 
 ```bash
 # Build the webserver package

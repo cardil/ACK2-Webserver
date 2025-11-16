@@ -61,37 +61,12 @@ test-only: ## Run tests without running the pipeline
 	@$(MAKE) -C src test-only
 
 # --- Deployment Configuration ---
-PRINTER_USER ?= root
-PRINTER_PORT ?= 22
-WEBFSD_PORT ?= 8000
-
-deploy: build ## Deploy to printer via SSH (Usage: make deploy PRINTER_IP=192.168.1.100)
-	@if [ -z "$(PRINTER_IP)" ]; then \
-		echo "$(CROSS) Error: PRINTER_IP not specified"; \
-		echo "$(INFO) Usage: make deploy PRINTER_IP=192.168.1.100 [PRINTER_USER=root] [PRINTER_PORT=22] [WEBFSD_PORT=8000]"; \
-		echo "$(WARN) Prerequisites: SSH access, unzip, openssh-sftp-server installed on printer"; \
-		echo "$(INFO) Install with: opkg update && opkg install unzip openssh-sftp-server"; \
-		exit 1; \
-	fi
-	@echo ""
-	@echo "$(BLUE)➜ Deploying to $(PRINTER_USER)@$(PRINTER_IP):$(PRINTER_PORT)...$(NC)"
-	@echo "$(INFO) Webserver will run on port $(WEBFSD_PORT)"
-	@echo "$(INFO) Uploading package..."
-	@scp -P $(PRINTER_PORT) webserver/webserver.zip $(PRINTER_USER)@$(PRINTER_IP):/webserver.zip || { echo "$(CROSS) Upload failed. Ensure openssh-sftp-server is installed."; exit 1; }
-	@echo "$(TICK) Package uploaded"
-	@echo "$(INFO) Installing and restarting webserver..."
-	@ssh -p $(PRINTER_PORT) $(PRINTER_USER)@$(PRINTER_IP) '\
-		cd / && \
-		killall webfsd 2>/dev/null || true && \
-		rm -rf /opt/webfs && \
-		unzip -o webserver.zip && \
-		webfsd -p $(WEBFSD_PORT) && \
-		rm -f webserver.zip \
-	' || { echo "$(CROSS) Deployment failed. Check prerequisites."; exit 1; }
-	@echo "$(TICK) Deployment complete"
-	@echo ""
-	@echo "$(GREEN)✓ Dashboard deployed successfully!$(NC)"
-	@echo "$(INFO) Access at: $(BLUE)http://$(PRINTER_IP):$(WEBFSD_PORT)$(NC)"
+deploy: build ## Deploy to printer via SSH (interactive or: make deploy PRINTER_IP=192.168.1.100)
+	@PRINTER_IP="$(PRINTER_IP)" \
+	PRINTER_USER="$(PRINTER_USER)" \
+	PRINTER_PORT="$(PRINTER_PORT)" \
+	WEBFSD_PORT="$(WEBFSD_PORT)" \
+	./scripts/deploy.sh
 
 clean: ## Clean the project
 	@echo ""
