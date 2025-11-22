@@ -13,13 +13,40 @@ INFO := $(BLUE)ℹ$(NC)
 WARN := $(YELLOW)⚠$(NC)
 ARROW := $(BLUE)➜$(NC)
 
-# Cross-compiler setup
+# Initialization method: set USE_DOCKER=1 for Docker, default is wget
+USE_DOCKER ?= 0
+
+# Cross-compiler configuration
 CROSS_COMPILER_DIR := ./arm-linux-musleabi-cross
 CROSS_COMPILER_URL := https://musl.cc/arm-linux-musleabi-cross.tgz
-CC := $(CROSS_COMPILER_DIR)/bin/arm-linux-musleabi-gcc
+DOCKER := $(shell command -v docker 2>/dev/null || command -v podman 2>/dev/null)
+DOCKER_IMAGE := localhost/arm-cross-cc
+DOCKER_PLATFORM := linux/arm/v7
 
-CFLAGS := -DMIMEFILE=\""/etc/mime.types"\" -DWEBFS_VERSION=\"1.22\" -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+# Compiler flags (same for both methods)
+CFLAGS := -DMIMEFILE=\""/etc/mime.types"\" \
+	-DWEBFS_VERSION=\"1.22\" \
+	-D_GNU_SOURCE \
+	-D_LARGEFILE_SOURCE \
+	-D_LARGEFILE64_SOURCE \
+	-D_FILE_OFFSET_BITS=64
 LDFLAGS := -static
+
+# Set compiler based on initialization method
+ifeq ($(USE_DOCKER),1)
+	# Docker method: wrap compiler in container
+	DOCKER_RUN = $(DOCKER) run --rm \
+		--platform $(DOCKER_PLATFORM) \
+		-v "$(CURDIR):/src:Z" \
+		-w /src \
+		$(DOCKER_IMAGE)
+	CC = $(DOCKER_RUN) gcc
+	STRIP = $(DOCKER_RUN) strip
+else
+	# Wget method: use downloaded cross-compiler (default)
+	CC = $(CROSS_COMPILER_DIR)/bin/arm-linux-musleabi-gcc
+	STRIP = $(CROSS_COMPILER_DIR)/bin/arm-linux-musleabi-strip
+endif
 
 SOURCE_FILES := $(wildcard *.c *.h)
 OBJ := $(patsubst %.c,%.o,$(wildcard *.c))
@@ -32,13 +59,25 @@ LINT_STAMP := $(STAMP_DIR)/.lint.stamp
 
 .PHONY: all init build lint compile test clean help \
 	build-only lint-only compile-only test-only \
-	strip export-bin cross-cc clean-cc
+	strip export-bin cross-cc clean-cc clean-docker
 
 all: build ## Default target (same as build)
 
-init: cross-cc ## Initialize the backend
+# init switches based on USE_DOCKER environment variable
+ifeq ($(USE_DOCKER),1)
+init: docker-image docker-warn ## Initialize with Docker (EXPERIMENTAL)
+docker-warn:
+	@echo ""
+	@echo "$(WARN) WARNING: Docker build method is EXPERIMENTAL"
+	@echo "$(WARN) Binary built with Alpine ARM gcc (not musl.cc)"
+	@echo "$(WARN) Has NOT been tested on actual printer hardware"
+	@echo "$(WARN) Use wget method for production builds"
+	@echo ""
+else
+init: cross-cc ## Initialize backend with wget (default)
+endif
 
-cross-cc: $(CROSS_COMPILER_DIR) ## Download and extract cross-compiler
+cross-cc: $(CROSS_COMPILER_DIR) ## Download cross-compiler (wget method)
 
 $(CROSS_COMPILER_DIR):
 	@echo "$(BLUE)➜ Setting up backend environment...$(NC)"
@@ -52,14 +91,34 @@ else
 	@exit 1
 endif
 
+docker-image: ## Build container image for cross-compilation
+	@echo "$(BLUE)➜ Building container image...$(NC)"
+	@if [ -z "$(DOCKER)" ]; then \
+		echo "$(CROSS) Error: Neither docker nor podman found in PATH"; \
+		exit 1; \
+	fi
+	@$(DOCKER) build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(DOCKER_IMAGE) \
+		-f build.Dockerfile .
+	@echo "$(TICK) Container image built"
+
+docker-build: docker-image ## Build using container (cross-compile for ARM)
+	@echo "$(BLUE)➜ Building in container...$(NC)"
+	@$(DOCKER) run --rm --platform $(DOCKER_PLATFORM) \
+		-v "$(CURDIR)/..:/workspace:Z" \
+		-w /workspace/src \
+		$(DOCKER_IMAGE)
+	@echo "$(TICK) Container build complete"
+
 $(TARGET): $(OBJ)
 	@echo "$(BLUE)➜ Linking $@...$(NC)"
 	@$(CC) $(LDFLAGS) -o $@ $^
 	@echo "$(TICK) $@ linked."
 
-$(STRIPPED_TARGET):
-	@echo "$(BLUE)➜ Striping $(TARGET)...$(NC)"
-	@$(CROSS_COMPILER_DIR)/bin/arm-linux-musleabi-strip $(TARGET) -o $@
+$(STRIPPED_TARGET): $(TARGET)
+	@echo "$(BLUE)➜ Stripping $(TARGET)...$(NC)"
+	@$(STRIP) $(TARGET) -o $@
 	@echo "$(TICK) $(TARGET) stripped."
 
 test: compile ## Test the code (runs also: compile, init)
@@ -108,6 +167,10 @@ clean: ## Clean the backend
 clean-cc: ## Delete the cross compiler
 	@echo "$(BLUE)➜ Cleaning cross compiler...$(NC)"
 	rm -rf $(CROSS_COMPILER_DIR)
+
+clean-docker: ## Remove container image
+	@echo "$(BLUE)➜ Removing container image...$(NC)"
+	@$(DOCKER) rmi $(DOCKER_IMAGE) 2>/dev/null || true
 
 help: ## Display this help message
 	@echo "Usage: make [target]"

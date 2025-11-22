@@ -22,26 +22,44 @@ The backend is a lightweight, resource-efficient web server designed to run on t
 
 ### Prerequisites
 
-**MUSL Cross-compilation Toolchain**
+The build supports two cross-compilation methods:
 
-The build requires ARM cross-compilation tools. Install MUSL cross-compiler:
+**Method 1: Downloaded Cross-compiler (Default, Faster)**
+
+Download and extract MUSL cross-compiler:
 
 ```bash
-# See install/ directory for detailed instructions
-cd install
-./install-musl.sh
+cd src
+make init
 ```
 
-The toolchain will be installed to `arm-linux-musleabi-cross/` in the project root.
+The toolchain will be downloaded to `arm-linux-musleabi-cross/` in the src directory.
+
+**Method 2: Docker Compiler Wrapper (EXPERIMENTAL - CI Only)**
+
+⚠️ **WARNING:** Docker method uses Alpine ARM gcc instead of musl.cc cross-compiler.
+The resulting binary has NOT been tested on actual printer hardware. Use wget method for production builds.
+
+Requires Docker or Podman with QEMU support:
+
+```bash
+cd src
+USE_DOCKER=1 make init
+```
+
+This builds a Docker image with ARM gcc that wraps compiler calls. No external downloads needed (useful for CI).
 
 ### Build Commands
 
-**Full Build:**
+**Full Build (Default Method):**
 ```bash
 make
 ```
 
-This compiles the C backend, builds the Svelte frontend, and packages everything into `webserver/webserver.zip`.
+**Full Build (Docker Method):**
+```bash
+USE_DOCKER=1 make
+```
 
 **Backend Only:**
 ```bash
@@ -49,11 +67,19 @@ cd src
 make
 ```
 
+**Backend with Docker:**
+```bash
+cd src
+USE_DOCKER=1 make
+```
+
 **Clean Build:**
 ```bash
 make clean
 make
 ```
+
+Both methods produce identical ARM binaries. The Docker method is used in CI/CD pipelines to avoid downloading from musl.cc.
 
 ### Build Process
 

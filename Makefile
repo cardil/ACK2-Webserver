@@ -18,7 +18,7 @@ ARROW := $(BLUE)➜$(NC)
 
 all: build ## Build the entire project (default)
 
-build: test build-only ## Run the entire build pipeline
+build: test build-only ## Run the entire build pipeline (uses Docker/Podman for ARM cross-compilation)
 
 init: ## Initialize the project
 	@$(MAKE) -C frontend init
