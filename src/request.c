@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include "api.h"
 #include "httpd.h"
 
 typedef uint8_t BYTE;
@@ -735,20 +736,20 @@ int read_mesh_from_printer_config(void) {
 
                     result = 0;
                 } else if (b[0] == 'p' && b[1] == 'r' && b[2] == 'o' && b[3] == 'b' && b[4] == 'e' && b[5] == '_' && b[6] == 'c' &&
-                           b[7] == 'o' && b[8] == 'u' && b[9] == 'n' && b[10] == 't' && b[11] == ' ' && b[12] == ':' && b[13] == ' ') {
+                          b[7] == 'o' && b[8] == 'u' && b[9] == 'n' && b[10] == 't' && b[11] == ' ' && b[12] == ':' && b[13] == ' ') {
                     sscanf(&b[14], "%d,%d", &probe_count_x, &probe_count_y);
                 } else if (b[0] == 'x' && b[1] == '_' && b[2] == 'c' && b[3] == 'o' && b[4] == 'u' &&
-                           b[5] == 'n' && b[6] == 't' && b[7] == ' ' && b[8] == ':' && b[9] == ' ') {
+                          b[5] == 'n' && b[6] == 't' && b[7] == ' ' && b[8] == ':' && b[9] == ' ') {
                     sscanf(&b[10], "%d", &x_count);
                 } else if (b[0] == 'y' && b[1] == '_' && b[2] == 'c' && b[3] == 'o' && b[4] == 'u' &&
-                           b[5] == 'n' && b[6] == 't' && b[7] == ' ' && b[8] == ':' && b[9] == ' ') {
+                          b[5] == 'n' && b[6] == 't' && b[7] == ' ' && b[8] == ':' && b[9] == ' ') {
                     sscanf(&b[10], "%d", &y_count);
                 } else if (b[0] == 'z' && b[1] == '_' && b[2] == 'o' && b[3] == 'f' && b[4] == 'f' &&
-                           b[5] == 's' && b[6] == 'e' && b[7] == 't' && b[8] == ' ' && b[9] == ':' && b[10] == ' ') {
+                          b[5] == 's' && b[6] == 'e' && b[7] == 't' && b[8] == ' ' && b[9] == ':' && b[10] == ' ') {
                     z_offset = atof(&b[11]);
                 } else if (b[0] == 'b' && b[1] == 'e' && b[2] == 'd' && b[3] == '_' && b[4] == 'm' &&
-                           b[5] == 'e' && b[6] == 's' && b[7] == 'h' && b[8] == '_' && b[9] == 't' && b[10] == 'e' &&
-                           b[11] == 'm' && b[12] == 'p' && b[13] == ' ' && b[14] == ':' && b[15] == ' ') {
+                          b[5] == 'e' && b[6] == 's' && b[7] == 'h' && b[8] == '_' && b[9] == 't' && b[10] == 'e' &&
+                          b[11] == 'm' && b[12] == 'p' && b[13] == ' ' && b[14] == ':' && b[15] == ' ') {
                     bed_temp = atoi(&b[16]);
                 }
             }
@@ -1279,7 +1280,7 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     if (debug) {
-        fprintf(stderr, "+++ requested file: %s\n", filename_str);
+        fprintf(stderr, "+++ process_custom_pages: checking for custom pages for request path: %s\n", req->path);
     }
 
     if ((strstr(filename_str, "/mnt/UDISK/webfs/files/"))) {
@@ -1293,17 +1294,18 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     // ----------------------------- access to the 3d visualizer index.html -----------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/mesh/index.html"))) {
+    if ((strcmp(req->path, "/deprecated/mesh/") == 0 || strcmp(req->path, "/deprecated/mesh") == 0 || strcmp(req->path, "/deprecated/mesh/index.html") == 0)) {
+        if (debug) fprintf(stderr, "+++ process_custom_pages: handling /deprecated/mesh/index.html\n");
         // turn off the cache
         req->cache_turn_off = 'Y';
 
         int rr = read_mesh_from_printer_config();
 
         if (rr == 1) {
-            custom_copy_file(NULL, "/mnt/UDISK/webfs/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Missing printer configuration file! Try to upload it from a backup.</body></html>");
+            custom_copy_file(NULL, "/mnt/UDISK/webfs/deprecated/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Missing printer configuration file! Try to upload it from a backup.</body></html>");
         } else {
             if (rr == 2) {
-                custom_copy_file(NULL, "/mnt/UDISK/webfs/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Missing configuration data! Level the bed first!</body></html>");
+                custom_copy_file(NULL, "/mnt/UDISK/webfs/deprecated/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Missing configuration data! Level the bed first!</body></html>");
             } else {
                 int rrr = -1;
 
@@ -1324,12 +1326,13 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
                     }
                 }
                 if (rrr == 0) {
-                    custom_copy_file(NULL, "/mnt/UDISK/webfs/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Selected Data Slot is empty! Select another Data Slot!</body></html>");
+                    custom_copy_file(NULL, "/mnt/UDISK/webfs/deprecated/mesh/index.html", "wb", "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>3D-Visualizer</title></head><body>Selected Data Slot is empty! Select another Data Slot!</body></html>");
                 } else {
-                    remove("/mnt/UDISK/webfs/mesh/index.html");
-                    custom_copy_file("/opt/webfs/mesh/index1.html", "/mnt/UDISK/webfs/mesh/index.tmp", "wb", mesh_matrix);
-                    custom_copy_file("/opt/webfs/mesh/index2.html", "/mnt/UDISK/webfs/mesh/index.tmp", "ab", NULL);
-                    rename("/mnt/UDISK/webfs/mesh/index.tmp", "/mnt/UDISK/webfs/mesh/index.html");
+                    remove("/mnt/UDISK/webfs/deprecated/mesh/index.html");
+                    custom_copy_file("/opt/webfs/deprecated/mesh/index1.html", "/mnt/UDISK/webfs/deprecated/mesh/index.tmp", "wb", mesh_matrix);
+                    custom_copy_file("/opt/webfs/deprecated/mesh/index2.html", "/mnt/UDISK/webfs/deprecated/mesh/index.tmp", "ab", NULL);
+                    rename("/mnt/UDISK/webfs/deprecated/mesh/index.tmp", "/mnt/UDISK/webfs/deprecated/mesh/index.html");
+                    sync();
                 }
             }
         }
@@ -1337,7 +1340,7 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     // ----------------------------- access to the cam.jpg file -----------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/webcam/cam.jpg"))) {
+    if ((!strcmp(req->path, "/webcam/cam.jpg"))) {
         // turn off the cache
         req->cache_turn_off = 'Y';
 
@@ -1358,14 +1361,14 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
         if (access("/tmp/cam.jpg", F_OK) == -1) {
             custom_copy_file("/mnt/UDISK/webfs/webcam/default.jpg", "/tmp/cam.jpg", "wb", NULL);
         }
-        
+
         // Point the server to the image in tmpfs
         strcpy(filename_str, "/tmp/cam.jpg");
         goto e_x_i_t;
     }
 
     // ----------------------------- access to the api.json file ----------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/api/info.json"))) {
+    if ((!strcmp(req->path, "/api/info.json"))) {
         // turn off the cache
         req->cache_turn_off = 'Y';
 
@@ -1374,7 +1377,7 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     // ----------------------------- access to the do.json file -----------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/api/do.json"))) {
+    if ((!strcmp(req->path, "/api/do.json"))) {
         // turn off the cache
         req->cache_turn_off = 'Y';
 
@@ -1383,7 +1386,8 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
     }
 
     // ----------------------------- access to the tools index.html -------------------------
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/tools/index.html"))) {
+    if ((strcmp(req->path, "/deprecated/tools/") == 0 || strcmp(req->path, "/deprecated/tools") == 0 || strcmp(req->path, "/deprecated/tools/index.html") == 0)) {
+        if (debug) fprintf(stderr, "+++ process_custom_pages: handling /deprecated/tools/index.html\n");
         response_code = 0;
         error_code = 0;
 
@@ -1412,14 +1416,16 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
         // mesh_matrix_export(mesh_average, mesh_grid);
 
         // Fill the index.html template
-        remove("/mnt/UDISK/webfs/tools/index.html");
-        int rrr = populate_template_file("/opt/webfs/tools/index.html", "/mnt/UDISK/webfs/tools/index.tmp", leveling_template_callback);
-        rename("/mnt/UDISK/webfs/tools/index.tmp", "/mnt/UDISK/webfs/tools/index.html");
+        remove("/mnt/UDISK/webfs/deprecated/tools/index.html");
+        int rrr = populate_template_file("/opt/webfs/deprecated/tools/index.html", "/mnt/UDISK/webfs/deprecated/tools/index.tmp", leveling_template_callback);
+        rename("/mnt/UDISK/webfs/deprecated/tools/index.tmp", "/mnt/UDISK/webfs/deprecated/tools/index.html");
+        sync();
         goto e_x_i_t;
     }
 
     // process all actions from /leveling/index.html and go back to the index.html
-    if ((!strcmp(filename_str, "/mnt/UDISK/webfs/tools/response.html"))) {
+    if ((!strcmp(req->path, "/deprecated/tools/response.html"))) {
+        if (debug) fprintf(stderr, "+++ process_custom_pages: handling /deprecated/tools/response.html\n");
         // set no error and no information messages
         response_code = 0;
         error_code = 0;
@@ -1676,9 +1682,10 @@ void process_custom_pages(char *filename_str, struct REQUEST *req) {
             }
         }
 
-        remove("/mnt/UDISK/webfs/tools/response.html");
-        int rrr = populate_template_file("/opt/webfs/tools/response.html", "/mnt/UDISK/webfs/tools/response.tmp", leveling_template_callback);
-        rename("/mnt/UDISK/webfs/tools/response.tmp", "/mnt/UDISK/webfs/tools/response.html");
+        remove("/mnt/UDISK/webfs/deprecated/tools/response.html");
+        int rrr = populate_template_file("/opt/webfs/deprecated/tools/response.html", "/mnt/UDISK/webfs/deprecated/tools/response.tmp", leveling_template_callback);
+        rename("/mnt/UDISK/webfs/deprecated/tools/response.tmp", "/mnt/UDISK/webfs/deprecated/tools/response.html");
+        sync();
         goto e_x_i_t;
     }
 
@@ -1721,7 +1728,7 @@ restart:
     }
 
     /* check if this looks like a http request after
-             the first few bytes... */
+            the first few bytes... */
     if (req->hdata < 5)
         return;
     if (strncmp(req->hreq, "GET ", 4) != 0 &&
@@ -2145,7 +2152,9 @@ void parse_request(struct REQUEST *req) {
         fprintf(stderr, "query: \"%s\"\n", req->query);
 
     if (0 != strcmp(req->type, "GET") &&
-        0 != strcmp(req->type, "HEAD")) {
+        0 != strcmp(req->type, "HEAD") &&
+        0 != strcmp(req->type, "PUT") &&
+        0 != strcmp(req->type, "DELETE")) {
         mkerror(req, 501, 0);
         return;
     }
@@ -2156,6 +2165,7 @@ void parse_request(struct REQUEST *req) {
 
     /* parse header lines */
     req->keep_alive = req->minor;
+    req->content_length = 0;
     for (h = req->hreq; h - req->hreq < req->lreq;) {
         h = strchr(h, '\n');
         if (NULL == h)
@@ -2172,7 +2182,7 @@ void parse_request(struct REQUEST *req) {
             if (2 != sscanf(h + 6, "%" S(MAX_HOST) "[a-zA-Z0-9.-]:%d",
                             req->hostname, &port))
                 sscanf(h + 6, "%" S(MAX_HOST) "[a-zA-Z0-9.-]",
-                       req->hostname);
+                      req->hostname);
         } else if (0 == strncasecmp(h, "If-Modified-Since: ", 19)) {
             req->if_modified = h + 19;
         } else if (0 == strncasecmp(h, "If-Unmodified-Since: ", 21)) {
@@ -2185,8 +2195,10 @@ void parse_request(struct REQUEST *req) {
                 fprintf(stderr, "%03d: auth: %s\n", req->fd, req->auth);
         } else if (0 == strncasecmp(h, "Range: bytes=", 13)) {
             /* parsing must be done after fstat, we need the file size
-                     for the boundary checks */
+                    for the boundary checks */
             req->range_hdr = h + 13;
+        } else if (0 == strncasecmp(h, "Content-Length: ", 16)) {
+            req->content_length = atoi(h + 16);
         }
     }
     if (debug) {
@@ -2200,6 +2212,46 @@ void parse_request(struct REQUEST *req) {
             fprintf(stderr, "%03d: if-range: \"%s\"\n",
                     req->fd, req->if_range);
     }
+
+
+    // Read request body for PUT requests
+    if ((0 == strcmp(req->type, "PUT") || 0 == strcmp(req->type, "POST")) && req->content_length > 0) {
+        if (req->content_length > MAX_HEADER) { // Or some other reasonable limit
+            mkerror(req, 413, 0); // Payload Too Large
+            return;
+        }
+        req->req_body = malloc(req->content_length + 1);
+        if (req->req_body == NULL) {
+            mkerror(req, 500, 0);
+            return;
+        }
+
+        int body_read = 0;
+        char *header_end = strstr(req->hreq, "\r\n\r\n");
+        if (header_end) {
+            header_end += 4;
+            int body_start_offset = header_end - req->hreq;
+            int initial_body_len = req->hdata - body_start_offset;
+            if (initial_body_len > 0) {
+                memcpy(req->req_body, header_end, initial_body_len);
+                body_read = initial_body_len;
+            }
+        }
+
+        while (body_read < req->content_length) {
+            rc = read(req->fd, req->req_body + body_read, req->content_length - body_read);
+            if (rc <= 0) {
+                // Error or connection closed
+                free(req->req_body);
+                req->req_body = NULL;
+                mkerror(req, 400, 0);
+                return;
+            }
+            body_read += rc;
+        }
+        req->req_body[req->content_length] = '\0';
+    }
+
 
     /* take care about the hostname */
     if (virtualhosts) {
@@ -2229,7 +2281,7 @@ void parse_request(struct REQUEST *req) {
     /* build filename */
     if (userdir && '~' == req->path[1]) {
         /* expand user directories, i.e.
-                 /~user/path/file => $HOME/public_html/path/file */
+                /~user/path/file => $HOME/public_html/path/file */
         h = strchr(req->path + 2, '/');
         if (NULL == h) {
             mkerror(req, 404, 1);
@@ -2243,20 +2295,25 @@ void parse_request(struct REQUEST *req) {
             return;
         }
         len = snprintf(filename, sizeof(filename) - 1,
-                       "%s/%s/%s", pw->pw_dir, userdir, h + 1);
+                      "%s/%s/%s", pw->pw_dir, userdir, h + 1);
     } else {
         len = snprintf(filename, sizeof(filename) - 1,
-                       "%s%s%s%s",
-                       do_chroot ? "" : doc_root,
-                       virtualhosts ? "/" : "",
-                       virtualhosts ? req->hostname : "",
-                       req->path);
+                      "%s%s%s%s",
+                      do_chroot ? "" : doc_root,
+                      virtualhosts ? "/" : "",
+                      virtualhosts ? req->hostname : "",
+                      req->path);
     }
 
     req->cache_turn_off = 'N';
 
     // process the custom pages
-    process_custom_pages(filename, req);
+    if (strncmp(req->path, "/api/leveling", 13) == 0) {
+        handle_api_request(req, filename);
+        return; // API request handled, don't continue with file serving
+    } else {
+        process_custom_pages(filename, req);
+    }
 
     h = filename + len - 1;
     if (*h == '/') {
@@ -2280,6 +2337,29 @@ void parse_request(struct REQUEST *req) {
         }
 
         if (no_listing) {
+            /* For SvelteKit SPA, serve index.html instead of 403 for non-existent directories */
+            int is_api_route = (strncmp(req->path, "/api/", 5) == 0);
+            int is_static_asset = (strncmp(req->path, "/_app/", 6) == 0) ||
+                                  (strncmp(req->path, "/webcam/", 8) == 0) ||
+                                  (strncmp(req->path, "/files/", 7) == 0) ||
+                                  (strncmp(req->path, "/deprecated/", 12) == 0);
+
+            if (!is_api_route && !is_static_asset) {
+                /* Try to serve root index.html for SPA routing */
+                char index_path[1024];
+                int index_len = snprintf(index_path, sizeof(index_path) - 1,
+                          "%s%s%s%s",
+                          do_chroot ? "" : doc_root,
+                          virtualhosts ? "/" : "",
+                          virtualhosts ? req->hostname : "",
+                          "/index.html");
+                if (index_len > 0 && index_len < (int)sizeof(index_path)) {
+                    if (-1 != (req->bfd = open(index_path, O_RDONLY))) {
+                        close_on_exec(req->bfd);
+                        goto regular_file;
+                    }
+                }
+            }
             mkerror(req, 403, 1);
             return;
         };
@@ -2288,6 +2368,30 @@ void parse_request(struct REQUEST *req) {
             if (errno == EACCES) {
                 mkerror(req, 403, 1);
             } else {
+                /* Directory doesn't exist - check if this is a SvelteKit SPA route */
+                int is_api_route = (strncmp(req->path, "/api/", 5) == 0);
+                int is_static_asset = (strncmp(req->path, "/_app/", 6) == 0) ||
+                                      (strncmp(req->path, "/webcam/", 8) == 0) ||
+                                      (strncmp(req->path, "/files/", 7) == 0) ||
+                                      (strncmp(req->path, "/deprecated/", 12) == 0);
+
+                if (!is_api_route && !is_static_asset) {
+                    /* Try to serve root index.html for SPA routing */
+                    char index_path[1024];
+                    int index_len = snprintf(index_path, sizeof(index_path) - 1,
+                              "%s%s%s%s",
+                              do_chroot ? "" : doc_root,
+                              virtualhosts ? "/" : "",
+                              virtualhosts ? req->hostname : "",
+                              "/index.html");
+                    if (index_len > 0 && index_len < (int)sizeof(index_path)) {
+                        if (-1 != (req->bfd = open(index_path, O_RDONLY))) {
+                            close_on_exec(req->bfd);
+                            strcpy(filename, index_path);
+                            goto regular_file;
+                        }
+                    }
+                }
                 mkerror(req, 404, 1);
             }
             return;
@@ -2297,11 +2401,11 @@ void parse_request(struct REQUEST *req) {
         req->dir = get_dir(req, filename);
         if (NULL == req->body) {
             /* We arrive here if opendir failed, probably due to -EPERM
-             * It does exist (see the stat() call above) */
+            * It does exist (see the stat() call above) */
             mkerror(req, 403, 1);
             return;
         } else if (NULL != req->if_modified &&
-                   0 == strcmp(req->if_modified, req->mtime)) {
+                  0 == strcmp(req->if_modified, req->mtime)) {
             /* 304 not modified */
             mkheader(req, 304);
             req->head_only = 1;
@@ -2316,6 +2420,35 @@ void parse_request(struct REQUEST *req) {
     if (-1 == (req->bfd = open(filename, O_RDONLY))) {
         if (errno == EACCES) {
             mkerror(req, 403, 1);
+        } else if (errno == ENOENT) {
+            /* File not found - check if this is a SvelteKit SPA route */
+            /* Don't serve index.html for API routes, static assets, or files with extensions */
+            int is_api_route = (strncmp(req->path, "/api/", 5) == 0);
+            int is_static_asset = (strncmp(req->path, "/_app/", 6) == 0) ||
+                                  (strncmp(req->path, "/webcam/", 8) == 0) ||
+                                  (strncmp(req->path, "/files/", 7) == 0) ||
+                                  (strncmp(req->path, "/deprecated/", 12) == 0) ||
+                                  (strchr(req->path, '.') != NULL); /* Has file extension */
+
+            if (!is_api_route && !is_static_asset) {
+                /* This is likely a SvelteKit route - serve index.html for SPA routing */
+                char index_path[1024];
+                int index_len = snprintf(index_path, sizeof(index_path) - 1,
+                          "%s%s%s%s",
+                          do_chroot ? "" : doc_root,
+                          virtualhosts ? "/" : "",
+                          virtualhosts ? req->hostname : "",
+                          "/index.html");
+                if (index_len > 0 && index_len < (int)sizeof(index_path)) {
+                    if (-1 != (req->bfd = open(index_path, O_RDONLY))) {
+                        /* Successfully opened index.html - continue to serve it */
+                        strcpy(filename, index_path);
+                        goto regular_file;
+                    }
+                }
+            }
+            /* Fall through to 404 if we couldn't serve index.html */
+            mkerror(req, 404, 1);
         } else {
             mkerror(req, 404, 1);
         }

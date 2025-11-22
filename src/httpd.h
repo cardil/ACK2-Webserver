@@ -1,3 +1,6 @@
+#ifndef HTTPD_H
+#define HTTPD_H
+
 #include <sys/stat.h>
 
 // #define MORE_INFO
@@ -71,6 +74,8 @@ struct REQUEST {
     char *r_head;
     int *r_hlen;
     char *cors;
+    char *req_body;
+    int content_length;
 
     /* response */
     int status;                /* status code (log) */
@@ -219,3 +224,5 @@ config_option_t read_config_file_from_get_request(char *parameters);
 #define FREE_COND(cond)        /* nothing */
 #define BCAST_COND(cond)       /* nothing */
 #define WAIT_COND(cond, mutex) /* nothing */
+
+#endif /* HTTPD_H */

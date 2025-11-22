@@ -1,61 +1,197 @@
-## Anycubic Kobra 2 Custom Webserver
+# AK2 Dashboard
 
-This repository contains the source code and the tools needed to build a custom webserver package for Anycubic Kobra 2 Series 3D printers.
+**Modern web interface for Anycubic Kobra 2 Series 3D printers**
 
-The result file `webserver/webserver.zip` can be used as a package for the option `webserver` which is a part of the options available for the `Custom Updates` project for these AC K2 printers. For more information fow to use this package to create a custom update please refer to the information provided in [this repository](https://github.com/ultimateshadsform/Anycubic-Kobra-2-Series-Tools).
+A community-maintained fork bringing a complete UI overhaul, advanced bed leveling, and full printer control to your browser.
 
-This version of the webserver was done based on the great work from these two projects:
+![Dashboard Screenshot](images/screenshot1.png)
 
-[WEBFS](https://linux.bytesex.org/misc/webfs.html) - well optimized web server for static web pages and files.
+## About This Project
 
-[MUSL](https://musl.libc.org) - well optimized static library that eliminate the need of using shared libraries (with all other functions in them not used by the caller).
+This is an actively maintained fork of [AGG2017's ACK2-Webserver](https://github.com/AGG2017/ACK2-Webserver), featuring a complete transformation from static HTML to a modern Svelte application. Born from the Kobra 2 hacking community's efforts to overcome Anycubic's closed-source limitations, this project is part of a larger ecosystem of tools that enable full control over your printer.
 
-### Installation
+**Why this exists:** Anycubic released the Kobra 2 series with locked-down, closed-source firmware. The community reverse-engineered access, and this dashboard is one of the results - now maintained and actively developed after the original projects were abandoned.
 
-Documentation can be found in the `install` folder.
+## ✨ Key Features
 
-### Build
+- 🎯 **Comprehensive Dashboard** - Real-time stats, webcam stream, and full printer control
+- 🔧 **Advanced Bed Mesh Leveling** - Intelligent averaging algorithm for consistent first layers
+- 📊 **3D Mesh Visualization** - See your bed topology in stunning detail
+- 🛠️ **System Tools** - Monitor resources, manage services, view logs in real-time
+- 📁 **Smart File Browser** - Syntax highlighting, hex dump for binaries, easy navigation
+- 🎨 **Modern Design** - Light/dark themes, responsive layout, intuitive interface
+- ⚡ **Resource Efficient** - <1% memory usage, minimal CPU impact
 
-After installing the tools, building the package can be done by executing the script `build.sh` from the project root folder.
+## 📚 Documentation
 
-### Folder Information inside the root of the project
+- **[Installation Guide](INSTALL.md)** - Complete installation instructions
+- **[User Guide](DOCS.md)** - Feature usage and troubleshooting
+- **[About](ABOUT.md)** - Project history, credits, and community
+- **[Frontend Development](frontend/README.md)** - Svelte development guide
+- **[Backend Development](src/README.md)** - C backend and API documentation
 
-**arm-linux-musleabi-cross** - The installed MUSL cross tools folder. It is expected to be in the project root folder but can be in another place. Can be also another MUSL tool package according to your platform. The build script and the make file are hardcoded to use `arm-linux-musleabi-cross` in the project root folder, so in case you use another tool or another path, replace this folder name and tool path accordingly.
+## 🚀 Quick Start
 
-**install** - Contains information how to install the MUSL cross tool.
+### For Users
 
-**src** - Contains the source code for the custom webserver.
+**⚠️ Requires a jailbroken Kobra 2 Series printer**
 
-**webserver** - Contains the web pages and other resources to be packed in the result archive file `webserver.zip`
+**Already Jailbroken?** Deploy directly via SSH:
 
-### Additional Information
+```bash
+git clone https://github.com/cardil/ACK2-Webserver
+cd ACK2-Webserver
+make deploy PRINTER_IP=192.168.1.100
+```
 
-To include this custom webserver in the generated custom update you have to enable the option `webserver` with the parameter equal to the package name and the port you need, like `webserver="webfs-v5:8000"` (inside the configuration file `options.cfg`).
+**New User?** See **[INSTALL.md](INSTALL.md)** for complete jailbreak and installation instructions.
 
-You can modify the existing or add more static html pages (with css and javascript only) inside the document root folder webfs. For backend support you have to do the processing inside the `request.c` source file. There is no `php` or other script engines available at the backend, so all needed server processing should be done as optimized `C` code.
+**Access Dashboard:** `http://YOUR_PRINTER_IP:8000`
 
-The web pages document root comes from the update in the printer folder `/opt/webfs`. Then, at the first boot is transfered to the final destination `/mnt/UDISK/webfs` from where the webserver will use the static pages when they are requested. For the template pages that need some processing, they are read from `/opt/webfs` as templates, updated with information and saved in `/mnt/UDISK/webfs` as ready to use static web pages.
+### For Developers
 
-You can add more static pages if needed after you have updated the printer. The additional pages should be added in `/mnt/UDISK/webfs`. The template pages in `/opt/webfs` can be also modified after you have updated the printer, but you should not change the parameters in the templates because this may require also change in the executable file `/opt/bin/webfsd`.
+**Build the entire package:**
+```bash
+make
+```
 
-The webcam web page requires a web camera connected to any USB slot with support for mpeg or raw YUYV video format of 640x480.
+**Development mode (frontend only):**
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-The web page for the Kobra Unleashed interface requires the Kobra Unleashed http server URL to be set in advance inside the file `webserver.json`. This usually can be done in the folder RESOURCES/KEYS (for the custom update project) where a template `webserver.json` already exists and will be included in the generated custom update.
+See [frontend/README.md](frontend/README.md) and [src/README.md](src/README.md) for details.
 
-How to build Kobra Unleashed MQTT server with web interface on a Raspberry Pi 4 or 5 can be found [here](https://github.com/AGG2017/kobra-unleashed).
+## 📁 Project Structure
 
-Information how to create custom updates can be found in [this repository](https://github.com/ultimateshadsform/Anycubic-Kobra-2-Series-Tools)
+```
+├── src/                   # C backend (WEBFS + custom API)
+├── frontend/              # Svelte frontend application
+├── webserver/             # Packaged web resources
+├── INSTALL.md             # Installation guide
+├── DOCS.md                # Feature usage guide
+├── ABOUT.md               # Project history and credits
+└── Makefile               # Build and deployment automation
+```
 
-### Demo Screenshots from the Custom WebServer
+## 🛠️ Technology Stack
 
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot1.png)
+**Backend:**
+- [WEBFS](https://linux.bytesex.org/misc/webfs.html) - Lightweight static web server
+- [MUSL](https://musl.libc.org) - Minimal C library for ARM cross-compilation
+- Custom C API for printer integration
 
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot2.png)
+**Frontend:**
+- [SvelteKit](https://kit.svelte.dev/) - Modern web application framework
+- [Apache ECharts](https://echarts.apache.org/) - 3D mesh visualization
+- [Prism.js](https://prismjs.com/) - Syntax highlighting
 
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot3.png)
+## 🌟 Highlights
 
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot4.png)
+### Unified Printer Control
+No more juggling multiple interfaces! Integrated printer controls (upload, print, pause/resume, stop) directly in the dashboard via Kobra Unleashed API integration. One interface for everything - bed leveling, system tools, and printer control.
 
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot5.png)
+### Advanced Bed Leveling
+The stock firmware's inconsistent probing is solved with an intelligent averaging algorithm. Run leveling multiple times, save each result, and the system computes a statistically superior mesh for perfect first layers.
 
-![](https://raw.githubusercontent.com/AGG2017/ACK2-Webserver/master/images/screenshot6.png)
+### Real-Time System Monitoring
+View CPU usage, memory, temperatures, and service status. Access printer logs with error highlighting, deduplication, and follow mode.
+
+### File Management
+Browse the printer filesystem with syntax-highlighted previews for code and configs, plus hex dump view for binary files.
+
+## 🤝 Community & Credits
+
+### Join the Discussion
+- 💬 [Telegram Group](https://t.me/kobra2modding) - Active community for questions, bugs, and development
+- 📖 [Klipper Discourse Thread](https://klipper.discourse.group/t/printer-cfg-for-anycubic-kobra-2-plus-pro-max/11658) - Original reverse engineering discussions (archived)
+- 📚 [Kobra 2 Pro Insights](https://1coderookie.github.io/Kobra2ProInsights) - Comprehensive printer documentation by 1coderookie
+
+### The Kobra 2 Hacking Ecosystem
+
+This project is part of a suite of community tools for Kobra 2 printers:
+
+**Maintained Forks (by cardil):**
+- 🔧 [kobra2-fw-tools](https://github.com/cardil/kobra2-fw-tools) - Jailbreak tools and custom firmware builder (fork of deleted ultimateshadsform/Anycubic-Kobra-2-Series-Tools)
+- 🌐 [ACK2-Webserver](https://github.com/cardil/ACK2-Webserver) - This project (fork of AGG2017/ACK2-Webserver)
+- 🚀 [Kobra Unleashed](https://github.com/cardil/kobra-unleashed) - MQTT server for cloud printing (fork of anjomro/kobra-unleashed)
+
+**Original Projects:**
+- [AGG2017/ACK2-Webserver](https://github.com/AGG2017/ACK2-Webserver) - Original webserver (unmaintained)
+- [anjomro/kobra-unleashed](https://github.com/anjomro/kobra-unleashed) - Original MQTT server (unmaintained)
+- ultimateshadsform/Anycubic-Kobra-2-Series-Tools - Original firmware tools (deleted)
+
+**Alternative Solutions:**
+- [Rinkhals](https://jbatonnet.github.io/Rinkhals) - Modern alternative for Kobra 3 and some K2 Pro units with newer boards
+
+### Credits & Thanks
+
+**Original Authors:**
+- **[@AGG2017](https://github.com/AGG2017)** - Original ACK2-Webserver author
+- **[@anjomro](https://github.com/anjomro)** - Original Kobra Unleashed author
+- **ultimateshadsform** - Original firmware tools author (repository deleted)
+- **[@1coderookie](https://github.com/1coderookie)** - Comprehensive Kobra 2 Pro documentation
+- **[@jbatonnet](https://github.com/jbatonnet)** - Rinkhals project
+
+**Community Contributors:**
+- **[Kuroi](https://klipper.discourse.group/u/kuroi)** - Initial printer.cfg dumps and reverse engineering
+- **[Boris](https://klipper.discourse.group/u/boris)** - UART and boot process documentation
+- The entire [Klipper Discourse community](https://klipper.discourse.group/t/printer-cfg-for-anycubic-kobra-2-plus-pro-max/11658) who reverse-engineered these printers
+- Everyone in the [Telegram group](https://t.me/kobra2modding) contributing bug reports, testing, and feedback
+
+**Built On:**
+- [WEBFS](https://linux.bytesex.org/misc/webfs.html) by Gerd Hoffmann
+- [MUSL](https://musl.libc.org) by Rich Felker and contributors
+
+## 🤲 Contributing
+
+Contributions are welcome! Whether you're:
+- 🐛 Reporting bugs
+- ✨ Suggesting features
+- 📝 Improving documentation
+- 💻 Submitting code
+- 🧪 Testing on your printer
+
+See the development guides in [frontend/README.md](frontend/README.md) and [src/README.md](src/README.md).
+
+**Development History:**
+- Evolved from AGG2017's static HTML webserver
+- Webcam improvement: 0.5 fps → 8 fps
+- Complete UI overhaul: Static HTML → Modern Svelte SPA
+- Goal: Revive interest in Kobra 2 hacking and provide a solid foundation for future development
+
+## 📜 License
+
+Open source project. Check individual files for specific licenses. Built on WEBFS (public domain) and incorporates various open-source libraries.
+
+## ⚠️ Important Disclaimers
+
+**Jailbreak Required:** This dashboard requires a jailbroken Kobra 2 printer with root access via UART. See [INSTALL.md](INSTALL.md) for complete instructions.
+
+**No Firmware Distributed:** This project does NOT host or distribute Anycubic firmware files. The [kobra2-fw-tools](https://github.com/cardil/kobra2-fw-tools) downloads official firmware from Anycubic's public servers and provides tools to modify it.
+
+**Community Project:** Not affiliated with or endorsed by Anycubic. Installing custom firmware may void your warranty. The original firmware contains parts of Klipper (evidenced by printer.cfg format), which raises questions about GPL compliance.
+
+**Use at Your Own Risk:** Always backup important files (`/user` directory) before modifications. Keep working firmware files accessible. This is experimental software developed by the community.
+
+**Maintained Fork:** The original projects (ACK2-Webserver, Kobra Unleashed, firmware tools) were abandoned. These forks are actively maintained to keep the Kobra 2 hacking community alive.
+
+## 📸 Screenshots
+
+<details>
+<summary>Click to view more screenshots</summary>
+
+![Dashboard](images/screenshot1.png)
+![Bed Mesh Leveling](images/screenshot2.png)
+![3D Visualization](images/screenshot3.png)
+![System Tools](images/screenshot4.png)
+![File Browser](images/screenshot5.png)
+![Printer Controls](images/screenshot6.png)
+
+</details>
+
+---
+
+**Built with ❤️ by the Kobra 2 modding community**

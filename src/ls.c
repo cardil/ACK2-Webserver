@@ -253,7 +253,7 @@ ls(time_t now, char *hostname, char *filename, char *path, int *length) {
                 files[count]->s.st_mode & 0400)
                 files[count]->r = 1;
             else if (files[count]->s.st_uid == gid &&
-                     files[count]->s.st_mode & 0040)
+                    files[count]->s.st_mode & 0040)
                 files[count]->r = 1; /* FIXME: check additional groups */
             else if (files[count]->s.st_mode & 0004)
                 files[count]->r = 1;
@@ -273,11 +273,11 @@ ls(time_t now, char *hostname, char *filename, char *path, int *length) {
     len = 0;
 
     len += sprintf(buf + len,
-                   "<html>\n"
-                   "<head>\n<title>%s:%d%s</title>\n<meta charset=\"utf-8\" />\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\" />\n</head>\n"
-                   "<body bgcolor=white text=black link=darkblue vlink=firebrick alink=red>\n"
-                   "<h1>listing: \n",
-                   hostname, tcp_port, path);
+            "<html>\n"
+            "<head>\n<title>%s:%d%s</title>\n<meta charset=\"utf-8\" />\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\" />\n</head>\n"
+            "<body bgcolor=white text=black link=darkblue vlink=firebrick alink=red>\n"
+            "<h1>listing: \n",
+            hostname, tcp_port, path);
 
     h1 = path, h2 = path + 1;
     for (;;) {
@@ -291,10 +291,10 @@ ls(time_t now, char *hostname, char *filename, char *path, int *length) {
             buf = re2;
         }
         len += sprintf(buf + len, "<a href=\"%s\">%*.*s</a>",
-                       quote(path, h2 - path),
-                       (int)(h2 - h1),
-                       (int)(h2 - h1),
-                       h1);
+                      quote(path, h2 - path),
+                      (int)(h2 - h1),
+                      (int)(h2 - h1),
+                      h1);
         h1 = h2;
         h2 = strchr(h2, '/');
         if (NULL == h2)
@@ -303,9 +303,9 @@ ls(time_t now, char *hostname, char *filename, char *path, int *length) {
     }
 
     len += sprintf(buf + len,
-                   "</h1><hr noshade size=1><pre>\n"
-                   "<b>access      user      group     date             "
-                   "size  name</b>\n\n");
+                  "</h1><hr noshade size=1><pre>\n"
+                  "<b>access      user      group     date             "
+                  "size  name</b>\n\n");
 
     for (i = 0; i < count; i++) {
         if (len > size)
@@ -353,37 +353,37 @@ ls(time_t now, char *hostname, char *filename, char *path, int *length) {
             len += sprintf(buf + len, "     --  ");
         } else if (files[i]->s.st_size < 1024 * 9) {
             len += sprintf(buf + len, "%4d  B  ",
-                           (int)files[i]->s.st_size);
+                          (int)files[i]->s.st_size);
         } else if (files[i]->s.st_size < 1024 * 1024 * 9) {
             len += sprintf(buf + len, "%4d kB  ",
-                           (int)(files[i]->s.st_size >> 10));
+                          (int)(files[i]->s.st_size >> 10));
         } else if ((int64_t)(files[i]->s.st_size) < (int64_t)1024 * 1024 * 1024 * 9) {
             len += sprintf(buf + len, "%4d MB  ",
-                           (int)(files[i]->s.st_size >> 20));
+                          (int)(files[i]->s.st_size >> 20));
         } else if ((int64_t)(files[i]->s.st_size) < (int64_t)1024 * 1024 * 1024 * 1024 * 9) {
             len += sprintf(buf + len, "%4d GB  ",
-                           (int)(files[i]->s.st_size >> 30));
+                          (int)(files[i]->s.st_size >> 30));
         } else {
             len += sprintf(buf + len, "%4d TB  ",
-                           (int)(files[i]->s.st_size >> 40));
+                          (int)(files[i]->s.st_size >> 40));
         }
 
         /* filename */
         if (files[i]->r) {
             len += sprintf(buf + len, "<a href=\"%s%s\">%s</a>\n",
-                           quote(files[i]->n, 9999),
-                           S_ISDIR(files[i]->s.st_mode) ? "/" : "",
-                           files[i]->n);
+                          quote(files[i]->n, 9999),
+                          S_ISDIR(files[i]->s.st_mode) ? "/" : "",
+                          files[i]->n);
         } else {
             len += sprintf(buf + len, "%s\n", files[i]->n);
         }
     }
     strftime(line, 32, "%d/%b/%Y %H:%M:%S GMT", gmtime(&now));
     len += sprintf(buf + len,
-                   "</pre><hr noshade size=1>\n"
-                   "<small><a href=\"%s\">%s</a> &nbsp; %s</small>\n"
-                   "</body>\n</html>\n",
-                   HOMEPAGE, server_name, line);
+                  "</pre><hr noshade size=1>\n"
+                  "<small><a href=\"%s\">%s</a> &nbsp; %s</small>\n"
+                  "</body>\n</html>\n",
+                  HOMEPAGE, server_name, line);
     for (i = 0; i < count; i++)
         free(files[i]);
     if (count)
@@ -437,7 +437,7 @@ get_dir(struct REQUEST *req, char *filename) {
 
     DO_LOCK(lock_dircache);
     for (prev = NULL, this = dirs, i = 0; this != NULL;
-         prev = this, this = this->next, i++) {
+        prev = this, this = this->next, i++) {
         if (0 == strcmp(filename, this->path)) {
             /* remove from list */
             if (NULL == prev)
